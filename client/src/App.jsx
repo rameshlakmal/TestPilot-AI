@@ -23,6 +23,8 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import RestartAltIcon from '@mui/icons-material/RestartAlt'
 
 import { purpleMain, purpleDeep, bgBase, paperBase, primaryBlack, modelOptions, defaultModel } from './theme'
+
+const API = import.meta.env.VITE_API_URL || ''
 import StepRequirements from './StepRequirements'
 import StepAnalyze from './StepAnalyze'
 import StepResults from './StepResults'
@@ -357,10 +359,10 @@ export default function App() {
 
   // Check Jira configuration on mount
   useEffect(() => {
-    fetch('/api/jira/status').then((r) => r.json()).then((d) => {
+    fetch(`${API}/api/jira/status`).then((r) => r.json()).then((d) => {
       if (d && d.configured) {
         setJiraConfigured(true)
-        fetch('/api/jira/projects').then((r) => r.json()).then((p) => {
+        fetch(`${API}/api/jira/projects`).then((r) => r.json()).then((p) => {
           if (Array.isArray(p.projects)) setJiraProjects(p.projects)
         }).catch(() => {})
       }
@@ -378,10 +380,10 @@ export default function App() {
     setJiraSprintFilter('')
     setJiraStatusFilter('')
 
-    fetch(`/api/jira/epics?project=${encodeURIComponent(jiraProject)}`).then((r) => r.json()).then((d) => {
+    fetch(`${API}/api/jira/epics?project=${encodeURIComponent(jiraProject)}`).then((r) => r.json()).then((d) => {
       if (Array.isArray(d.epics)) setJiraEpics(d.epics)
     }).catch(() => {})
-    fetch(`/api/jira/sprints?project=${encodeURIComponent(jiraProject)}`).then((r) => r.json()).then((d) => {
+    fetch(`${API}/api/jira/sprints?project=${encodeURIComponent(jiraProject)}`).then((r) => r.json()).then((d) => {
       if (Array.isArray(d.sprints)) setJiraSprints(d.sprints)
     }).catch(() => {})
   }, [jiraProject])
@@ -394,7 +396,7 @@ export default function App() {
     if (jiraSprintFilter) params.set('sprint', jiraSprintFilter)
     if (jiraStatusFilter) params.set('status', jiraStatusFilter)
     if (jiraSearch.trim()) params.set('search', jiraSearch.trim())
-    fetch(`/api/jira/stories?${params}`).then((r) => r.json()).then((d) => {
+    fetch(`${API}/api/jira/stories?${params}`).then((r) => r.json()).then((d) => {
       if (Array.isArray(d.stories)) {
         setJiraStories(d.stories)
         setJiraSelectedKeys(new Set())
@@ -407,7 +409,7 @@ export default function App() {
     if (!keys.length) { setError('Select at least one story.'); return }
     setJiraLoading(true)
     try {
-      const res = await fetch('/api/jira/story-details', {
+      const res = await fetch(`${API}/api/jira/story-details`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ keys })
@@ -529,7 +531,7 @@ export default function App() {
       const fd = new FormData()
       fd.set('provider', provider); fd.set('model', model); fd.set('requirementText', requirementText)
       if (requirementFile) fd.set('requirementFile', requirementFile)
-      const res = await fetch('/api/preflight', { method: 'POST', body: fd, signal: controller.signal })
+      const res = await fetch(`${API}/api/preflight`, { method: 'POST', body: fd, signal: controller.signal })
       const data = await res.json()
       if (!res.ok) throw new Error((data && data.error) || `Request failed: ${res.status}`)
       setPreflight(data.preflight || null)
@@ -555,7 +557,7 @@ export default function App() {
       const fd = new FormData()
       fd.set('provider', provider); fd.set('model', model); fd.set('requirementText', requirementText)
       if (requirementFile) fd.set('requirementFile', requirementFile)
-      const res = await fetch('/api/analyze', { method: 'POST', body: fd, signal: controller.signal })
+      const res = await fetch(`${API}/api/analyze`, { method: 'POST', body: fd, signal: controller.signal })
       const data = await res.json()
       if (!res.ok) throw new Error((data && data.error) || `Request failed: ${res.status}`)
       const analysisResult = data.analysis || {}
@@ -591,7 +593,7 @@ export default function App() {
       if (analysis && Array.isArray(analysis.extractedElements)) fd.set('analysisContext', JSON.stringify(analysis.extractedElements))
       const clarifications = buildClarifications()
       if (clarifications) fd.set('clarifications', clarifications)
-      const res = await fetch('/api/generate-tests', { method: 'POST', body: fd, signal: controller.signal })
+      const res = await fetch(`${API}/api/generate-tests`, { method: 'POST', body: fd, signal: controller.signal })
       const data = await res.json()
       if (!res.ok) throw new Error((data && data.error) || `Request failed: ${res.status}`)
       setSuite(data.suite || null)
@@ -632,7 +634,7 @@ export default function App() {
         aioToken: aioToken.trim() || undefined,
         includeCoverageTags: aioIncludeTags
       }
-      const res = await fetch('/api/push-to-aio', {
+      const res = await fetch(`${API}/api/push-to-aio`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -805,7 +807,7 @@ export default function App() {
 
             <Button
               component="a"
-              href="/api/skills"
+              href={`${API}/api/skills`}
               target="_blank"
               rel="noreferrer"
               variant="outlined"

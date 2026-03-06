@@ -1,0 +1,1537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Test Case Generator — Workflow Diagram</title>
+  <style>
+    :root {
+      --bg: #0b0b0b;
+      --surface: #141414;
+      --card: #1a1a1a;
+      --border: rgba(255,255,255,0.10);
+      --text: rgba(255,255,255,0.90);
+      --muted: rgba(255,255,255,0.55);
+      --purple: #a855f7;
+      --purple-dim: rgba(168,85,247,0.15);
+      --purple-border: rgba(168,85,247,0.35);
+      --green: #22c55e;
+      --green-dim: rgba(34,197,94,0.12);
+      --green-border: rgba(34,197,94,0.35);
+      --amber: #f59e0b;
+      --amber-dim: rgba(245,158,11,0.12);
+      --amber-border: rgba(245,158,11,0.35);
+      --blue: #3b82f6;
+      --blue-dim: rgba(59,130,246,0.12);
+      --blue-border: rgba(59,130,246,0.35);
+      --red: #ef4444;
+      --red-dim: rgba(239,68,68,0.10);
+      --cyan: #06b6d4;
+      --cyan-dim: rgba(6,182,212,0.12);
+      --cyan-border: rgba(6,182,212,0.35);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Space Grotesk', 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .container { max-width: 1100px; margin: 0 auto; padding: 48px 24px; }
+
+    h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 4px; }
+    h1 span { color: var(--purple); }
+    .subtitle { color: var(--muted); font-size: 0.95rem; margin-bottom: 48px; }
+    h2 {
+      font-size: 1.25rem; font-weight: 700; margin: 56px 0 20px;
+      padding-bottom: 8px; border-bottom: 2px solid var(--purple);
+      display: inline-block;
+    }
+    h3 { font-size: 1rem; font-weight: 600; margin-bottom: 6px; }
+    p, li { font-size: 0.9rem; color: rgba(255,255,255,0.78); }
+
+    /* Flow containers */
+    .flow-section { margin: 32px 0; }
+
+    .flow-vertical {
+      display: flex; flex-direction: column; align-items: center; gap: 0;
+    }
+    .flow-arrow {
+      color: var(--purple); font-size: 1.6rem; line-height: 1; padding: 6px 0;
+      opacity: 0.7;
+    }
+    .flow-arrow.green { color: var(--green); }
+    .flow-arrow.amber { color: var(--amber); }
+    .flow-arrow.blue { color: var(--blue); }
+
+    /* Flow nodes */
+    .flow-node {
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 28px;
+      text-align: center;
+      min-width: 300px;
+      max-width: 600px;
+      width: 100%;
+      position: relative;
+    }
+    .flow-node h4 {
+      font-size: 0.92rem; font-weight: 700; margin-bottom: 4px;
+    }
+    .flow-node p { font-size: 0.82rem; color: var(--muted); margin: 0; }
+    .flow-node.purple { border-color: var(--purple-border); }
+    .flow-node.purple h4 { color: var(--purple); }
+    .flow-node.green { border-color: var(--green-border); }
+    .flow-node.green h4 { color: var(--green); }
+    .flow-node.amber { border-color: var(--amber-border); }
+    .flow-node.amber h4 { color: var(--amber); }
+    .flow-node.blue { border-color: var(--blue-border); }
+    .flow-node.blue h4 { color: var(--blue); }
+    .flow-node.cyan { border-color: var(--cyan-border); }
+    .flow-node.cyan h4 { color: var(--cyan); }
+
+    .flow-node.left-align { text-align: left; }
+    .flow-node ul, .flow-node ol { padding-left: 18px; margin-top: 8px; }
+    .flow-node li { font-size: 0.8rem; color: rgba(255,255,255,0.70); margin-bottom: 4px; }
+    .flow-node li strong { color: rgba(255,255,255,0.88); }
+
+    /* Branch diagram */
+    .branch-container {
+      display: flex; flex-direction: column; align-items: center;
+      margin: 32px 0;
+    }
+    .branch-label {
+      background: var(--surface);
+      border: 1.5px solid var(--purple-border);
+      border-radius: 50px;
+      padding: 8px 24px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--purple);
+      margin-bottom: 16px;
+    }
+    .branch-paths {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+      width: 100%;
+      position: relative;
+    }
+    .branch-paths::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 16.66%;
+      right: 16.66%;
+      height: 1.5px;
+      background: var(--purple-border);
+    }
+    .branch-path {
+      display: flex; flex-direction: column; align-items: center; gap: 0;
+    }
+    .branch-connector {
+      width: 1.5px; height: 20px;
+      background: var(--purple-border);
+    }
+    .branch-connector.green { background: var(--green-border); }
+    .branch-connector.amber { background: var(--amber-border); }
+    .branch-connector.blue { background: var(--blue-border); }
+
+    /* Path cards */
+    .path-card {
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      width: 100%;
+    }
+    .path-card h4 {
+      font-size: 0.88rem; font-weight: 700; margin-bottom: 8px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .path-card.purple { border-color: var(--purple-border); }
+    .path-card.purple h4 { color: var(--purple); }
+    .path-card.green { border-color: var(--green-border); }
+    .path-card.green h4 { color: var(--green); }
+    .path-card.amber { border-color: var(--amber-border); }
+    .path-card.amber h4 { color: var(--amber); }
+    .path-card.blue { border-color: var(--blue-border); }
+    .path-card.blue h4 { color: var(--blue); }
+
+    .path-card ol, .path-card ul {
+      padding-left: 18px; margin: 0;
+    }
+    .path-card li {
+      font-size: 0.82rem; margin-bottom: 5px; color: rgba(255,255,255,0.70);
+    }
+    .path-card li strong { color: rgba(255,255,255,0.88); }
+
+    /* Internal detail cards */
+    .detail-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin: 16px 0;
+    }
+    .detail-card h3 { margin-bottom: 10px; }
+    .detail-card ul { padding-left: 18px; }
+    .detail-card li { margin-bottom: 5px; font-size: 0.85rem; }
+
+    /* Parallel calls diagram */
+    .parallel-box {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 16px 0;
+    }
+    .parallel-call {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 0.82rem;
+    }
+    .parallel-call .label {
+      font-weight: 600; color: var(--purple);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 4px;
+    }
+    .parallel-call .desc { color: var(--muted); }
+
+    /* Merge diagram */
+    .merge-flow {
+      display: flex; align-items: center; gap: 12px;
+      flex-wrap: wrap; justify-content: center;
+      margin: 16px 0;
+    }
+    .merge-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 18px;
+      font-size: 0.82rem;
+      text-align: center;
+    }
+    .merge-box.highlight {
+      border-color: var(--purple-border);
+      background: var(--purple-dim);
+    }
+    .merge-arrow { color: var(--muted); font-size: 1.2rem; }
+
+    /* Tag */
+    .tag {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 9999px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .tag-purple { background: var(--purple-dim); color: var(--purple); }
+    .tag-green { background: var(--green-dim); color: var(--green); }
+    .tag-amber { background: var(--amber-dim); color: var(--amber); }
+    .tag-blue { background: var(--blue-dim); color: var(--blue); }
+    .tag-cyan { background: var(--cyan-dim); color: var(--cyan); }
+    .tag-red { background: var(--red-dim); color: var(--red); }
+
+    /* Skills table */
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+    th, td {
+      text-align: left; padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.82rem;
+    }
+    th {
+      color: var(--muted); font-size: 0.75rem;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      font-weight: 600;
+    }
+    td { color: rgba(255,255,255,0.75); }
+
+    /* Mono */
+    .mono {
+      font-family: 'IBM Plex Mono', 'SF Mono', monospace;
+      font-size: 0.82rem;
+      background: rgba(255,255,255,0.06);
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+
+    /* Converge arrow */
+    .converge-section {
+      display: flex; flex-direction: column; align-items: center;
+      margin: 24px 0 8px;
+    }
+    .converge-label {
+      font-size: 0.8rem; color: var(--muted);
+      font-weight: 500; margin-bottom: 4px;
+    }
+
+    /* Code block */
+    .code-block {
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 18px;
+      font-family: 'IBM Plex Mono', 'SF Mono', monospace;
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.7);
+      overflow-x: auto;
+      white-space: pre;
+      line-height: 1.5;
+      margin: 12px 0;
+    }
+    .code-block .key { color: var(--cyan); }
+    .code-block .str { color: var(--green); }
+    .code-block .comment { color: var(--muted); font-style: italic; }
+    .code-block .type { color: var(--amber); }
+
+    /* Explanation text */
+    .explain {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.70);
+      line-height: 1.7;
+      margin: 10px 0;
+    }
+    .explain strong { color: rgba(255,255,255,0.90); }
+
+    /* Section divider */
+    .section-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 40px 0 20px;
+    }
+
+    /* Info box */
+    .info-box {
+      background: var(--surface);
+      border-left: 3px solid var(--purple);
+      border-radius: 0 8px 8px 0;
+      padding: 14px 20px;
+      margin: 16px 0;
+      font-size: 0.84rem;
+      color: rgba(255,255,255,0.72);
+    }
+    .info-box.amber { border-left-color: var(--amber); }
+    .info-box.green { border-left-color: var(--green); }
+    .info-box.blue { border-left-color: var(--blue); }
+    .info-box.red { border-left-color: var(--red); }
+    .info-box strong { color: rgba(255,255,255,0.90); }
+
+    /* Config grid */
+    .config-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 12px 0;
+    }
+    .config-item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+    }
+    .config-item .config-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .config-item .config-value {
+      font-size: 0.88rem;
+      color: var(--text);
+      font-weight: 600;
+    }
+    .config-item .config-desc {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .branch-paths { grid-template-columns: 1fr; }
+      .branch-paths::before { display: none; }
+      .branch-connector { display: none; }
+      .parallel-box { grid-template-columns: 1fr; }
+      .config-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <h1><span>AI Test Case Generator</span> — Workflow</h1>
+    <p class="subtitle">Complete internal workflow documentation showing how the system processes requirements into structured test scenarios across all 3 user paths.</p>
+
+    <!-- ============================================================ -->
+    <!-- ARCHITECTURE OVERVIEW -->
+    <!-- ============================================================ -->
+    <h2>Architecture Overview</h2>
+
+    <p class="explain">
+      The platform is a <strong>two-tier application</strong>: an Express.js backend (<span class="mono">server/</span>) that orchestrates LLM calls and file processing,
+      and a React + Material UI frontend (<span class="mono">client/</span>) that provides the user interface. There is also a legacy vanilla JS UI in <span class="mono">web/</span>.
+      The backend communicates with one of three AI providers (OpenAI, Anthropic, or Gemini) to analyze requirements and generate test cases.
+      Twelve markdown-based "skill" files in the <span class="mono">skills/</span> directory teach the AI how to apply specific testing techniques.
+    </p>
+
+    <div class="config-grid">
+      <div class="config-item">
+        <div class="config-label">Backend</div>
+        <div class="config-value">Express.js (CommonJS)</div>
+        <div class="config-desc">Port 3001 default, rate-limited at 90 req/min per IP</div>
+      </div>
+      <div class="config-item">
+        <div class="config-label">Frontend</div>
+        <div class="config-value">React + MUI (Vite)</div>
+        <div class="config-desc">Dark theme, purple accent (#a855f7), single-file App.jsx</div>
+      </div>
+      <div class="config-item">
+        <div class="config-label">AI Providers</div>
+        <div class="config-value">OpenAI / Anthropic / Gemini</div>
+        <div class="config-desc">Default models: gpt-4.1-mini, claude-3-5-sonnet-latest, gemini-1.5-flash</div>
+      </div>
+      <div class="config-item">
+        <div class="config-label">Skills</div>
+        <div class="config-value">12 QA Technique Playbooks</div>
+        <div class="config-desc">Markdown files with YAML front matter (id, title, tags)</div>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <strong>How skills work:</strong> Each skill is a markdown file in <span class="mono">skills/</span> that teaches the AI a specific test design technique
+      (e.g., Boundary Value Analysis, State Transition Testing). The file includes guidance on when to apply the technique, what to look for,
+      and example patterns. These are injected into LLM prompts so the AI applies formal QA methods rather than guessing.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- INPUT PROCESSING -->
+    <!-- ============================================================ -->
+    <h2>Step 1 — Input Processing</h2>
+
+    <p class="explain">
+      Every path starts the same way: the user provides a <strong>requirement</strong>. This can be plain text typed/pasted into a textarea,
+      or a file upload, or both. The server processes uploaded files into plain text before anything else happens.
+    </p>
+
+    <div class="flow-vertical" style="margin-top:20px;">
+      <div class="flow-node purple">
+        <h4>User Provides Requirement</h4>
+        <p>Paste text into the textarea, drag-and-drop a file, or both. The server combines them.</p>
+      </div>
+      <div class="flow-arrow">&#x25BC;</div>
+      <div class="flow-node left-align">
+        <h4>Server-Side File Parsing</h4>
+        <p style="margin-bottom:8px;">Uploaded files (max 2 MB) are converted to plain text based on their extension:</p>
+        <ul>
+          <li><strong>.txt / .md</strong> — Read as raw UTF-8 text, used directly</li>
+          <li><strong>.pdf</strong> — Extracted using the <span class="mono">pdf-parse</span> library, pulls all text content from pages</li>
+          <li><strong>.docx</strong> — Extracted using the <span class="mono">mammoth</span> library, converts Word documents to plain text</li>
+          <li><strong>.html / .htm</strong> — Parsed with <span class="mono">cheerio</span>, script and style tags are stripped, whitespace is normalized</li>
+        </ul>
+        <p style="margin-top:8px;">The extracted file text is <strong>appended</strong> to any text the user typed in the textarea. This combined string becomes the "requirement text" used by all subsequent steps.</p>
+      </div>
+      <div class="flow-arrow">&#x25BC;</div>
+      <div class="flow-node" style="border-color: var(--purple-border); background: var(--purple-dim);">
+        <h4 style="color: var(--purple);">User Chooses One of 3 Paths</h4>
+        <p>The UI presents three buttons, each triggering a different workflow. Each path ultimately produces a structured test suite, but with different levels of intelligence, user control, and cost.</p>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- 3 PATHS BRANCH -->
+    <!-- ============================================================ -->
+    <div class="branch-container" style="margin-top:32px;">
+      <div class="branch-label">3 Available Paths</div>
+      <div class="branch-paths">
+
+        <!-- PATH A -->
+        <div class="branch-path">
+          <div class="branch-connector amber"></div>
+          <div class="path-card amber">
+            <h4><span class="tag tag-amber">PATH A</span> Ask Missing Info First</h4>
+            <p style="font-size:0.8rem; color:var(--muted); margin-bottom:10px;">Clarify ambiguities before generating — adds one LLM call upfront</p>
+            <ol>
+              <li>Sends requirement to <strong>POST /api/preflight</strong></li>
+              <li>Server selects relevant skills using <strong>keyword matching</strong></li>
+              <li>AI receives requirement + skill markdowns and identifies <strong>ambiguities, assumptions, and gaps</strong></li>
+              <li>Returns a list of <strong>clarifying questions</strong> to the UI</li>
+              <li>User <strong>answers each question</strong> in text fields</li>
+              <li>Answers are appended to the requirement, then user clicks <strong>Analyze</strong> or <strong>Generate</strong></li>
+            </ol>
+            <p style="font-size:0.78rem; color:var(--amber); margin-top:10px; font-weight:600;">Best for: vague, incomplete, or ambiguous requirements</p>
+          </div>
+        </div>
+
+        <!-- PATH B -->
+        <div class="branch-path">
+          <div class="branch-connector" style="background: var(--purple-border);"></div>
+          <div class="path-card purple">
+            <h4><span class="tag tag-purple">PATH B</span> Analyze & Recommend</h4>
+            <p style="font-size:0.8rem; color:var(--muted); margin-bottom:10px;">AI picks the best techniques — the <strong>recommended path</strong> for quality output</p>
+            <ol>
+              <li>Sends requirement to <strong>POST /api/analyze</strong></li>
+              <li>AI reads the requirement and extracts <strong>testable elements</strong> (inputs, states, rules, boundaries, etc.)</li>
+              <li>AI recommends <strong>3-6 testing techniques</strong> with confidence levels and rationale</li>
+              <li>User reviews the recommendations and <strong>toggles techniques on/off</strong></li>
+              <li>Sends selected skills to <strong>POST /api/generate-tests</strong> for <strong>per-skill parallel generation</strong></li>
+              <li>Each skill gets its own focused LLM call, results are <strong>merged and deduplicated</strong></li>
+            </ol>
+            <p style="font-size:0.78rem; color:var(--purple); margin-top:10px; font-weight:600;">Best for: highest quality output with user control over techniques</p>
+          </div>
+        </div>
+
+        <!-- PATH C -->
+        <div class="branch-path">
+          <div class="branch-connector blue"></div>
+          <div class="path-card blue">
+            <h4><span class="tag tag-blue">PATH C</span> Generate Directly (Legacy)</h4>
+            <p style="font-size:0.8rem; color:var(--muted); margin-bottom:10px;">Quick one-shot generation — fast but less accurate</p>
+            <ol>
+              <li>Sends requirement to <strong>POST /api/generate-tests</strong> without selectedSkills</li>
+              <li>Server selects skills using <strong>keyword matching</strong> (all 12 always included)</li>
+              <li>All skill markdowns are concatenated into <strong>one massive prompt</strong></li>
+              <li>AI generates the entire test suite in a <strong>single LLM call</strong></li>
+              <li>Simple exact-match deduplication is applied</li>
+            </ol>
+            <p style="font-size:0.78rem; color:var(--blue); margin-top:10px; font-weight:600;">Best for: quick results when speed matters more than depth</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="converge-section">
+      <div class="converge-label">All paths produce the same output format</div>
+      <div class="flow-arrow">&#x25BC;</div>
+    </div>
+    <div class="flow-vertical">
+      <div class="flow-node green">
+        <h4>Test Suite Result</h4>
+        <p>Structured test cases with IDs, titles, types, priorities, steps, expected results, coverage tags, and requirement references. Users can filter, search, export (JSON/CSV), or push to AIO/Jira.</p>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- DEPTH LEVELS -->
+    <!-- ============================================================ -->
+    <h2>Depth Levels</h2>
+
+    <p class="explain">
+      Before triggering any path, the user selects a <strong>depth level</strong> that controls how many test cases the AI should generate.
+      This affects the prompt instructions and the min/max constraints applied to the output.
+    </p>
+
+    <table>
+      <thead>
+        <tr><th>Depth</th><th>Prompt Guidance</th><th>Min Cases</th><th>Max Cases</th><th>Per-Skill Range</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="tag tag-green">Smoke</span></td>
+          <td>"~8-12 test cases, P0/P1 happy paths + few critical negatives"</td>
+          <td>8</td>
+          <td>30</td>
+          <td>3-6 per skill</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-amber">Standard</span></td>
+          <td>"~20-30 cases, balanced functional/negative/boundary"</td>
+          <td>18</td>
+          <td>120</td>
+          <td>5-10 per skill</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-red">Deep</span></td>
+          <td>"~50-80 cases, broad coverage including negatives, boundaries, state/rule paths"</td>
+          <td>40</td>
+          <td>220</td>
+          <td>10-20 per skill</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="info-box amber">
+      <strong>Global cap:</strong> Regardless of depth, there is a hard maximum of <strong>160 test cases</strong> (configurable via <span class="mono">MAX_TEST_CASES</span> env var, range 20-500).
+      If the merged output from per-skill generation exceeds this, it is truncated after deduplication.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PATH A DETAIL -->
+    <!-- ============================================================ -->
+    <h2>Path A — Ask Missing Info First (Detailed)</h2>
+
+    <p class="explain">
+      Path A is a <strong>pre-processing step</strong> that helps when requirements are vague or incomplete.
+      It doesn't generate test cases directly — instead, it identifies what's unclear and asks the user to fill in the gaps.
+      After answering, the user proceeds to Path B or C with a richer, more complete requirement.
+    </p>
+
+    <div class="flow-vertical" style="margin-top:24px;">
+      <div class="flow-node amber">
+        <h4>User clicks "Ask missing info first"</h4>
+        <p>Requirement text + optional file sent as multipart form data to the server</p>
+      </div>
+      <div class="flow-arrow amber">&#x25BC;</div>
+      <div class="flow-node left-align">
+        <h4>POST /api/preflight</h4>
+        <p style="margin-bottom:8px;">The server processes the request in several steps:</p>
+        <ol>
+          <li>Parse the uploaded file (if any) using the file extraction pipeline described above</li>
+          <li>Combine extracted file text with the typed requirement text</li>
+          <li>Run <strong>keyword-based skill selection</strong> to identify which QA techniques are relevant (see Skill Selection below)</li>
+          <li>Load the markdown content of matched skills</li>
+        </ol>
+      </div>
+      <div class="flow-arrow amber">&#x25BC;</div>
+      <div class="flow-node left-align">
+        <h4>Build the Preflight Prompt</h4>
+        <p style="margin-bottom:8px;">Two prompts are constructed and sent to the LLM:</p>
+        <ul>
+          <li><strong>System prompt:</strong> "You are a senior QA engineer and business analyst. Identify ambiguity and missing information. Return strict JSON only."</li>
+          <li><strong>User prompt:</strong> Contains the full requirement text + the markdown content of selected skills as context, plus the expected output schema</li>
+        </ul>
+        <p style="margin-top:6px;">The AI is instructed to keep questions <strong>concise and actionable</strong>, avoid redundant questions, and focus only on information that would materially affect test case design.</p>
+      </div>
+      <div class="flow-arrow amber">&#x25BC;</div>
+      <div class="flow-node">
+        <h4>LLM Call — Preflight Analysis</h4>
+        <p>Single LLM call at temperature 0.2 with a 90-second timeout. The AI analyzes the requirement and returns structured JSON.</p>
+      </div>
+      <div class="flow-arrow amber">&#x25BC;</div>
+      <div class="flow-node left-align">
+        <h4>Validate Response (AJV)</h4>
+        <p style="margin-bottom:8px;">The raw LLM output goes through the schema validation pipeline:</p>
+        <ol>
+          <li>Try <span class="mono">JSON.parse()</span> directly on the response text</li>
+          <li>If that fails, scan for the first <span class="mono">{</span> and extract the JSON object</li>
+          <li>Validate the parsed object against the <strong>preflight schema</strong> using AJV</li>
+          <li>If validation fails, send a <strong>repair prompt</strong> back to the LLM (temperature lowered to 0.1) with the validation errors, asking it to fix and return corrected JSON</li>
+        </ol>
+      </div>
+      <div class="flow-arrow amber">&#x25BC;</div>
+      <div class="flow-node left-align amber">
+        <h4>Preflight Response Structure</h4>
+        <div class="code-block">{
+  <span class="key">"assumptions"</span>: [<span class="str">"string"</span>],       <span class="comment">// What the AI assumed about the requirement</span>
+  <span class="key">"missingInfoQuestions"</span>: [<span class="str">"string"</span>], <span class="comment">// Questions the user needs to answer</span>
+  <span class="key">"notes"</span>: [<span class="str">"string"</span>]              <span class="comment">// Optional additional observations</span>
+}</div>
+      </div>
+      <div class="flow-arrow amber">&#x25BC;</div>
+      <div class="flow-node amber">
+        <h4>User Sees Questions in the UI</h4>
+        <p>Each question from <span class="mono">missingInfoQuestions</span> is displayed with a text input field. The user types an answer for each. A progress indicator shows "X/Y answered".</p>
+      </div>
+      <div class="flow-arrow amber">&#x25BC;</div>
+      <div class="flow-node" style="border-color: var(--amber-border); background: var(--amber-dim);">
+        <h4 style="color: var(--amber);">User Proceeds to Path B or C</h4>
+        <p>The user's answers are formatted as "<strong>Q: [question] A: [answer]</strong>" pairs and appended to the original requirement text. This enriched requirement is then sent to the Analyze or Generate endpoint, giving the AI much better context to work with.</p>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PATH B DETAIL -->
+    <!-- ============================================================ -->
+    <h2>Path B — Analyze & Generate Per-Skill (Detailed)</h2>
+    <p class="explain">
+      This is the <strong>recommended workflow</strong> for highest quality output. It works in two phases:
+      first the AI analyzes the requirement to understand what needs testing and which techniques to use,
+      then it generates test cases for each technique in separate, focused LLM calls running in parallel.
+    </p>
+
+    <h3 style="margin-top:28px; color:var(--purple);">Phase 1 — Requirement Analysis</h3>
+
+    <p class="explain">
+      The analysis phase extracts testable elements from the requirement and recommends which of the 12 available
+      testing techniques would be most effective. This gives the user visibility and control before generation begins.
+    </p>
+
+    <div class="flow-vertical" style="margin-top:16px;">
+      <div class="flow-node purple">
+        <h4>User clicks "Analyze & recommend techniques"</h4>
+        <p>Requirement text + optional file sent to the server. No skill pre-selection needed — the AI figures out which techniques apply.</p>
+      </div>
+      <div class="flow-arrow">&#x25BC;</div>
+      <div class="flow-node left-align">
+        <h4>POST /api/analyze</h4>
+        <p style="margin-bottom:8px;">The server builds an analysis prompt:</p>
+        <ul>
+          <li><strong>System prompt:</strong> "You are a senior QA engineer and test architect. Analyze the requirement and recommend applicable test techniques."</li>
+          <li><strong>User prompt:</strong> Contains the requirement text + a list of all 12 available skills (just their ID, title, and tags — not the full markdown) + the expected output schema</li>
+        </ul>
+        <p style="margin-top:6px;">Key instructions to the AI: extract testable elements of different types, recommend only <strong>3-6 techniques</strong> that genuinely apply (not all of them), assign confidence levels, keep descriptions to 1-2 sentences max.</p>
+      </div>
+      <div class="flow-arrow">&#x25BC;</div>
+      <div class="flow-node">
+        <h4>LLM Call — Analyze Requirement</h4>
+        <p>Single LLM call at temperature 0.2. The AI reads the requirement holistically and returns a structured analysis.</p>
+      </div>
+      <div class="flow-arrow">&#x25BC;</div>
+      <div class="flow-node purple left-align">
+        <h4>Analysis Result Structure</h4>
+        <div class="code-block">{
+  <span class="key">"summary"</span>: <span class="str">"Brief description of what the requirement covers"</span>,
+
+  <span class="key">"extractedElements"</span>: [
+    {
+      <span class="key">"name"</span>: <span class="str">"username field"</span>,
+      <span class="key">"type"</span>: <span class="type">"input"</span>,       <span class="comment">// input | output | state | rule | boundary | constraint | action | integration</span>
+      <span class="key">"description"</span>: <span class="str">"Text input, 3-50 chars, alphanumeric only"</span>,
+      <span class="key">"values"</span>: [<span class="str">"valid examples"</span>]  <span class="comment">// optional</span>
+    }
+  ],
+
+  <span class="key">"techniqueRecommendations"</span>: [
+    {
+      <span class="key">"skillId"</span>: <span class="str">"boundary-value-analysis"</span>,
+      <span class="key">"confidence"</span>: <span class="type">"high"</span>,    <span class="comment">// high | medium | low</span>
+      <span class="key">"rationale"</span>: <span class="str">"Username has min/max length constraints"</span>,
+      <span class="key">"estimatedScenarios"</span>: <span class="type">8</span>  <span class="comment">// integer, how many cases this technique would produce</span>
+    }
+  ],
+
+  <span class="key">"complexity"</span>: <span class="type">"moderate"</span>  <span class="comment">// simple | moderate | complex</span>
+}</div>
+      </div>
+      <div class="flow-arrow">&#x25BC;</div>
+      <div class="flow-node left-align">
+        <h4>Post-Processing the Analysis</h4>
+        <ul>
+          <li>Validate against the analysis JSON schema using AJV (with repair attempt if invalid)</li>
+          <li>Filter <span class="mono">techniqueRecommendations</span> to only include valid skill IDs that actually exist in the loaded skills</li>
+          <li>Always inject <strong>"general-fallback"</strong> skill if it's not already in the recommendations — this ensures baseline coverage regardless of what the AI recommends</li>
+        </ul>
+      </div>
+      <div class="flow-arrow">&#x25BC;</div>
+      <div class="flow-node purple">
+        <h4>User Reviews Recommendations in the UI</h4>
+        <p>The UI displays the extracted elements as a summary, then shows each recommended technique as a card with a checkbox.
+        <strong>High and medium confidence</strong> techniques are pre-checked. Low confidence techniques are unchecked but visible.
+        The user can toggle any technique on or off before proceeding.</p>
+      </div>
+      <div class="flow-arrow">&#x25BC;</div>
+      <div class="flow-node purple left-align">
+        <h4>Optional: Select Technique Diagrams</h4>
+        <p style="margin-bottom:8px;">Below the technique list, an <strong>"Available Diagrams"</strong> section appears showing
+        which visual diagrams can be generated for the selected techniques. Diagrams are <strong>entirely optional</strong> — none are selected by default.</p>
+        <p style="margin-bottom:8px;">Each selected technique maps to a Mermaid.js diagram type:</p>
+        <ul>
+          <li><strong>State Transition Testing</strong> → <span class="mono">stateDiagram-v2</span> (states, transitions, invalid transitions)</li>
+          <li><strong>Decision Tables</strong> → <span class="mono">flowchart TD</span> (conditions branching to outcomes)</li>
+          <li><strong>Equivalence Partitioning</strong> → <span class="mono">flowchart LR</span> (valid/invalid input partition blocks)</li>
+          <li><strong>Boundary Value Analysis</strong> → <span class="mono">flowchart LR</span> (boundary points with pass/fail zones)</li>
+          <li><strong>Pairwise / Combinatorial</strong> → <span class="mono">flowchart TD</span> (parameter combination tree/matrix)</li>
+          <li><strong>Feature Decomposition</strong> → <span class="mono">mindmap</span> (actors, data, rules, states, integrations)</li>
+          <li><strong>Other techniques</strong> → <span class="mono">flowchart TD</span> (logical flow of the technique)</li>
+        </ul>
+        <p style="margin-top:8px;">The user can check individual diagrams or use "Select all / Deselect all". Only checked diagrams
+        are requested from the LLM — this avoids wasting tokens when diagrams aren't needed.</p>
+      </div>
+    </div>
+
+    <h3 style="margin-top:36px; color:var(--purple);">Phase 2 — Per-Skill Parallel Generation</h3>
+
+    <p class="explain">
+      This is the core innovation of Path B. Instead of dumping all techniques into one prompt (like Path C),
+      each selected technique gets its own <strong>dedicated, focused LLM call</strong>. This means the AI can deeply apply
+      one technique at a time, producing higher quality and more thorough test cases. The calls run in parallel for speed.
+    </p>
+
+    <div class="flow-vertical" style="margin-top:16px;">
+      <div class="flow-node purple">
+        <h4>User clicks "Generate test scenarios"</h4>
+        <p>The selected skill IDs + optional diagram skill IDs + requirement text + analysis context (extracted elements) are sent to the server.
+        The <span class="mono">diagramSkills</span> parameter tells the server which skills should also produce a Mermaid diagram.</p>
+      </div>
+      <div class="flow-arrow">&#x25BC;</div>
+      <div class="flow-node left-align">
+        <h4>POST /api/generate-tests (per-skill mode)</h4>
+        <p style="margin-bottom:8px;">The server detects <span class="mono">selectedSkills</span> in the request body and enters the <strong>per-skill generation path</strong>. For each selected skill, it creates a separate generation task:</p>
+        <ul>
+          <li><strong>System prompt:</strong> "You are a senior QA engineer specializing in [technique name]. Generate test cases using THIS technique only."</li>
+          <li><strong>User prompt:</strong> Contains the requirement + only that skill's markdown (not all 12) + the extracted elements from Phase 1 as additional context + depth-based instructions</li>
+          <li>The AI is told to <strong>focus only on scenarios this specific technique uncovers</strong> and not duplicate generic happy-path testing unless it's technique-specific</li>
+          <li><strong>Conditional diagram:</strong> If the user selected a diagram for this skill, the system prompt also instructs the AI to include a <span class="mono">mermaidDiagram</span> field containing a valid Mermaid.js diagram string. The schema hint also includes the diagram field only when requested. Skills without diagram selection skip this entirely — no extra tokens are consumed.</li>
+        </ul>
+      </div>
+      <div class="flow-arrow">&#x25BC;</div>
+    </div>
+
+    <div class="detail-card">
+      <h3>Parallel LLM Calls</h3>
+      <p class="explain">
+        All skill generation tasks are executed in parallel with a <strong>concurrency limiter</strong>:
+        up to <strong>3 simultaneous calls</strong> for OpenAI and Anthropic, but only <strong>1 at a time for Gemini</strong>
+        (due to free-tier rate limits). Each call operates independently — if one skill's generation fails,
+        it doesn't crash the others.
+      </p>
+      <div class="parallel-box">
+        <div class="parallel-call">
+          <div class="label">LLM Call #1</div>
+          <div class="desc">Boundary Value Analysis prompt → focused on min/max edges, off-by-one errors → 5-10 boundary scenarios</div>
+        </div>
+        <div class="parallel-call">
+          <div class="label">LLM Call #2</div>
+          <div class="desc">State Transition prompt → focused on workflow states, valid/invalid transitions → 5-10 state scenarios</div>
+        </div>
+        <div class="parallel-call">
+          <div class="label">LLM Call #3</div>
+          <div class="desc">Error Guessing prompt → focused on common failure patterns, edge cases → 5-10 error scenarios</div>
+        </div>
+        <div class="parallel-call">
+          <div class="label">LLM Call #4</div>
+          <div class="desc">General Fallback prompt → baseline happy path + core coverage → 5-10 baseline scenarios</div>
+        </div>
+      </div>
+      <p class="explain">
+        Each call's output is independently validated against the test suite schema.
+        If the output is invalid, a <strong>repair prompt</strong> is sent (temperature lowered to 0.1) with up to 12 sample validation errors.
+        If the repair also fails, that skill returns an empty result — the other skills' results are still used.
+        Any skill-level errors are reported in the <span class="mono">skillErrors</span> field of the response.
+      </p>
+    </div>
+
+    <div class="flow-vertical">
+      <div class="flow-arrow">&#x25BC;</div>
+      <div class="flow-node left-align">
+        <h4>Extract Diagrams &amp; Merge All Suites</h4>
+        <p style="margin-bottom:8px;"><strong>Before merging</strong>, the server extracts any <span class="mono">mermaidDiagram</span> fields from each skill's suite and collects them into a separate <span class="mono">skillDiagrams</span> array (each entry contains <span class="mono">skillId</span>, <span class="mono">skillTitle</span>, and <span class="mono">diagram</span> string). This must happen before merging because the merge process constructs a new combined object.</p>
+        <p style="margin-bottom:8px;">Then <span class="mono">mergeSuites()</span> combines the test case results from all skill calls:</p>
+        <ul>
+          <li>Suite title becomes "Skill1 + Skill2 + Skill3 + ..." (or "Generated Test Suite" as fallback)</li>
+          <li>Assumptions, risks, and missing info questions are <strong>merged and deduplicated</strong> (case-insensitive)</li>
+          <li>All test cases from all skills are combined into a single array</li>
+          <li>Each test case retains a <span class="mono">coverageTags</span> field identifying which skill generated it</li>
+        </ul>
+      </div>
+      <div class="flow-arrow">&#x25BC;</div>
+    </div>
+
+    <div class="detail-card">
+      <h3>Jaccard Deduplication</h3>
+      <p class="explain">
+        When multiple skills generate test cases independently, there's often overlap. For example, both "Boundary Value Analysis"
+        and "Equivalence Partitioning" might generate a test for "empty input field". The system uses <strong>weighted Jaccard similarity</strong>
+        to detect and remove near-duplicates — not just exact matches.
+      </p>
+
+      <h4 style="font-size:0.85rem; color:var(--text); margin: 16px 0 8px;">How it works:</h4>
+      <ol style="padding-left:18px;">
+        <li style="font-size:0.84rem; margin-bottom:6px;"><strong>Tokenize:</strong> Each test case's title, steps, and expected results are split into lowercase tokens (punctuation removed, words under 2 characters filtered out)</li>
+        <li style="font-size:0.84rem; margin-bottom:6px;"><strong>Compare:</strong> For each pair of test cases, compute Jaccard similarity (intersection / union of token sets) for title, steps, and expected results separately</li>
+        <li style="font-size:0.84rem; margin-bottom:6px;"><strong>Weight:</strong> Combine the three similarity scores using fixed weights</li>
+        <li style="font-size:0.84rem; margin-bottom:6px;"><strong>Threshold:</strong> If the weighted score is &ge; 60%, the test case is marked as a duplicate and removed</li>
+      </ol>
+
+      <div class="merge-flow" style="margin-top:16px;">
+        <div class="merge-box">Title similarity<br/><strong>40% weight</strong></div>
+        <span class="merge-arrow">+</span>
+        <div class="merge-box">Steps similarity<br/><strong>40% weight</strong></div>
+        <span class="merge-arrow">+</span>
+        <div class="merge-box">Expected similarity<br/><strong>20% weight</strong></div>
+        <span class="merge-arrow">=</span>
+        <div class="merge-box highlight">Score &ge; 60%<br/><strong>= Duplicate</strong></div>
+      </div>
+      <p class="explain" style="margin-top:12px;">
+        The algorithm iterates through test cases in order. For each case, it checks against all previously "kept" cases.
+        If any comparison exceeds the threshold, the newer case is discarded. Duplicate groups (which cases were removed and
+        what they were similar to, with percentage scores) are returned to the UI so the user can see what was filtered out.
+      </p>
+    </div>
+
+    <div class="flow-vertical">
+      <div class="flow-arrow">&#x25BC;</div>
+      <div class="flow-node">
+        <h4>Renumber IDs</h4>
+        <p>After dedup and merging, all remaining test cases are renumbered sequentially: TC-001, TC-002, TC-003, ... This ensures clean, gap-free IDs regardless of how many cases were removed.</p>
+      </div>
+      <div class="flow-arrow">&#x25BC;</div>
+      <div class="flow-node green">
+        <h4>Final Test Suite Returned</h4>
+        <p style="margin-bottom:8px;">Each test case is tagged with the skill that generated it via <span class="mono">coverageTags</span>, giving full traceability back to the technique used.</p>
+        <p>The API response includes an optional <span class="mono">skillDiagrams</span> array containing Mermaid.js diagram strings for each skill where a diagram was requested. The client renders these as interactive SVG diagrams in collapsible panels using the Mermaid.js library with a dark theme matching the application.</p>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PATH C DETAIL -->
+    <!-- ============================================================ -->
+    <h2>Path C — Generate Directly / Legacy (Detailed)</h2>
+
+    <p class="explain">
+      Path C is the original generation method. It's faster and cheaper (single LLM call) but produces lower quality results
+      because all 12 skill markdowns are crammed into one prompt and the AI has to figure out on its own which techniques to apply.
+      Skills tend to be applied shallowly when there are too many competing instructions in one prompt.
+    </p>
+
+    <div class="flow-vertical" style="margin-top:24px;">
+      <div class="flow-node blue">
+        <h4>User clicks "Generate directly (legacy)"</h4>
+        <p>Requirement text + optional file + depth sent to the server</p>
+      </div>
+      <div class="flow-arrow blue">&#x25BC;</div>
+      <div class="flow-node left-align">
+        <h4>POST /api/generate-tests (legacy mode)</h4>
+        <p>The server detects that <span class="mono">selectedSkills</span> is <strong>not present</strong> in the request body, and enters the legacy code path.</p>
+      </div>
+      <div class="flow-arrow blue">&#x25BC;</div>
+      <div class="flow-node left-align">
+        <h4>Keyword-Based Skill Selection</h4>
+        <p style="margin-bottom:8px;">Unlike Path B where the AI recommends skills, Path C uses a simple <strong>keyword matching algorithm</strong>:</p>
+        <ul>
+          <li>All 12 skills are <strong>always included</strong> in the legacy path (the ALWAYS_INCLUDE list contains all skill IDs)</li>
+          <li>Each skill's ID, title, and tags are tokenized and matched against the requirement text</li>
+          <li>Base scoring: <strong>+3 points</strong> per matching token</li>
+          <li>Domain hint bonuses: words like "workflow"/"state" boost the state-transition skill by +2, "rule"/"decision" boost decision-tables by +2, etc.</li>
+          <li>Scores are used for ordering, but in practice all skills are included regardless of score</li>
+        </ul>
+      </div>
+      <div class="flow-arrow blue">&#x25BC;</div>
+      <div class="flow-node left-align">
+        <h4>Build Single Mega-Prompt</h4>
+        <p style="margin-bottom:8px;">All skill markdowns are concatenated into one massive prompt:</p>
+        <ul>
+          <li><strong>System prompt:</strong> "You are a senior QA engineer and test designer. Return strict JSON only."</li>
+          <li><strong>User prompt:</strong> Contains the requirement + depth guidance + ALL selected skill markdowns concatenated as "SELECTED QA SKILLS (markdown; use as guidance): [all skills]" + schema hint</li>
+          <li>The AI receives everything at once and must decide on its own which techniques to apply and how deeply</li>
+        </ul>
+      </div>
+      <div class="flow-arrow blue">&#x25BC;</div>
+      <div class="flow-node">
+        <h4>Single LLM Call</h4>
+        <p>One call with the full mega-prompt. Temperature 0.2, 90-second timeout. The AI generates the entire test suite in one shot.</p>
+      </div>
+      <div class="flow-arrow blue">&#x25BC;</div>
+      <div class="flow-node left-align">
+        <h4>Validate + Repair + Simple Dedup</h4>
+        <ul>
+          <li>Same JSON parse → schema validate → repair pipeline as other paths</li>
+          <li>Deduplication is <strong>exact match only</strong> (compares title + type + priority + steps + expected as a composite key)</li>
+          <li>No weighted Jaccard similarity — only identical test cases are removed</li>
+          <li>IDs are renumbered TC-001, TC-002, ...</li>
+        </ul>
+      </div>
+      <div class="flow-arrow blue">&#x25BC;</div>
+      <div class="flow-node green">
+        <h4>Test Suite Returned</h4>
+        <p>Same output format as Path B, but test cases lack skill attribution in <span class="mono">coverageTags</span> since all skills were mixed in one prompt. Quality is generally lower because skills compete for attention in the prompt.</p>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- MERMAID DIAGRAM FEATURE -->
+    <!-- ============================================================ -->
+    <h2>Technique Diagrams (Mermaid.js)</h2>
+
+    <p class="explain">
+      An <strong>optional feature</strong> that generates visual diagrams showing how each test design technique applies to the given requirement.
+      Diagrams are generated by the LLM alongside test cases and rendered client-side using <strong>Mermaid.js</strong> as interactive SVGs.
+    </p>
+
+    <div class="detail-card">
+      <h3>How It Works</h3>
+      <div class="flow-vertical" style="margin-top:12px;">
+        <div class="flow-node left-align">
+          <h4>1. User Selects Diagrams (Analyze Step)</h4>
+          <p>After the AI recommends techniques, an "Available Diagrams" panel shows which techniques support visual diagrams.
+          The user checks only the diagrams they want. None are selected by default — this is a zero-cost feature when not used.</p>
+        </div>
+        <div class="flow-arrow">&#x25BC;</div>
+        <div class="flow-node left-align">
+          <h4>2. Conditional Prompt Injection (Server)</h4>
+          <p>The server receives <span class="mono">diagramSkills</span> (array of skill IDs). For each skill in the list,
+          the system prompt gets additional instructions to include a <span class="mono">mermaidDiagram</span> field with a valid Mermaid.js diagram string.
+          Skills NOT in the list get no diagram instructions — saving tokens and keeping the prompt focused on test cases.</p>
+        </div>
+        <div class="flow-arrow">&#x25BC;</div>
+        <div class="flow-node left-align">
+          <h4>3. LLM Returns Diagram + Test Cases</h4>
+          <p>The LLM returns a JSON object that includes both <span class="mono">testCases</span> and <span class="mono">mermaidDiagram</span>.
+          The diagram is a string containing valid Mermaid syntax (e.g. <span class="mono">stateDiagram-v2</span>, <span class="mono">flowchart TD</span>, <span class="mono">mindmap</span>).
+          The AJV schema allows <span class="mono">mermaidDiagram</span> as an optional string field.</p>
+        </div>
+        <div class="flow-arrow">&#x25BC;</div>
+        <div class="flow-node left-align">
+          <h4>4. Diagram Extraction (Before Merge)</h4>
+          <p>Before suites are merged, the server extracts each skill's <span class="mono">mermaidDiagram</span> into a separate
+          <span class="mono">skillDiagrams</span> array: <span class="mono">[{ skillId, skillTitle, diagram }]</span>.
+          This is necessary because <span class="mono">mergeSuites()</span> constructs a new object and would lose the diagrams.</p>
+        </div>
+        <div class="flow-arrow">&#x25BC;</div>
+        <div class="flow-node green left-align">
+          <h4>5. Client Renders with Mermaid.js</h4>
+          <p>The <span class="mono">MermaidDiagram</span> React component initializes Mermaid.js with a dark theme
+          (matching the app's purple accent), strips any accidental code fences, and calls <span class="mono">mermaid.render()</span>
+          to produce an inline SVG. Diagrams appear as collapsible accordion panels in the Results step under "Technique Diagrams".
+          Render errors are caught gracefully and shown as a small error message instead of crashing the UI.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-card">
+      <h3>Diagram Type Mapping</h3>
+      <table style="width:100%; border-collapse:collapse; font-size:0.84rem; margin-top:12px;">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border);">
+            <th style="text-align:left; padding:8px 12px; color:var(--muted);">Test Technique</th>
+            <th style="text-align:left; padding:8px 12px; color:var(--muted);">Mermaid Type</th>
+            <th style="text-align:left; padding:8px 12px; color:var(--muted);">What It Visualizes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+            <td style="padding:8px 12px;">State Transition</td>
+            <td style="padding:8px 12px;"><span class="mono">stateDiagram-v2</span></td>
+            <td style="padding:8px 12px;">States, allowed/blocked transitions, terminal states</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+            <td style="padding:8px 12px;">Decision Tables</td>
+            <td style="padding:8px 12px;"><span class="mono">flowchart TD</span></td>
+            <td style="padding:8px 12px;">Conditions branching to outcomes/actions</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+            <td style="padding:8px 12px;">Equivalence Partitioning</td>
+            <td style="padding:8px 12px;"><span class="mono">flowchart LR</span></td>
+            <td style="padding:8px 12px;">Input partitions — valid (green) / invalid (red) blocks</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+            <td style="padding:8px 12px;">Boundary Value Analysis</td>
+            <td style="padding:8px 12px;"><span class="mono">flowchart LR</span></td>
+            <td style="padding:8px 12px;">Boundary points on a number line with pass/fail zones</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+            <td style="padding:8px 12px;">Pairwise / Combinatorial</td>
+            <td style="padding:8px 12px;"><span class="mono">flowchart TD</span></td>
+            <td style="padding:8px 12px;">Parameter combinations as a tree or matrix</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+            <td style="padding:8px 12px;">Feature Decomposition</td>
+            <td style="padding:8px 12px;"><span class="mono">mindmap</span></td>
+            <td style="padding:8px 12px;">Decomposed dimensions — actors, data, rules, states, integrations</td>
+          </tr>
+          <tr>
+            <td style="padding:8px 12px;">Other techniques</td>
+            <td style="padding:8px 12px;"><span class="mono">flowchart TD</span></td>
+            <td style="padding:8px 12px;">Logical flow of the technique applied to the requirement</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="explain" style="margin-top:16px;">
+      <strong>Key design decisions:</strong> Diagrams are never auto-generated — the user must opt in per technique.
+      The diagram prompt is only injected into skills the user explicitly selects, keeping LLM costs predictable.
+      Each diagram is capped at ~30 nodes to stay readable. The Mermaid.js library renders entirely client-side
+      (no server dependency like PlantUML), and uses <span class="mono">securityLevel: 'strict'</span> to prevent XSS.
+    </p>
+
+    <!-- ============================================================ -->
+    <!-- TEST CASE STRUCTURE -->
+    <!-- ============================================================ -->
+    <h2>Test Case Output Structure</h2>
+
+    <p class="explain">
+      All three paths produce test suites in the same JSON format. Here's the exact structure that the LLM is asked to return,
+      and that the AJV schema validates against:
+    </p>
+
+    <div class="code-block">{
+  <span class="key">"suiteTitle"</span>: <span class="str">"Login Feature Test Suite"</span>,
+  <span class="key">"assumptions"</span>: [<span class="str">"User has a registered account"</span>, <span class="str">"..."</span>],
+  <span class="key">"risks"</span>: [<span class="str">"Third-party auth provider downtime"</span>, <span class="str">"..."</span>],
+  <span class="key">"missingInfoQuestions"</span>: [<span class="str">"Is MFA required for all users?"</span>, <span class="str">"..."</span>],
+  <span class="key">"testCases"</span>: [
+    {
+      <span class="key">"id"</span>: <span class="str">"TC-001"</span>,
+      <span class="key">"title"</span>: <span class="str">"Verify successful login with valid credentials"</span>,
+      <span class="key">"type"</span>: <span class="type">"functional"</span>,       <span class="comment">// functional | negative | boundary | security | accessibility</span>
+                                     <span class="comment">// | performance | usability | compatibility | resilience</span>
+      <span class="key">"priority"</span>: <span class="type">"P0"</span>,             <span class="comment">// P0 (critical) | P1 (high) | P2 (medium) | P3 (low)</span>
+      <span class="key">"preconditions"</span>: [<span class="str">"User account exists"</span>, <span class="str">"User is on login page"</span>],
+      <span class="key">"steps"</span>: [              <span class="comment">// min 1 step required</span>
+        <span class="str">"Enter valid username"</span>,
+        <span class="str">"Enter valid password"</span>,
+        <span class="str">"Click Login button"</span>
+      ],
+      <span class="key">"expected"</span>: [           <span class="comment">// min 1 expected result required</span>
+        <span class="str">"User is redirected to dashboard"</span>,
+        <span class="str">"Welcome message displays username"</span>
+      ],
+      <span class="key">"coverageTags"</span>: [<span class="str">"functional-core"</span>, <span class="str">"happy-path"</span>],
+      <span class="key">"requirementRefs"</span>: [<span class="str">"REQ-LOGIN-001"</span>]
+    }
+  ]
+}</div>
+
+    <div class="info-box">
+      <strong>String normalization:</strong> All string arrays (steps, expected, preconditions, etc.) are automatically trimmed, capped at 500 items max,
+      and individual strings are truncated at 500 characters. This prevents runaway LLM output from bloating the response.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- COMPARISON -->
+    <!-- ============================================================ -->
+    <h2>Path Comparison</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Aspect</th>
+          <th><span class="tag tag-amber">A</span> Missing Info</th>
+          <th><span class="tag tag-purple">B</span> Analyze (Recommended)</th>
+          <th><span class="tag tag-blue">C</span> Legacy</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>LLM calls</td>
+          <td>1 (preflight) + then B or C</td>
+          <td>1 (analyze) + N (one per selected skill)</td>
+          <td>1 (single mega-prompt)</td>
+        </tr>
+        <tr>
+          <td>Skill selection method</td>
+          <td>Keyword token matching (+3 pts/match, +2 domain hints)</td>
+          <td>AI-driven with confidence levels (high/medium/low)</td>
+          <td>Keyword matching, but all 12 always included anyway</td>
+        </tr>
+        <tr>
+          <td>User control</td>
+          <td>Answers clarifying questions</td>
+          <td>Toggle individual techniques on/off with rationale visible</td>
+          <td>None — fire and forget</td>
+        </tr>
+        <tr>
+          <td>How skills are applied</td>
+          <td>Depends on Path B or C next</td>
+          <td>Dedicated prompt per skill with only that skill's markdown</td>
+          <td>All 12 skill markdowns dumped into one prompt</td>
+        </tr>
+        <tr>
+          <td>Prompt focus</td>
+          <td>N/A</td>
+          <td>AI told "specialize in [technique], focus ONLY on what this technique uncovers"</td>
+          <td>AI told "use these skills as guidance" with everything at once</td>
+        </tr>
+        <tr>
+          <td>Parallelism</td>
+          <td>N/A</td>
+          <td>Up to 3 concurrent calls (1 for Gemini)</td>
+          <td>Single sequential call</td>
+        </tr>
+        <tr>
+          <td>Deduplication</td>
+          <td>Depends on next step</td>
+          <td>Weighted Jaccard similarity (40/40/20 weights, 60% threshold)</td>
+          <td>Exact match only (title+type+priority+steps+expected)</td>
+        </tr>
+        <tr>
+          <td>Traceability</td>
+          <td>Depends on next step</td>
+          <td>Each test case tagged with the source skill in coverageTags</td>
+          <td>No skill attribution — all mixed together</td>
+        </tr>
+        <tr>
+          <td>Quality</td>
+          <td>Helps disambiguate requirements before generation</td>
+          <td>Highest — each technique applied deeply and thoroughly</td>
+          <td>Lower — techniques applied shallowly, skills compete for attention</td>
+        </tr>
+        <tr>
+          <td>Speed</td>
+          <td>Adds ~5-15 seconds for one extra LLM call</td>
+          <td>Slower total (multiple calls), but parallel execution helps</td>
+          <td>Fastest — single call, typically 10-30 seconds</td>
+        </tr>
+        <tr>
+          <td>Cost (tokens)</td>
+          <td>+1 preflight call</td>
+          <td>Higher — N+1 calls, but each is smaller than the mega-prompt</td>
+          <td>Lowest — 1 call, but with a very large prompt</td>
+        </tr>
+        <tr>
+          <td>Technique diagrams</td>
+          <td>Not available</td>
+          <td>Optional — user selects which techniques get Mermaid.js diagrams</td>
+          <td>Not available</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ============================================================ -->
+    <!-- OPTIMAL FLOW -->
+    <!-- ============================================================ -->
+    <h2>Recommended Complete Flow</h2>
+    <p class="explain">For maximum quality: combine Path A + Path B. Start by clarifying ambiguities, then let the AI analyze and generate with full context.</p>
+
+    <div class="flow-vertical" style="margin-top:20px;">
+      <div class="flow-node purple">
+        <h4>1. Input Requirement</h4>
+        <p>Paste text or upload a file (PDF, DOCX, MD, TXT, HTML). Select your AI provider (OpenAI / Anthropic / Gemini) and depth level (smoke / standard / deep).</p>
+      </div>
+      <div class="flow-arrow">&#x25BC;</div>
+      <div class="flow-node amber">
+        <h4>2. Ask Missing Info (Path A)</h4>
+        <p>AI identifies what's unclear or missing in the requirement. You answer the questions — this enriches the requirement text with concrete details the AI can use.</p>
+      </div>
+      <div class="flow-arrow">&#x25BC;</div>
+      <div class="flow-node purple">
+        <h4>3. Analyze & Recommend (Path B, Phase 1)</h4>
+        <p>AI reads the enriched requirement, extracts testable elements (inputs, states, rules, boundaries, etc.), and recommends 3-6 testing techniques with confidence levels and rationale.</p>
+      </div>
+      <div class="flow-arrow">&#x25BC;</div>
+      <div class="flow-node">
+        <h4>4. Review & Toggle Techniques</h4>
+        <p>High/medium confidence techniques are pre-checked. You can toggle any on or off. Each recommendation shows why it was suggested and how many scenarios it would produce.</p>
+      </div>
+      <div class="flow-arrow">&#x25BC;</div>
+      <div class="flow-node" style="border-color: var(--cyan-border); background: var(--cyan-dim);">
+        <h4>5. Select Diagrams (Optional)</h4>
+        <p>Check which techniques should also produce a visual Mermaid.js diagram. This is entirely optional — skip it to save tokens, or select specific techniques whose diagrams would help your review.</p>
+      </div>
+      <div class="flow-arrow">&#x25BC;</div>
+      <div class="flow-node purple">
+        <h4>6. Generate Per-Skill (Path B, Phase 2)</h4>
+        <p>Each selected technique runs as a focused, parallel LLM call. Skills with diagrams selected also generate a Mermaid diagram string. Results are merged, near-duplicates are removed via weighted Jaccard similarity, and IDs are renumbered.</p>
+      </div>
+      <div class="flow-arrow">&#x25BC;</div>
+      <div class="flow-node green">
+        <h4>7. Review & Export</h4>
+        <p>View technique diagrams as interactive SVGs, filter test cases by type or priority, search by keyword, view duplicate groups that were removed. Export as JSON or CSV, or push directly to AIO/Jira with folder hierarchy and priority mapping.</p>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SKILLS TABLE -->
+    <!-- ============================================================ -->
+    <h2>The 12 Skills (Test Design Techniques)</h2>
+    <p class="explain">
+      Skills are markdown playbook files in the <span class="mono">skills/</span> directory. Each file has YAML front matter
+      (with <span class="mono">id</span>, <span class="mono">title</span>, and <span class="mono">tags</span> fields) and a markdown body that teaches
+      the AI how to apply a specific testing technique. At server startup, all <span class="mono">.md</span> files in the skills directory are loaded
+      and parsed using the <span class="mono">gray-matter</span> library, then sorted by ID.
+    </p>
+
+    <table>
+      <thead>
+        <tr><th>Skill ID</th><th>Title</th><th>What It Tests</th><th>When Used</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="mono">boundary-value-analysis</td><td>BVA</td><td>Min/max edges, off-by-one errors, limit boundaries</td><td>When requirement has numeric ranges, length limits, or thresholds</td></tr>
+        <tr><td class="mono">equivalence-partitioning</td><td>EP</td><td>Valid/invalid input classes, representative value groups</td><td>When requirement has distinct input categories or validation rules</td></tr>
+        <tr><td class="mono">decision-tables</td><td>Decision Tables</td><td>Business rule condition combinations, truth table coverage</td><td>When requirement has multiple conditions that interact ("if X and Y then Z")</td></tr>
+        <tr><td class="mono">state-transition</td><td>State Transition</td><td>Workflow states, valid/invalid transitions, state sequences</td><td>When requirement describes a process with distinct states (draft → published → archived)</td></tr>
+        <tr><td class="mono">pairwise-combinatorial</td><td>Pairwise</td><td>Parameter combination coverage, interaction effects</td><td>When requirement has multiple independent parameters (browser × OS × language)</td></tr>
+        <tr><td class="mono">error-guessing-heuristics</td><td>Error Guessing</td><td>Common failure patterns, known problem areas, edge cases</td><td>When requirement involves user input, external integrations, or complex logic</td></tr>
+        <tr><td class="mono">risk-based-prioritization</td><td>Risk-Based</td><td>Priority ranking by likelihood × impact, risk mitigation</td><td>When requirement has varying criticality levels or compliance needs</td></tr>
+        <tr><td class="mono">requirements-to-tests-traceability</td><td>Traceability</td><td>Maps test cases to specific requirement references</td><td>When requirement has numbered clauses or formal requirement IDs</td></tr>
+        <tr><td class="mono">functional-core</td><td>Functional Core</td><td>Happy path flows, nominal use cases, basic functionality</td><td>Always relevant — covers the core "does it work?" scenarios</td></tr>
+        <tr><td class="mono">non-functional-baseline</td><td>Non-Functional</td><td>Performance, security, compliance, accessibility baselines</td><td>When requirement mentions SLAs, security, data protection, or accessibility</td></tr>
+        <tr><td class="mono">feature-decomposition</td><td>Feature Decomposition</td><td>Breaking stories into atomic testable parts</td><td>When requirement is a large user story or epic that needs breakdown</td></tr>
+        <tr>
+          <td class="mono">general-fallback</td><td>General Fallback</td><td>Catch-all baseline coverage, gaps not covered by other skills</td>
+          <td><span class="tag tag-green">Always included</span> — automatically added if missing from recommendations</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ============================================================ -->
+    <!-- SCHEMA REPAIR -->
+    <!-- ============================================================ -->
+    <h2>Schema Validation & Auto-Repair Pipeline</h2>
+    <p class="explain">
+      LLMs don't always return perfect JSON. They might wrap output in markdown code fences, include commentary before/after the JSON,
+      produce malformed syntax, or miss required fields. Every LLM response in the system goes through a multi-step validation pipeline
+      to ensure the output is valid, structured, and safe to use.
+    </p>
+
+    <div class="flow-vertical" style="margin-top:20px;">
+      <div class="flow-node">
+        <h4>LLM Response (raw text)</h4>
+        <p>May contain valid JSON, markdown-wrapped JSON, commentary mixed with JSON, or completely malformed output</p>
+      </div>
+      <div class="flow-arrow">&#x25BC;</div>
+      <div class="flow-node left-align">
+        <h4>Step 1 — Direct JSON Parse</h4>
+        <p>Try <span class="mono">JSON.parse()</span> on the raw response text. If it succeeds, proceed directly to schema validation. This handles the happy path where the LLM returns clean JSON.</p>
+      </div>
+      <div class="flow-arrow">&#x25BC;</div>
+      <div class="flow-node left-align">
+        <h4>Step 2 — Extract JSON from Text</h4>
+        <p>If direct parse fails, scan the text for the first <span class="mono">{</span> or <span class="mono">[</span> character and attempt to extract a complete JSON object/array from that point.
+        This handles cases where the LLM wraps JSON in markdown code fences (<span class="mono">```json ... ```</span>) or adds explanation text before/after.
+        The extraction handles nested braces, string escapes, and balanced brackets correctly.</p>
+      </div>
+      <div class="flow-arrow">&#x25BC;</div>
+      <div class="flow-node left-align">
+        <h4>Step 3 — AJV Schema Validation</h4>
+        <p>The parsed JSON object is validated against the expected schema (analysis, testSuite, or preflight) using the <strong>AJV</strong> JSON Schema validator.
+        This checks required fields, enum values, array constraints (e.g., <span class="mono">steps</span> must have at least 1 item), string formats, and additional properties.</p>
+      </div>
+      <div class="flow-arrow">&#x25BC;</div>
+      <div class="flow-node amber left-align">
+        <h4>Step 4 — Auto-Repair (if validation fails)</h4>
+        <p style="margin-bottom:8px;">If the parsed JSON doesn't match the schema, the system sends a <strong>repair prompt</strong> back to the LLM:</p>
+        <ul>
+          <li>Temperature is lowered to <strong>0.1</strong> (more deterministic) for the repair call</li>
+          <li>The prompt includes up to <strong>12 sample validation errors</strong> from AJV, telling the AI exactly what's wrong</li>
+          <li>Message: "Your output was invalid. Here are the errors: [...]. Fix and return only the corrected JSON."</li>
+          <li>The repaired output goes through the same parse → validate pipeline again</li>
+          <li>If the repair also fails, the system returns an error for that specific call (in per-skill mode, other skills still succeed)</li>
+        </ul>
+      </div>
+      <div class="flow-arrow">&#x25BC;</div>
+      <div class="flow-node left-align">
+        <h4>Step 5 — Post-Processing & Normalization</h4>
+        <p style="margin-bottom:8px;">After validation passes, the output is normalized:</p>
+        <ul>
+          <li>All string arrays are trimmed (whitespace removed from start/end of each string)</li>
+          <li>Empty strings are filtered out</li>
+          <li>Arrays are capped at 500 items, individual strings at 500 characters</li>
+          <li>Test case count is enforced against the depth-based maximum</li>
+          <li>IDs are renumbered sequentially (TC-001, TC-002, ...)</li>
+        </ul>
+      </div>
+      <div class="flow-arrow">&#x25BC;</div>
+      <div class="flow-node green">
+        <h4>Valid Structured Output</h4>
+        <p>Type-safe, schema-compliant JSON ready for the UI. The <span class="mono">repaired</span> field in the API response indicates whether a repair prompt was needed.</p>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- LLM PROVIDERS -->
+    <!-- ============================================================ -->
+    <h2>LLM Provider Details</h2>
+
+    <p class="explain">
+      The system supports three AI providers. Each has its own adapter in <span class="mono">server/llm/</span> that handles
+      authentication, request formatting, response parsing, and error recovery differently.
+      All providers use <strong>temperature 0.2</strong> by default and a <strong>90-second timeout</strong>.
+    </p>
+
+    <table>
+      <thead>
+        <tr><th>Provider</th><th>Default Model</th><th>JSON Mode</th><th>Special Handling</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>OpenAI</strong></td>
+          <td class="mono">gpt-4.1-mini</td>
+          <td>Structured output via <span class="mono">response_format: {type: "json_schema"}</span> with strict mode. Falls back to <span class="mono">{type: "json_object"}</span> if the model rejects the schema.</td>
+          <td>AbortController for timeout. System message goes in the messages array.</td>
+        </tr>
+        <tr>
+          <td><strong>Anthropic</strong></td>
+          <td class="mono">claude-3-5-sonnet-latest</td>
+          <td>No native JSON schema enforcement — relies entirely on prompt guidance to produce valid JSON. Uses <span class="mono">anthropic-version: 2023-06-01</span> header.</td>
+          <td>System prompt is a separate top-level field, not part of the messages array. Default max_tokens: 2000.</td>
+        </tr>
+        <tr>
+          <td><strong>Gemini</strong></td>
+          <td class="mono">gemini-1.5-flash</td>
+          <td>Uses <span class="mono">responseMimeType: "application/json"</span>. Optionally sends <span class="mono">responseSchema</span> and function declarations, with multiple fallback layers if the model rejects them.</td>
+          <td><strong>Rate limit retry:</strong> On 429 errors, parses "retry in Xs" from the error message, waits, and retries up to 3 times. Concurrency limited to 1 parallel call.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ============================================================ -->
+    <!-- API ROUTES -->
+    <!-- ============================================================ -->
+    <h2>API Routes</h2>
+    <table>
+      <thead>
+        <tr><th>Route</th><th>Method</th><th>Used By</th><th>Purpose</th><th>Key Parameters</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono">/api/health</td><td>GET</td>
+          <td>—</td><td>Health check — confirms server is running</td>
+          <td>None</td>
+        </tr>
+        <tr>
+          <td class="mono">/api/skills</td><td>GET</td>
+          <td>—</td><td>List all loaded skills with their IDs, titles, and tags</td>
+          <td>None</td>
+        </tr>
+        <tr>
+          <td class="mono">/api/preflight</td><td>POST</td>
+          <td><span class="tag tag-amber">Path A</span></td>
+          <td>AI identifies ambiguities and returns clarifying questions</td>
+          <td><span class="mono">requirement</span> (text), <span class="mono">file</span> (multipart), <span class="mono">provider</span></td>
+        </tr>
+        <tr>
+          <td class="mono">/api/analyze</td><td>POST</td>
+          <td><span class="tag tag-purple">Path B</span></td>
+          <td>AI analyzes requirement, extracts testable elements, recommends techniques</td>
+          <td><span class="mono">requirement</span> (text), <span class="mono">file</span> (multipart), <span class="mono">provider</span></td>
+        </tr>
+        <tr>
+          <td class="mono">/api/generate-tests</td><td>POST</td>
+          <td><span class="tag tag-purple">Path B</span> <span class="tag tag-blue">Path C</span></td>
+          <td>Generate test scenarios. Per-skill mode if <span class="mono">selectedSkills</span> present, otherwise legacy mode.</td>
+          <td><span class="mono">requirement</span>, <span class="mono">file</span>, <span class="mono">provider</span>, <span class="mono">depth</span>, <span class="mono">selectedSkills[]</span> (optional), <span class="mono">diagramSkills[]</span> (optional), <span class="mono">analysisContext</span> (optional), <span class="mono">clarifications</span> (optional)</td>
+        </tr>
+        <tr>
+          <td class="mono">/api/aio/push</td><td>POST</td>
+          <td>Results</td>
+          <td>Push generated test cases to Jira AIO test management</td>
+          <td><span class="mono">jiraProjectId</span>, <span class="mono">suite</span>, <span class="mono">folderPath</span> (optional), <span class="mono">aioToken</span> (optional), <span class="mono">includeCoverageTags</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ============================================================ -->
+    <!-- AIO INTEGRATION -->
+    <!-- ============================================================ -->
+    <h2>AIO / Jira Integration</h2>
+
+    <p class="explain">
+      After generating test cases, users can push them directly to <strong>AIO Test Management for Jira</strong>.
+      The integration creates test cases in the specified Jira project with proper folder hierarchy, priorities, steps, and tags.
+    </p>
+
+    <div class="flow-vertical" style="margin-top:20px;">
+      <div class="flow-node purple">
+        <h4>User Configures Push Settings</h4>
+        <p>Enters Jira Project ID (required), folder path (optional, e.g. "Automated/Sprint 12"), AIO token (or uses env var), and whether to include coverage tags.</p>
+      </div>
+      <div class="flow-arrow">&#x25BC;</div>
+      <div class="flow-node left-align">
+        <h4>POST /api/aio/push</h4>
+        <p style="margin-bottom:8px;">The server processes the push in several steps:</p>
+        <ol>
+          <li><strong>Create folder hierarchy</strong> — Splits the folder path by <span class="mono">/</span>, <span class="mono">></span>, or <span class="mono">\</span> and creates the folder tree in AIO via <span class="mono">PUT /api/v1/project/{id}/testcase/folder/hierarchy</span></li>
+          <li><strong>Fetch priority config</strong> — Gets the project's priority list from AIO and maps P0→Critical/Highest/Blocker, P1→High, P2→Medium/Normal, P3→Low/Lowest/Minor</li>
+          <li><strong>Fetch script type</strong> — Gets the default test case script type (prefers "classic" if available)</li>
+          <li><strong>Create tags</strong> — If coverage tags are enabled, bulk-creates tags from each test case's <span class="mono">coverageTags</span> array</li>
+          <li><strong>Create test cases</strong> — For each test case, builds an AIO-compatible payload with title, description (preconditions), steps with expected results, priority, folder, and tags</li>
+        </ol>
+      </div>
+      <div class="flow-arrow">&#x25BC;</div>
+      <div class="flow-node left-align">
+        <h4>Step Mapping Logic</h4>
+        <p style="margin-bottom:8px;">Test case steps are mapped to AIO's step format with intelligent pairing:</p>
+        <ul>
+          <li>If <strong>no steps</strong> defined: creates a single step from the test case title with all expected results</li>
+          <li>If <strong>steps.length === expected.length</strong>: pairs them 1:1 (step 1 → expected 1, step 2 → expected 2, ...)</li>
+          <li>If <strong>only 1 expected result</strong>: applies it to the last step only</li>
+          <li>Otherwise: joins all expected results and applies them to the last step</li>
+        </ul>
+      </div>
+      <div class="flow-arrow">&#x25BC;</div>
+      <div class="flow-node green">
+        <h4>Push Result</h4>
+        <p>Returns the count of created test cases and their AIO case IDs. The UI displays a log of what was created.</p>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CONFIGURATION -->
+    <!-- ============================================================ -->
+    <h2>Server Configuration</h2>
+
+    <p class="explain">All configuration is via environment variables with sensible defaults. No config files needed.</p>
+
+    <table>
+      <thead>
+        <tr><th>Variable</th><th>Default</th><th>Range</th><th>Purpose</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="mono">PORT</td><td>3001</td><td>—</td><td>Server port</td></tr>
+        <tr><td class="mono">MAX_UPLOAD_MB</td><td>2</td><td>1 – 20</td><td>Max file upload size in MB</td></tr>
+        <tr><td class="mono">LLM_TIMEOUT_MS</td><td>90000</td><td>5000 – 300000</td><td>Timeout per LLM call (milliseconds)</td></tr>
+        <tr><td class="mono">MAX_TEST_CASES</td><td>160</td><td>20 – 500</td><td>Hard cap on total test cases returned</td></tr>
+        <tr><td class="mono">RATE_LIMIT_PER_MINUTE</td><td>90</td><td>10 – 600</td><td>Rate limit per IP address</td></tr>
+        <tr><td class="mono">CORS_ORIGINS</td><td>localhost:5173, localhost:3001</td><td>—</td><td>Additional allowed CORS origins (comma-separated)</td></tr>
+        <tr><td class="mono">OPENAI_API_KEY</td><td>—</td><td>—</td><td>OpenAI API key</td></tr>
+        <tr><td class="mono">OPENAI_MODEL</td><td>gpt-4.1-mini</td><td>—</td><td>OpenAI model override</td></tr>
+        <tr><td class="mono">ANTHROPIC_API_KEY</td><td>—</td><td>—</td><td>Anthropic API key</td></tr>
+        <tr><td class="mono">ANTHROPIC_MODEL</td><td>claude-3-5-sonnet-latest</td><td>—</td><td>Anthropic model override</td></tr>
+        <tr><td class="mono">GEMINI_API_KEY</td><td>—</td><td>—</td><td>Gemini API key</td></tr>
+        <tr><td class="mono">GEMINI_MODEL</td><td>gemini-1.5-flash</td><td>—</td><td>Gemini model override</td></tr>
+        <tr><td class="mono">AIO_TOKEN</td><td>—</td><td>—</td><td>Default AIO auth token (can also be passed per-request)</td></tr>
+      </tbody>
+    </table>
+
+    <!-- ============================================================ -->
+    <!-- LOCAL STORAGE -->
+    <!-- ============================================================ -->
+    <h2>Client-Side Persistence</h2>
+
+    <p class="explain">
+      The React UI persists user preferences to <span class="mono">localStorage</span> under the key <span class="mono">ai-test-generator:v1</span>.
+      This means your settings survive page refreshes and browser restarts. The following fields are saved:
+    </p>
+
+    <div class="config-grid">
+      <div class="config-item">
+        <div class="config-label">Provider</div>
+        <div class="config-desc">Selected AI provider (openai / anthropic / gemini)</div>
+      </div>
+      <div class="config-item">
+        <div class="config-label">Depth</div>
+        <div class="config-desc">Selected depth level (smoke / standard / deep)</div>
+      </div>
+      <div class="config-item">
+        <div class="config-label">Model Override</div>
+        <div class="config-desc">Custom model name if the user overrode the default</div>
+      </div>
+      <div class="config-item">
+        <div class="config-label">Requirement Text</div>
+        <div class="config-desc">The last entered requirement text (auto-saved as you type)</div>
+      </div>
+      <div class="config-item">
+        <div class="config-label">Preflight Answers</div>
+        <div class="config-desc">User's answers to clarifying questions (question → answer map)</div>
+      </div>
+      <div class="config-item">
+        <div class="config-label">AIO Settings</div>
+        <div class="config-desc">Jira project ID, folder path, and coverage tag preference</div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- FILE STRUCTURE -->
+    <!-- ============================================================ -->
+    <h2>Project File Structure</h2>
+
+    <div class="code-block">test-generaror/
+├── server/
+│   ├── index.js                 <span class="comment">← Express app, routes, orchestration, file parsing</span>
+│   ├── prompt.js                <span class="comment">← All prompt builders (analysis, per-skill, legacy, preflight)</span>
+│   ├── schema.js                <span class="comment">← AJV JSON schemas (analysis, testSuite, preflight)</span>
+│   ├── util.js                  <span class="comment">← JSON parsing, dedup, suite merging, normalization</span>
+│   ├── selectSkills.js          <span class="comment">← Keyword-based skill selection + scoring</span>
+│   ├── skills.js                <span class="comment">← Loads .md skill files from skills/ directory</span>
+│   ├── aio.js                   <span class="comment">← Jira AIO integration (folder creation, test case push)</span>
+│   └── llm/
+│       ├── index.js             <span class="comment">← Provider dispatcher (routes to correct adapter)</span>
+│       ├── openai.js            <span class="comment">← OpenAI adapter (structured output, json_schema mode)</span>
+│       ├── anthropic.js         <span class="comment">← Anthropic adapter (system prompt as separate field)</span>
+│       └── gemini.js            <span class="comment">← Gemini adapter (rate limit retry, schema fallbacks)</span>
+├── client/
+│   └── src/
+│       ├── App.jsx              <span class="comment">← Main React + MUI app — 3-step wizard (~1800 lines)</span>
+│       └── MermaidDiagram.jsx   <span class="comment">← Mermaid.js diagram renderer (dark theme, error handling)</span>
+├── web/
+│   └── app.js                   <span class="comment">← Legacy vanilla JS UI (not updated for new flow)</span>
+└── skills/
+    └── *.md                     <span class="comment">← 12 QA technique playbooks (YAML front matter + markdown body)</span></div>
+
+    <div style="margin-top:64px; padding-top:24px; border-top:1px solid var(--border); text-align:center;">
+      <p style="color:var(--muted); font-size:0.78rem;">AI Test Case Generator — Internal Workflow Documentation</p>
+    </div>
+
+  </div>
+</body>
+</html>

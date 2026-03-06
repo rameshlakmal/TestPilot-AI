@@ -1,0 +1,30 @@
+:root {
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow-y: scroll;
+  background:
+    radial-gradient(1200px 740px at 18% 10%, rgba(255, 255, 255, 0.06), transparent 62%),
+    radial-gradient(980px 760px at 92% 0%, rgba(255, 255, 255, 0.035), transparent 58%),
+    radial-gradient(1100px 900px at 50% 120%, rgba(0, 0, 0, 0.65), transparent 60%),
+    linear-gradient(180deg, #0b0b0b 0%, #050505 100%);
+  background-attachment: fixed;
+}
+
+#root {
+  min-height: 100%;
+}

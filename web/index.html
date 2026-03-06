@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Test Case Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      // Tailwind CDN config
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["Space Grotesk", "ui-sans-serif", "system-ui"],
+              mono: [
+                "IBM Plex Mono",
+                "ui-monospace",
+                "SFMono-Regular",
+                "Menlo",
+                "Monaco",
+                "Consolas",
+                "Liberation Mono",
+                "monospace"
+              ]
+            },
+            boxShadow: {
+              soft: "0 22px 70px rgba(0,0,0,.35)",
+              glow: "0 0 0 1px rgba(148,163,184,.18), 0 16px 50px rgba(2,6,23,.55)"
+            }
+          }
+        }
+      };
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body>
+    <div class="min-h-dvh bg-zinc-950 text-zinc-100 selection:bg-cyan-400/25 selection:text-zinc-50">
+      <div class="pointer-events-none fixed inset-0 overflow-hidden">
+        <div
+          class="absolute inset-0 opacity-[0.22]"
+          style="background-image: radial-gradient(circle at 1px 1px, rgba(161,161,170,.35) 1px, transparent 0); background-size: 24px 24px;"
+        ></div>
+        <div class="absolute -top-40 left-1/2 h-[620px] w-[1040px] -translate-x-1/2 rounded-full bg-gradient-to-r from-cyan-500/18 via-sky-500/10 to-cyan-200/10 blur-3xl"></div>
+        <div class="absolute -bottom-48 right-0 h-[560px] w-[900px] translate-x-1/3 rounded-full bg-gradient-to-r from-blue-500/10 via-zinc-500/0 to-cyan-500/10 blur-3xl"></div>
+      </div>
+
+      <header class="relative border-b border-white/10 backdrop-blur">
+        <div class="w-full px-4 py-4 sm:px-6 lg:px-8">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex items-center gap-3">
+              <div class="grid h-10 w-10 place-items-center rounded-2xl border border-white/10 bg-white/[0.04] shadow-glow">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5 text-sky-200">
+                  <path d="M4.5 6.375A3.375 3.375 0 0 1 7.875 3h8.25A3.375 3.375 0 0 1 19.5 6.375v11.25A3.375 3.375 0 0 1 16.125 21h-8.25A3.375 3.375 0 0 1 4.5 17.625V6.375Z" opacity=".25" />
+                  <path d="M7.5 7.5A.75.75 0 0 1 8.25 6.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 7.5 7.5Zm0 3A.75.75 0 0 1 8.25 9.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 7.5 10.5Zm0 3A.75.75 0 0 1 8.25 12.75h4.5a.75.75 0 0 1 0 1.5h-4.5A.75.75 0 0 1 7.5 13.5Z" />
+                </svg>
+              </div>
+              <div>
+                <div class="font-mono text-[11px] uppercase tracking-[0.22em] text-zinc-400">skills-driven test design</div>
+                <h1 class="mt-1 text-xl font-semibold leading-tight sm:text-2xl">AI Test Case Generator</h1>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+              <a
+                href="/api/skills"
+                class="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-semibold text-zinc-100 shadow-glow hover:bg-white/[0.07]"
+                >Loaded skills</a
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="relative w-full px-4 py-8 sm:px-6 lg:px-8">
+        <form id="genForm" class="grid gap-6 lg:grid-cols-12">
+          <section id="leftCol" class="lg:col-span-5">
+            <div class="rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-soft">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <h2 class="text-base font-semibold">Generator</h2>
+                  <p class="mt-1 text-sm text-zinc-300">Add requirements, clarify if needed, then generate and export.</p>
+                </div>
+              </div>
+
+              <div class="mt-4 grid gap-3 rounded-2xl border border-white/10 bg-black/20 p-4 sm:grid-cols-2">
+                <div class="sm:col-span-2">
+                  <h3 class="text-sm font-semibold">Model</h3>
+                  <p class="mt-1 text-sm text-zinc-300">Select the provider/model first, then upload requirements.</p>
+                </div>
+                <label class="grid gap-1">
+                  <span class="font-mono text-xs text-slate-400">Provider</span>
+                  <div class="relative">
+                    <select
+                      name="provider"
+                      id="provider"
+                      class="appearance-none w-full rounded-xl border border-white/10 bg-zinc-950/60 px-3 py-2 pr-10 text-sm text-zinc-100 outline-none ring-0 focus:border-cyan-300/40 focus:ring-4 focus:ring-cyan-500/10"
+                    >
+                      <option value="openai">OpenAI</option>
+                      <option value="anthropic">Anthropic (Claude)</option>
+                      <option value="gemini">Google Gemini</option>
+                    </select>
+                    <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-zinc-400">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
+                        <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08Z" clip-rule="evenodd" />
+                      </svg>
+                    </span>
+                  </div>
+                </label>
+
+                <label class="grid gap-1">
+                  <span class="font-mono text-xs text-slate-400">Depth</span>
+                  <div class="relative">
+                    <select
+                      name="depth"
+                      id="depth"
+                      class="appearance-none w-full rounded-xl border border-white/10 bg-zinc-950/60 px-3 py-2 pr-10 text-sm text-zinc-100 outline-none ring-0 focus:border-cyan-300/40 focus:ring-4 focus:ring-cyan-500/10"
+                    >
+                      <option value="smoke">Smoke</option>
+                      <option value="standard" selected>Standard</option>
+                      <option value="deep">Deep</option>
+                    </select>
+                    <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-zinc-400">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
+                        <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08Z" clip-rule="evenodd" />
+                      </svg>
+                    </span>
+                  </div>
+                </label>
+
+                <label class="grid gap-1 sm:col-span-2">
+                  <span class="font-mono text-xs text-slate-400">Model override (optional)</span>
+                  <input
+                    name="model"
+                    id="model"
+                    placeholder="e.g., gpt-4o-mini or claude-3-5-sonnet-latest"
+                    class="rounded-xl border border-white/10 bg-zinc-950/40 px-3 py-2 text-sm text-zinc-100 outline-none placeholder:text-zinc-500 focus:border-cyan-300/40 focus:ring-4 focus:ring-cyan-500/10"
+                  />
+                </label>
+              </div>
+
+              <div class="mt-4 grid gap-3 rounded-2xl border border-white/10 bg-black/20 p-4">
+                <div class="flex items-center justify-between gap-3">
+                  <div>
+                    <h3 class="text-sm font-semibold">Requirements</h3>
+                  </div>
+                  <div id="reqBadge" class="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 font-mono text-xs text-zinc-300">empty</div>
+                </div>
+
+                <label class="grid gap-2">
+                  <span class="font-mono text-xs text-slate-400">File</span>
+                  <div
+                    id="dropzone"
+                    class="group relative grid place-items-center rounded-2xl border border-dashed border-white/15 bg-zinc-950/40 px-3 py-6 text-center hover:border-cyan-300/30 hover:bg-zinc-950/55"
+                  >
+                    <input
+                      type="file"
+                      name="requirementFile"
+                      id="requirementFile"
+                      accept=".txt,.md,.pdf,.docx,.html,.htm,text/plain,text/markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/html"
+                      class="absolute inset-0 cursor-pointer opacity-0"
+                    />
+                    <div class="pointer-events-none">
+                      <div class="font-mono text-xs text-zinc-400">Drag & drop, or click to upload</div>
+                      <div class="mt-1 text-xs text-zinc-400">Supported: .txt, .md, .pdf, .docx, .html</div>
+                      <div id="fileLabel" class="mt-1 text-sm text-zinc-200/90">No file selected</div>
+                    </div>
+                  </div>
+                </label>
+
+                <label class="grid gap-2">
+                  <span class="font-mono text-xs text-slate-400">Text</span>
+                  <textarea
+                    name="requirementText"
+                    id="requirementText"
+                    placeholder="Paste requirements here..."
+                    rows="9"
+                    class="min-h-44 rounded-xl border border-white/10 bg-zinc-950/40 px-3 py-2 text-sm leading-6 text-zinc-100 outline-none placeholder:text-zinc-500 focus:border-cyan-300/40 focus:ring-4 focus:ring-cyan-500/10"
+                  ></textarea>
+                </label>
+              </div>
+
+              <div class="mt-4 grid gap-3 rounded-2xl border border-white/10 bg-black/20 p-4">
+                <div class="flex items-center justify-between gap-3">
+                  <div>
+                    <h3 class="text-sm font-semibold">Generate</h3>
+                    <p class="mt-1 text-sm text-zinc-300">Generate immediately, or ask missing info questions first.</p>
+                  </div>
+                </div>
+
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    id="preflightBtn"
+                    class="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-semibold text-zinc-100 shadow-glow hover:bg-white/[0.07] disabled:opacity-50"
+                  >
+                    Ask missing info first
+                  </button>
+                  <button
+                    type="submit"
+                    id="generateBtn"
+                    class="rounded-full border border-cyan-300/25 bg-gradient-to-r from-cyan-300/15 via-sky-300/10 to-cyan-200/10 px-4 py-2 text-xs font-semibold text-zinc-100 shadow-glow hover:from-cyan-300/20 hover:to-cyan-200/15 disabled:opacity-50"
+                  >
+                    Generate test cases
+                  </button>
+                </div>
+              </div>
+
+              <div
+                id="status"
+                aria-live="polite"
+                class="mt-3 hidden rounded-xl border border-white/10 bg-zinc-950/40 px-3 py-2 font-mono text-xs text-zinc-300"
+              ></div>
+            </div>
+
+            <section id="clarify" hidden class="mt-6 rounded-2xl border border-third/60 bg-white/[0.04] p-4 shadow-soft">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <h2 class="text-base font-semibold">Answer missing info questions</h2>
+                  <p class="mt-1 text-sm text-zinc-300">Add short answers and generate once with clarifications included.</p>
+                </div>
+              </div>
+              <div id="clarifyQuestions" class="mt-4 grid gap-3"></div>
+              <div class="mt-4 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  id="generateWithAnswersBtn"
+                  class="rounded-full border border-accent/35 bg-gradient-to-r from-accent/20 to-third/10 px-4 py-2 text-xs font-semibold text-ink shadow-glow hover:from-accent/25 hover:to-third/15"
+                >
+                  Generate using answers
+                </button>
+                <button
+                  type="button"
+                  id="generateWithoutAnswersBtn"
+                  class="rounded-full border border-third/60 bg-primary/25 px-4 py-2 text-xs font-semibold text-ink shadow-glow hover:bg-primary/35"
+                >
+                  Generate without answers
+                </button>
+                <button
+                  type="button"
+                  id="clearAnswersBtn"
+                  class="rounded-full border border-third/60 bg-primary/25 px-4 py-2 text-xs font-semibold text-ink shadow-glow hover:bg-primary/35"
+                >
+                  Clear answers
+                </button>
+              </div>
+            </section>
+          </section>
+
+          <section id="rightCol" class="lg:col-span-7">
+            <section id="results" hidden class="rounded-2xl border border-third/60 bg-white/[0.04] p-4 shadow-soft animate-fadeUp">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="flex flex-wrap gap-2">
+                  <div id="metaProvider" class="rounded-full border border-third/60 bg-primary/30 px-3 py-1 font-mono text-xs text-muted"></div>
+                  <div id="metaModel" class="rounded-full border border-third/60 bg-primary/30 px-3 py-1 font-mono text-xs text-muted"></div>
+                  <div id="metaDepth" class="rounded-full border border-third/60 bg-primary/30 px-3 py-1 font-mono text-xs text-muted"></div>
+                  <div id="metaRepaired" class="rounded-full border border-third/60 bg-primary/30 px-3 py-1 font-mono text-xs text-muted"></div>
+                </div>
+
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    id="exportJsonBtn"
+                    disabled
+                    class="rounded-full border border-third/60 bg-primary/25 px-4 py-2 text-xs font-semibold text-ink shadow-glow hover:bg-primary/35 disabled:opacity-50"
+                  >
+                    Export JSON
+                  </button>
+                  <button
+                    type="button"
+                    id="exportCsvBtn"
+                    disabled
+                    class="rounded-full border border-third/60 bg-primary/25 px-4 py-2 text-xs font-semibold text-ink shadow-glow hover:bg-primary/35 disabled:opacity-50"
+                  >
+                    Export CSV
+                  </button>
+                </div>
+              </div>
+
+              <h2 id="suiteTitle" class="mt-3 text-xl font-semibold"></h2>
+
+              <div class="mt-4 rounded-2xl border border-third/40 bg-secondary/20 p-4">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <h3 class="text-sm font-semibold text-slate-100">Push to AIO Tests</h3>
+                    <p class="mt-1 text-sm text-muted">Create a folder (if needed) and create test cases in AIO.</p>
+                  </div>
+                  <div id="aioStatus" class="hidden rounded-full border border-third/60 bg-primary/30 px-3 py-1 font-mono text-xs text-muted"></div>
+                </div>
+
+                <div class="mt-3 grid gap-3 lg:grid-cols-12">
+                  <label class="grid gap-1 lg:col-span-3">
+                    <span class="font-mono text-xs text-slate-400">Jira project key/id</span>
+                    <input
+                      id="aioProject"
+                      placeholder="e.g., AT"
+                      class="rounded-xl border border-third/55 bg-primary/35 px-3 py-2 text-sm text-ink outline-none placeholder:text-muted/60 focus:border-accent/40 focus:ring-4 focus:ring-accent/10"
+                    />
+                  </label>
+
+                  <label class="grid gap-1 lg:col-span-5">
+                    <span class="font-mono text-xs text-slate-400">Folder path (optional)</span>
+                    <input
+                      id="aioFolder"
+                      placeholder="Release 1.0 / Regression / Checkout"
+                      class="rounded-xl border border-third/55 bg-primary/35 px-3 py-2 text-sm text-ink outline-none placeholder:text-muted/60 focus:border-accent/40 focus:ring-4 focus:ring-accent/10"
+                    />
+                  </label>
+
+                  <label class="grid gap-1 lg:col-span-4">
+                    <span class="font-mono text-xs text-slate-400">AIO API token (optional if server configured)</span>
+                    <input
+                      id="aioToken"
+                      type="password"
+                      placeholder="AioAuth token"
+                      class="rounded-xl border border-third/55 bg-primary/35 px-3 py-2 text-sm text-ink outline-none placeholder:text-muted/60 focus:border-accent/40 focus:ring-4 focus:ring-accent/10"
+                    />
+                  </label>
+                </div>
+
+                <div class="mt-3 flex flex-wrap items-center gap-3">
+                  <label class="flex items-center gap-2 text-sm text-muted">
+                    <input id="aioIncludeTags" type="checkbox" class="h-4 w-4 rounded border-third/60 bg-primary/35 accent-accent" />
+                    Include coverage tags
+                  </label>
+                  <div class="flex-1"></div>
+                    <button
+                      type="button"
+                      id="aioPushBtn"
+                      class="rounded-full border border-accent/35 bg-gradient-to-r from-accent/20 to-third/10 px-4 py-2 text-xs font-semibold text-ink shadow-glow hover:from-accent/25 hover:to-third/15"
+                    >
+                      Create folder & push
+                    </button>
+                </div>
+
+                <div id="aioResult" class="mt-3 hidden rounded-2xl border border-third/60 bg-primary/35 p-3 font-mono text-xs text-muted"></div>
+              </div>
+
+              <div class="mt-4 grid gap-4 xl:grid-cols-2">
+                <div class="rounded-2xl border border-white/10 bg-zinc-950/30 p-4">
+                  <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-semibold text-slate-100">Selected skills</h3>
+                  </div>
+                  <ul id="selectedSkills" class="mt-2 space-y-1 text-sm text-zinc-300"></ul>
+                </div>
+                <div id="missingInfoCard" class="rounded-2xl border border-white/10 bg-zinc-950/30 p-4">
+                  <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-semibold text-slate-100">Missing info questions</h3>
+                  </div>
+                  <ul id="missingInfo" class="mt-2 space-y-1 text-sm text-zinc-300"></ul>
+                </div>
+                <div class="rounded-2xl border border-white/10 bg-zinc-950/30 p-4">
+                  <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-semibold text-slate-100">Assumptions</h3>
+                  </div>
+                  <ul id="assumptions" class="mt-2 space-y-1 text-sm text-zinc-300"></ul>
+                </div>
+                <div class="rounded-2xl border border-white/10 bg-zinc-950/30 p-4">
+                  <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-semibold text-slate-100">Risks</h3>
+                  </div>
+                  <ul id="risks" class="mt-2 space-y-1 text-sm text-zinc-300"></ul>
+                </div>
+              </div>
+
+              <div class="mt-6">
+                <div class="flex items-center justify-between gap-3">
+                  <h3 class="text-sm font-semibold text-slate-100">Test cases</h3>
+                  <div class="flex flex-wrap items-center gap-2">
+                    <label class="relative">
+                      <span class="sr-only">Search</span>
+                      <input
+                        id="search"
+                        placeholder="Search title/id/tag..."
+                        class="w-56 rounded-full border border-third/55 bg-primary/35 px-4 py-2 text-xs text-ink outline-none placeholder:text-muted/60 focus:border-accent/40 focus:ring-4 focus:ring-accent/10"
+                      />
+                    </label>
+                    <div class="relative">
+                      <select id="filterType" class="appearance-none rounded-full border border-third/55 bg-primary/35 px-4 py-2 pr-9 text-xs text-ink outline-none focus:border-accent/40 focus:ring-4 focus:ring-accent/10">
+                        <option value="">All types</option>
+                        <option value="functional">functional</option>
+                        <option value="negative">negative</option>
+                        <option value="boundary">boundary</option>
+                        <option value="security">security</option>
+                        <option value="accessibility">accessibility</option>
+                        <option value="performance">performance</option>
+                        <option value="usability">usability</option>
+                        <option value="compatibility">compatibility</option>
+                        <option value="resilience">resilience</option>
+                      </select>
+                      <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-muted">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08Z" clip-rule="evenodd" /></svg>
+                      </span>
+                    </div>
+                    <div class="relative">
+                      <select id="filterPriority" class="appearance-none rounded-full border border-third/55 bg-primary/35 px-4 py-2 pr-9 text-xs text-ink outline-none focus:border-accent/40 focus:ring-4 focus:ring-accent/10">
+                        <option value="">All priorities</option>
+                        <option value="P0">P0</option>
+                        <option value="P1">P1</option>
+                        <option value="P2">P2</option>
+                        <option value="P3">P3</option>
+                      </select>
+                      <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-muted">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08Z" clip-rule="evenodd" /></svg>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div class="mt-3 overflow-auto rounded-2xl border border-white/10 bg-zinc-950/30">
+                  <table id="casesTable" class="min-w-[1100px] w-full border-collapse text-left">
+                    <thead class="sticky top-0 bg-zinc-950/90 backdrop-blur">
+                      <tr class="text-xs font-semibold text-zinc-300">
+                        <th class="px-3 py-3 font-mono">ID</th>
+                        <th class="px-3 py-3">Title</th>
+                        <th class="px-3 py-3 font-mono">Type</th>
+                        <th class="px-3 py-3 font-mono">Priority</th>
+                        <th class="px-3 py-3">Preconditions</th>
+                        <th class="px-3 py-3">Steps</th>
+                        <th class="px-3 py-3">Expected</th>
+                        <th class="px-3 py-3">Tags</th>
+                        <th class="px-3 py-3">Req refs</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/10"></tbody>
+                  </table>
+                </div>
+                <div id="resultCount" class="mt-3 font-mono text-xs text-zinc-400"></div>
+              </div>
+            </section>
+
+            <!-- Removed tips section (kept UI focused) -->
+          </section>
+        </form>
+      </main>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

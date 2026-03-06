@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test Scenario Generator — Architecture &amp; Workflow Plan</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --muted: #64748b;
+      --accent: #2563eb;
+      --accent-light: #eff6ff;
+      --green: #16a34a;
+      --green-light: #f0fdf4;
+      --amber: #d97706;
+      --amber-light: #fffbeb;
+      --red: #dc2626;
+      --red-light: #fef2f2;
+      --purple: #7c3aed;
+      --purple-light: #f5f3ff;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
+    h1 { font-size: 2rem; font-weight: 700; margin-bottom: 8px; }
+    h1 span { color: var(--accent); }
+    .subtitle { color: var(--muted); font-size: 1.05rem; margin-bottom: 40px; }
+    h2 { font-size: 1.35rem; font-weight: 600; margin: 40px 0 16px; padding-bottom: 8px; border-bottom: 2px solid var(--accent); display: inline-block; }
+    h3 { font-size: 1.05rem; font-weight: 600; margin-bottom: 8px; }
+    p, li { font-size: 0.95rem; }
+
+    /* Cards */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 16px; }
+    .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .step-badge { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; color: #fff; flex-shrink: 0; }
+    .badge-blue { background: var(--accent); }
+    .badge-green { background: var(--green); }
+    .badge-amber { background: var(--amber); }
+    .badge-purple { background: var(--purple); }
+    .badge-red { background: var(--red); }
+
+    /* Flow diagram */
+    .flow { display: flex; flex-direction: column; gap: 0; align-items: center; margin: 32px 0; }
+    .flow-step { background: var(--card); border: 2px solid var(--accent); border-radius: 12px; padding: 16px 28px; text-align: center; min-width: 280px; position: relative; }
+    .flow-step h4 { font-size: 0.95rem; font-weight: 600; color: var(--accent); }
+    .flow-step p { font-size: 0.82rem; color: var(--muted); margin-top: 4px; }
+    .flow-arrow { color: var(--accent); font-size: 1.5rem; line-height: 1; padding: 4px 0; }
+
+    /* Grid layouts */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    @media (max-width: 768px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+    /* Tags */
+    .tag { display: inline-block; padding: 2px 10px; border-radius: 9999px; font-size: 0.78rem; font-weight: 500; margin: 2px 4px 2px 0; }
+    .tag-blue { background: var(--accent-light); color: var(--accent); }
+    .tag-green { background: var(--green-light); color: var(--green); }
+    .tag-amber { background: var(--amber-light); color: var(--amber); }
+    .tag-purple { background: var(--purple-light); color: var(--purple); }
+    .tag-red { background: var(--red-light); color: var(--red); }
+
+    /* Table */
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+    th { background: var(--bg); font-weight: 600; color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* Lists */
+    ul { padding-left: 20px; }
+    li { margin-bottom: 4px; }
+
+    .mono { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85rem; background: var(--bg); padding: 2px 6px; border-radius: 4px; }
+
+    .section-description { color: var(--muted); margin-bottom: 20px; }
+
+    .highlight-box { border-left: 4px solid var(--accent); background: var(--accent-light); padding: 16px 20px; border-radius: 0 8px 8px 0; margin: 16px 0; }
+    .highlight-box.green { border-left-color: var(--green); background: var(--green-light); }
+    .highlight-box.amber { border-left-color: var(--amber); background: var(--amber-light); }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- ============================================================ -->
+    <!-- HEADER -->
+    <!-- ============================================================ -->
+    <h1><span>Test Scenario Generator</span> — Project Plan</h1>
+    <p class="subtitle">
+      An AI-powered Next.js application that transforms software requirements into structured,
+      high-quality test scenarios using multiple test design techniques and LLM providers.
+    </p>
+
+    <!-- ============================================================ -->
+    <!-- GOAL -->
+    <!-- ============================================================ -->
+    <h2>What the Project Achieves</h2>
+    <div class="highlight-box">
+      <p>
+        <strong>Core Goal:</strong> Accept raw software requirements (text or documents), use AI to analyze them,
+        recommend appropriate test design techniques, and then generate comprehensive, structured test scenarios —
+        ready for export or direct push to test management tools like Jira/Xray.
+      </p>
+    </div>
+    <div class="grid-3" style="margin-top: 20px;">
+      <div class="card">
+        <h3>For QA Engineers</h3>
+        <p>Eliminates hours of manual test case writing. Paste a requirement, get dozens of well-structured scenarios in seconds.</p>
+      </div>
+      <div class="card">
+        <h3>For Test Leads</h3>
+        <p>Ensures consistent test coverage across the team using proven techniques like Boundary Value Analysis and Decision Tables.</p>
+      </div>
+      <div class="card">
+        <h3>For Teams</h3>
+        <p>Export to CSV/JSON/PDF or push directly to Jira Xray. Integrates into existing workflows without friction.</p>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- HIGH-LEVEL WORKFLOW -->
+    <!-- ============================================================ -->
+    <h2>High-Level Workflow</h2>
+    <p class="section-description">The app follows a 3-step wizard flow managed by a Zustand store with session persistence.</p>
+
+    <div class="flow">
+      <div class="flow-step">
+        <h4>Step 1 — Input</h4>
+        <p>Paste text or upload a document (PDF, DOCX, MD, TXT). Optionally split into chunks. Select AI provider.</p>
+      </div>
+      <div class="flow-arrow">&#x25BC;</div>
+      <div class="flow-step" style="border-color: var(--green);">
+        <h4 style="color: var(--green);">Step 2 — Analysis</h4>
+        <p>AI analyzes the requirement, extracts testable elements, and recommends test techniques with confidence levels.</p>
+      </div>
+      <div class="flow-arrow">&#x25BC;</div>
+      <div class="flow-step" style="border-color: var(--purple);">
+        <h4 style="color: var(--purple);">Step 3 — Results</h4>
+        <p>AI generates scenarios per technique. Deduplication runs. Review, export (CSV/JSON/PDF), or push to Jira Xray.</p>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- DETAILED WORKFLOW -->
+    <!-- ============================================================ -->
+    <h2>Detailed Workflow Breakdown</h2>
+
+    <!-- STEP 1 -->
+    <div class="card">
+      <div class="card-header">
+        <div class="step-badge badge-blue">1</div>
+        <div>
+          <h3 style="margin-bottom: 0;">Requirement Input</h3>
+          <small style="color: var(--muted);">Page: <span class="mono">/</span> &nbsp;|&nbsp; Route: <span class="mono">app/page.tsx</span></small>
+        </div>
+      </div>
+      <ul>
+        <li><strong>Text Input:</strong> User types or pastes requirement text directly into a textarea.</li>
+        <li><strong>File Upload:</strong> User uploads a file (PDF, DOCX, Markdown, TXT). The file is sent to <span class="mono">/api/parse-document</span> which uses format-specific parsers (mammoth for DOCX, pdf-parse for PDF, etc.) to extract text.</li>
+        <li><strong>AI Provider Selection:</strong> User picks between <span class="tag tag-blue">OpenAI</span> <span class="tag tag-green">Gemini</span> <span class="tag tag-purple">Claude</span>.</li>
+        <li><strong>Chunking (Optional):</strong> For large documents, the user can click "Split into Requirements" which calls <span class="mono">/api/chunk</span>. The AI breaks the document into individual, self-contained requirement chunks (REQ-001, REQ-002, etc.). The user can then select/deselect which chunks to analyze.</li>
+        <li><strong>Analyze:</strong> Clicking "Analyze Requirement" sends the text (or selected chunks) + provider to <span class="mono">/api/analyze</span>.</li>
+      </ul>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="card">
+      <div class="card-header">
+        <div class="step-badge badge-green">2</div>
+        <div>
+          <h3 style="margin-bottom: 0;">Requirement Analysis</h3>
+          <small style="color: var(--muted);">Page: <span class="mono">/analysis</span> &nbsp;|&nbsp; Route: <span class="mono">app/analysis/page.tsx</span></small>
+        </div>
+      </div>
+      <p style="margin-bottom: 12px;">The <span class="mono">/api/analyze</span> route sends the requirement to the chosen AI provider with a structured output schema. The AI returns:</p>
+      <div class="grid-2">
+        <div>
+          <h3>Extracted Elements</h3>
+          <p>Testable elements identified in the requirement:</p>
+          <div style="margin-top: 8px;">
+            <span class="tag tag-blue">input</span>
+            <span class="tag tag-green">output</span>
+            <span class="tag tag-purple">state</span>
+            <span class="tag tag-amber">rule</span>
+            <span class="tag tag-red">boundary</span>
+            <span class="tag tag-blue">constraint</span>
+            <span class="tag tag-green">action</span>
+          </div>
+          <p style="margin-top: 8px; font-size: 0.85rem; color: var(--muted);">Each element has a name, type, description, and optional values.</p>
+        </div>
+        <div>
+          <h3>Technique Recommendations</h3>
+          <p>The AI recommends test design techniques with:</p>
+          <ul>
+            <li><strong>Confidence level</strong> (high/medium/low)</li>
+            <li><strong>Rationale</strong> explaining why</li>
+            <li><strong>Estimated scenario count</strong></li>
+          </ul>
+          <p style="margin-top: 8px; font-size: 0.85rem; color: var(--muted);">High/medium confidence techniques are auto-selected.</p>
+        </div>
+      </div>
+      <div class="highlight-box green" style="margin-top: 16px;">
+        <p>The user reviews the analysis, toggles techniques on/off, and clicks <strong>"Generate Test Scenarios"</strong> to proceed.</p>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="card">
+      <div class="card-header">
+        <div class="step-badge badge-purple">3</div>
+        <div>
+          <h3 style="margin-bottom: 0;">Scenario Generation &amp; Results</h3>
+          <small style="color: var(--muted);">Page: <span class="mono">/results</span> &nbsp;|&nbsp; Route: <span class="mono">app/results/page.tsx</span></small>
+        </div>
+      </div>
+      <p style="margin-bottom: 12px;">The <span class="mono">/api/generate</span> route fires off parallel AI calls (max concurrency: 3), one per selected technique. Each call uses a technique-specific prompt template.</p>
+
+      <h3>Test Design Techniques</h3>
+      <table>
+        <thead>
+          <tr><th>Technique</th><th>What It Tests</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Equivalence Partitioning</td><td>Inputs divided into valid/invalid equivalence classes</td></tr>
+          <tr><td>Boundary Value Analysis</td><td>Edge values at input range boundaries</td></tr>
+          <tr><td>State Transition</td><td>Systems with distinct states and transition triggers</td></tr>
+          <tr><td>Decision Table</td><td>Complex business rules with multiple conditions/actions</td></tr>
+          <tr><td>Pairwise Testing</td><td>Combinations of multiple independent parameters</td></tr>
+          <tr><td>Error Guessing</td><td>Common failure points, invalid inputs, edge cases</td></tr>
+          <tr><td>Use Case Testing</td><td>End-to-end user workflows and actor interactions</td></tr>
+          <tr><td>General</td><td>Fallback for broad test coverage</td></tr>
+        </tbody>
+      </table>
+
+      <h3 style="margin-top: 20px;">Generated Scenario Structure</h3>
+      <p>Each generated test scenario contains:</p>
+      <div class="grid-2" style="margin-top: 12px;">
+        <ul>
+          <li><strong>ID</strong> — Unique identifier</li>
+          <li><strong>Title &amp; Description</strong></li>
+          <li><strong>Preconditions</strong> — Setup required</li>
+          <li><strong>Steps</strong> — Action + Expected Result + Test Data</li>
+        </ul>
+        <ul>
+          <li><strong>Expected Result</strong> — Overall outcome</li>
+          <li><strong>Priority</strong> — critical / high / medium / low</li>
+          <li><strong>Type</strong> — positive / negative / edge-case / boundary</li>
+          <li><strong>Tags</strong> — Categorization labels</li>
+        </ul>
+      </div>
+
+      <h3 style="margin-top: 20px;">Post-Generation Processing</h3>
+      <ul>
+        <li><strong>Deduplication:</strong> A Jaccard similarity algorithm compares scenario titles (40%), steps (40%), and descriptions (20%). Pairs above 60% similarity are flagged as duplicates. Users can dismiss them with one click.</li>
+        <li><strong>Stats Dashboard:</strong> Shows total count, priority breakdown (critical/high), scenario types (positive/negative/edge-case/boundary), and duplicate count.</li>
+      </ul>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- EXPORT & INTEGRATION -->
+    <!-- ============================================================ -->
+    <h2>Export &amp; Integration</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h3>Export Formats</h3>
+        <p>Scenarios can be exported via <span class="mono">/api/export</span>:</p>
+        <ul style="margin-top: 8px;">
+          <li><span class="tag tag-blue">CSV</span> — Flat table format for spreadsheets</li>
+          <li><span class="tag tag-green">JSON</span> — Full structured data</li>
+          <li><span class="tag tag-purple">PDF</span> — Formatted report (via jsPDF + autotable)</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Test Management Integration</h3>
+        <p>Push scenarios directly to tools via <span class="mono">/api/push-to-tool</span>:</p>
+        <ul style="margin-top: 8px;">
+          <li><span class="tag tag-green">Jira Xray</span> — Implemented (requires JIRA_BASE_URL, JIRA_EMAIL, JIRA_API_TOKEN env vars)</li>
+          <li><span class="tag tag-amber">TestRail</span> — Planned (not yet implemented)</li>
+          <li><span class="tag tag-amber">Azure DevOps</span> — Planned (not yet implemented)</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ARCHITECTURE -->
+    <!-- ============================================================ -->
+    <h2>Architecture Overview</h2>
+
+    <div class="card">
+      <h3>Tech Stack</h3>
+      <div style="margin-top: 8px;">
+        <span class="tag tag-blue">Next.js 16</span>
+        <span class="tag tag-blue">React 19</span>
+        <span class="tag tag-blue">TypeScript</span>
+        <span class="tag tag-purple">Tailwind CSS 4</span>
+        <span class="tag tag-green">Zustand</span>
+        <span class="tag tag-amber">Zod 4</span>
+        <span class="tag tag-red">jsPDF</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Project Structure</h3>
+      <table>
+        <thead><tr><th>Directory</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><span class="mono">app/</span></td><td>Next.js App Router pages (input, analysis, results) and API routes</td></tr>
+          <tr><td><span class="mono">app/api/</span></td><td>6 API routes: analyze, generate, chunk, export, parse-document, push-to-tool</td></tr>
+          <tr><td><span class="mono">components/</span></td><td>React components: workflow stepper, requirement input, analysis review, scenario table, export toolbar, etc.</td></tr>
+          <tr><td><span class="mono">components/ui/</span></td><td>Reusable UI primitives: button, card, select, textarea, badge, checkbox, spinner, file-upload, data-table</td></tr>
+          <tr><td><span class="mono">lib/providers/</span></td><td>AI provider adapters: OpenAI, Gemini, Claude — all implement a common interface</td></tr>
+          <tr><td><span class="mono">lib/templates/</span></td><td>Prompt templates for each test design technique (8 techniques + analysis)</td></tr>
+          <tr><td><span class="mono">lib/parsers/</span></td><td>Document parsers: PDF, DOCX, Markdown, plain text</td></tr>
+          <tr><td><span class="mono">lib/exporters/</span></td><td>Export formatters: CSV, JSON, PDF</td></tr>
+          <tr><td><span class="mono">lib/schemas/</span></td><td>Zod schemas for AI response validation (analysis + scenarios)</td></tr>
+          <tr><td><span class="mono">lib/integrations/</span></td><td>Test management tool integrations (Jira Xray)</td></tr>
+          <tr><td><span class="mono">lib/store/</span></td><td>Zustand workflow store with session persistence</td></tr>
+          <tr><td><span class="mono">types/</span></td><td>TypeScript type definitions for the entire application</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>AI Provider Architecture</h3>
+      <p>All providers implement a common <span class="mono">AIProvider</span> interface with a <span class="mono">generateStructuredOutput()</span> method. This allows swapping providers without changing any business logic.</p>
+      <div class="grid-3" style="margin-top: 12px;">
+        <div style="text-align: center; padding: 12px; background: var(--accent-light); border-radius: 8px;">
+          <strong>OpenAI</strong><br>
+          <small style="color: var(--muted);">GPT models via structured outputs</small>
+        </div>
+        <div style="text-align: center; padding: 12px; background: var(--green-light); border-radius: 8px;">
+          <strong>Gemini</strong><br>
+          <small style="color: var(--muted);">Google GenAI SDK</small>
+        </div>
+        <div style="text-align: center; padding: 12px; background: var(--purple-light); border-radius: 8px;">
+          <strong>Claude</strong><br>
+          <small style="color: var(--muted);">Anthropic SDK</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- DATA FLOW -->
+    <!-- ============================================================ -->
+    <h2>API Routes &amp; Data Flow</h2>
+    <table>
+      <thead><tr><th>Route</th><th>Method</th><th>Input</th><th>Output</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="mono">/api/parse-document</span></td>
+          <td>POST</td>
+          <td>File upload (multipart/form-data)</td>
+          <td>Extracted text + filename</td>
+        </tr>
+        <tr>
+          <td><span class="mono">/api/chunk</span></td>
+          <td>POST</td>
+          <td>Text + provider name</td>
+          <td>Array of requirement chunks (REQ-xxx)</td>
+        </tr>
+        <tr>
+          <td><span class="mono">/api/analyze</span></td>
+          <td>POST</td>
+          <td>Requirement text + provider name</td>
+          <td>Analysis result: summary, extracted elements, technique recommendations, complexity</td>
+        </tr>
+        <tr>
+          <td><span class="mono">/api/generate</span></td>
+          <td>POST</td>
+          <td>Requirement text + provider + techniques + extracted elements + analysis context</td>
+          <td>Array of test scenarios + duplicate groups</td>
+        </tr>
+        <tr>
+          <td><span class="mono">/api/export</span></td>
+          <td>POST</td>
+          <td>Scenarios + format (csv/json/pdf)</td>
+          <td>Downloadable file</td>
+        </tr>
+        <tr>
+          <td><span class="mono">/api/push-to-tool</span></td>
+          <td>POST</td>
+          <td>Scenarios + platform + project key</td>
+          <td>Push result (created IDs / errors)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ============================================================ -->
+    <!-- KEY DESIGN DECISIONS -->
+    <!-- ============================================================ -->
+    <h2>Key Design Decisions</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h3>Structured Output via Zod</h3>
+        <p>All AI responses are validated against Zod schemas using <span class="mono">zod-to-json-schema</span> to generate JSON Schema for providers. This ensures type-safe, predictable output regardless of AI hallucinations.</p>
+      </div>
+      <div class="card">
+        <h3>Technique-Specific Prompts</h3>
+        <p>Each test design technique has its own dedicated prompt template with specialized system instructions, ensuring domain-expert-level output per technique.</p>
+      </div>
+      <div class="card">
+        <h3>Parallel Generation</h3>
+        <p>When multiple techniques are selected, scenario generation runs in parallel (max 3 concurrent) to minimize total wait time.</p>
+      </div>
+      <div class="card">
+        <h3>Deduplication</h3>
+        <p>Since multiple techniques may produce overlapping scenarios, a Jaccard-similarity algorithm flags duplicates (>60% match) for user review.</p>
+      </div>
+      <div class="card">
+        <h3>Session Persistence</h3>
+        <p>The Zustand store persists to <span class="mono">sessionStorage</span>, so users don't lose progress on page refresh within the same session.</p>
+      </div>
+      <div class="card">
+        <h3>Provider Abstraction</h3>
+        <p>A common <span class="mono">AIProvider</span> interface means adding a new AI provider only requires implementing one method — no changes to the rest of the application.</p>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- FUTURE / PLANNED -->
+    <!-- ============================================================ -->
+    <h2>Planned / Not Yet Implemented</h2>
+    <div class="highlight-box amber">
+      <ul>
+        <li><strong>TestRail integration</strong> — Route exists but returns 501</li>
+        <li><strong>Azure DevOps integration</strong> — Route exists but returns 501</li>
+      </ul>
+    </div>
+
+  </div>
+</body>
+</html>

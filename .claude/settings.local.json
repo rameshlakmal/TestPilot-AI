@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx vite:*)",
+      "Bash(timeout 5 node:*)",
+      "Bash(node:*)",
+      "Bash(netstat:*)",
+      "Bash(taskkill:*)",
+      "Bash(npm install:*)",
+      "Bash(curl:*)",
+      "Bash(sed:*)",
+      "Bash(ls:*)",
+      "Bash(mv:*)"
+    ]
+  }
+}

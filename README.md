@@ -11,6 +11,7 @@ A skills-driven test case generation platform that uses AI to analyze software r
 - **3 LLM Providers** — OpenAI, Anthropic (Claude), Google Gemini — switch from the UI dropdown
 - **Technique Diagrams** — Optional Mermaid.js visual diagrams showing how each technique applies to your requirement (state machines, flowcharts, mind maps)
 - **Smart Deduplication** — Weighted Jaccard similarity removes near-duplicate test cases across techniques
+- **Jira Import** — Import user stories directly from Jira with project/epic/sprint/status filters, reactive checkbox sync
 - **Multiple Input Formats** — Paste text or upload PDF, DOCX, Markdown, TXT, HTML files
 - **Clarify Requirements** — AI identifies ambiguities and asks targeted questions before generation
 - **AIO/Jira Integration** — Push generated test cases directly to AIO Tests with folder hierarchy, priority mapping, and tag support
@@ -66,7 +67,12 @@ RATE_LIMIT_PER_MINUTE=90
 # CORS (optional — defaults to localhost:5173)
 CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 
-# AIO/Jira integration (optional)
+# Jira import (optional — enables Jira tab in Step 1)
+# JIRA_BASE_URL=https://your-domain.atlassian.net
+# JIRA_EMAIL=your-email@example.com
+# JIRA_API_TOKEN=your-jira-api-token
+
+# AIO test management integration (optional)
 # AIO_BASE_URL=https://tcms.aiojiraapps.com/aio-tcms
 # AIO_TOKEN=your-aio-token
 ```
@@ -112,18 +118,17 @@ Everything is served from `http://localhost:3001`.
 │                  │     │                   │     │                 │
 │ • Paste text     │     │ • AI analyzes req │     │ • Test cases    │
 │ • Upload file    │     │ • Recommends      │     │ • Technique     │
+│ • Jira import    │     │                   │     │                 │
 │ • Select provider│     │   techniques      │     │   diagrams      │
 │ • Select model   │     │ • Select diagrams │     │ • Export/push   │
 │ • Clarify (opt.) │     │ • Generate        │     │   to AIO        │
 └─────────────────┘     └──────────────────┘     └─────────────────┘
 ```
 
-### Generation Paths
+### Generation Flow
 
-| Path | Description | Quality | Speed |
-|------|-------------|---------|-------|
-| **Analyze + Per-Skill** (recommended) | AI analyzes requirement, recommends techniques, generates per-skill in parallel | Highest | Moderate |
-| **Legacy Mega-Prompt** | All 12 skills in one prompt, AI figures out which to apply | Lower | Fastest |
+The recommended (and only) path is **Analyze + Per-Skill**:
+AI analyzes the requirement, recommends techniques with confidence levels, and generates test cases per-skill in parallel for highest quality output.
 
 ### Per-Skill Generation Flow
 
@@ -221,7 +226,8 @@ test-generaror/
 │   ├── util.js                  # JSON parsing, dedup, suite merging
 │   ├── selectSkills.js          # Keyword-based skill selection (legacy fallback)
 │   ├── skills.js                # Loads .md skill files from skills/ directory
-│   ├── aio.js                   # Jira AIO integration
+│   ├── aio.js                   # AIO test management integration
+│   ├── jira.js                  # Jira project/story import integration
 │   └── llm/
 │       ├── index.js             # Provider dispatcher
 │       ├── openai.js            # OpenAI adapter (structured output, json_schema)
@@ -229,8 +235,14 @@ test-generaror/
 │       └── gemini.js            # Gemini adapter (rate limit retry, schema fallbacks)
 ├── client/
 │   └── src/
-│       ├── App.jsx              # Main React + MUI app (3-step wizard)
-│       └── MermaidDiagram.jsx   # Mermaid.js diagram renderer
+│       ├── App.jsx              # Main shell: state, effects, orchestration, stepper UI
+│       ├── StepRequirements.jsx # Step 1: provider/model selection, manual input, Jira import
+│       ├── StepAnalyze.jsx      # Step 2: preflight, analysis, technique selection
+│       ├── StepResults.jsx      # Step 3: test cases, filters, export, AIO push
+│       ├── DiagramDialog.jsx    # Fullscreen Mermaid diagram viewer
+│       ├── MermaidDiagram.jsx   # Mermaid.js diagram renderer with sanitization
+│       ├── helpers.jsx          # Shared utility components (BulletList, OrderedList, CSV)
+│       └── theme.js             # Theme constants, model options, diagram info
 ├── web/                         # Static files served by Express
 ├── skills/                      # 12 QA technique playbooks (.md)
 ├── examples/                    # Example requirement documents
@@ -247,8 +259,12 @@ test-generaror/
 | `/api/skills` | GET | List loaded skills (id, title, tags) |
 | `/api/preflight` | POST | Identify ambiguities and missing info in requirements |
 | `/api/analyze` | POST | Analyze requirement, extract elements, recommend techniques |
-| `/api/generate-tests` | POST | Generate test cases (per-skill or legacy mode) |
-| `/api/aio/push` | POST | Push test suite to AIO/Jira |
+| `/api/generate-tests` | POST | Generate test cases using per-skill parallel generation |
+| `/api/jira/status` | GET | Check if Jira is configured |
+| `/api/jira/projects` | GET | List Jira projects |
+| `/api/jira/stories` | GET | Fetch stories with optional epic/sprint/status filters |
+| `/api/jira/story-details` | POST | Fetch full details for selected story keys |
+| `/api/push-to-aio` | POST | Push test suite to AIO test management |
 
 ## Deployment
 
@@ -295,7 +311,7 @@ Works with Railway, Render, Fly.io, or any Node.js hosting:
 | Validation | AJV (JSON Schema) |
 | File Parsing | pdf-parse, mammoth (DOCX), cheerio (HTML) |
 | LLM Providers | OpenAI, Anthropic, Google Gemini (REST APIs) |
-| Styling | MUI dark theme with purple accent (#a855f7) |
+| Styling | MUI Neon Minimal dark theme, violet-400 (#a78bfa) |
 
 ## License
 

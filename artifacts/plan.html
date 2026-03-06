@@ -1,0 +1,332 @@
+<h1 id="work-plan-ai-test-scenario-generator-agent">
+  Work Plan: AI Test Scenario Generator Agent
+</h1>
+<h2 id="overview">Overview</h2>
+<p>
+  Build an AI agent that accepts software requirements or user stories and
+  automatically generates comprehensive test scenarios using formal test design
+  techniques, Mermaid.js diagrams, and structured test cases with test data.
+</p>
+<hr />
+<h2 id="problem-statement">Problem Statement</h2>
+<p>
+  Manual test design is time-consuming and often incomplete. Testers need to:
+</p>
+<ul>
+  <li>Choose the right test design technique for each requirement</li>
+  <li>Ensure full coverage (positive, negative, edge cases)</li>
+  <li>Produce structured, readable test artifacts</li>
+</ul>
+<p>This agent automates that entire process.</p>
+<hr />
+<h2 id="goals">Goals</h2>
+<ol>
+  <li>Accept requirements as text input, uploaded file, or <strong>imported directly from Jira user stories</strong></li>
+  <li>Automatically select the most appropriate test design technique(s)</li>
+  <li>Generate a formal test design with reasoning</li>
+  <li>Produce Mermaid.js diagrams relevant to the technique chosen</li>
+  <li>Output structured test scenarios with concrete test data</li>
+  <li>Push generated test cases back to Jira/AIO test management</li>
+</ol>
+<hr />
+<h2 id="test-design-techniques-the-agent-will-know">
+  Test Design Techniques the Agent Will Know
+</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Technique</th>
+      <th>Best Used When</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Equivalence Partitioning</td>
+      <td>Inputs can be grouped into classes that behave the same way</td>
+    </tr>
+    <tr>
+      <td>Boundary Value Analysis</td>
+      <td>Numeric ranges, limits, or thresholds are involved</td>
+    </tr>
+    <tr>
+      <td>Decision Table Testing</td>
+      <td>Multiple conditions combine to produce different outcomes</td>
+    </tr>
+    <tr>
+      <td>State Transition Testing</td>
+      <td>System has distinct states and transitions between them</td>
+    </tr>
+    <tr>
+      <td>Domain Analysis Testing</td>
+      <td>Complex domains with multiple interacting variables</td>
+    </tr>
+  </tbody>
+</table>
+<hr />
+<h2 id="agent-workflow-pipeline-">Agent Workflow (Pipeline)</h2>
+<pre><code>[User Input: Text / File Upload / Jira Import]
+          │
+          ▼
+  Step 0: Input Processing
+  → Accept text, file upload, or Jira user stories
+  → Jira: select project → filter by epic/sprint/status → pick stories → auto-advance
+  → Jira stories stay synced with checkboxes (reactive update)
+          │
+          ▼
+  Step 1: Requirement Analyzer
+  → AI extracts testable elements: inputs, outputs, rules, states, boundaries
+  → Recommends 3-6 testing techniques with confidence levels
+          │
+          ▼
+  Step 2: Technique Selection (User Review)
+  → User toggles recommended techniques on/off
+  → Optionally selects Mermaid.js diagrams per technique
+          │
+          ▼
+  Step 3: Per-Skill Parallel Generation
+  → Each technique gets a dedicated, focused LLM call
+  → Up to 3 concurrent calls (1 for Gemini)
+  → Optional Mermaid diagram generated alongside test cases
+          │
+          ▼
+  Step 4: Merge + Deduplicate
+  → Combine results from all skills
+  → Weighted Jaccard dedup (title 40%, steps 40%, expected 20%, threshold 60%)
+  → Renumber IDs sequentially
+          │
+          ▼
+  [Output: Displayed in Web UI + Export JSON/CSV + Push to Jira/AIO]
+</code></pre>
+<hr />
+<h2 id="output-artifacts">Output Artifacts</h2>
+<p>For each requirement processed, the agent produces:</p>
+<table>
+  <thead>
+    <tr>
+      <th>Artifact</th>
+      <th>Format</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Analysis Report</td>
+      <td>Markdown</td>
+      <td>Technique selected + reasoning</td>
+    </tr>
+    <tr>
+      <td>Test Design</td>
+      <td>Markdown table</td>
+      <td>Partitions / boundaries / states / decisions</td>
+    </tr>
+    <tr>
+      <td>Mermaid.js Diagrams</td>
+      <td>SVG</td>
+      <td>Client-side rendered Mermaid.js diagrams</td>
+    </tr>
+    <tr>
+      <td>Test Cases</td>
+      <td>JSON</td>
+      <td>Structured test cases with steps, expected results, and concrete test data</td>
+    </tr>
+  </tbody>
+</table>
+<hr />
+<h2 id="user-interface-web-ui-">User Interface (Web UI)</h2>
+<p>Built with React + Material UI, Neon Minimal theme, violet-400 (#a78bfa). 3-step wizard workflow.</p>
+<p><strong>Layout:</strong></p>
+<pre><code>┌─────────────────────────────────────────────────────────┐
+│  AI Test Case Generator                                 │
+├─────────────────────────────────────────────────────────┤
+│  Step 1: Requirements                                   │
+│  ┌─────────────┬─────────────┐                          │
+│  │   Manual    │    Jira     │  ← Input method tabs     │
+│  ├─────────────┴─────────────┤                          │
+│  │ [Paste text / Upload]     │  ← Manual mode           │
+│  │ — OR —                    │                          │
+│  │ [Project ▼] [Epic ▼]     │  ← Jira mode             │
+│  │ [Sprint ▼] [Status ▼]    │                          │
+│  │ ☑ PROJ-1  Story title    │                          │
+│  │ ☑ PROJ-2  Story title    │                          │
+│  │ [Use Selected]            │  ← Auto-advances         │
+│  └───────────────────────────┘                          │
+├─────────────────────────────────────────────────────────┤
+│  Step 2: Analyze &amp; Configure                           │
+│  [Analyze] → Technique cards with checkboxes            │
+│  [Generate test scenarios]                              │
+├─────────────────────────────────────────────────────────┤
+│  Step 3: Results                                        │
+│  Diagrams | Test Cases (filter/search) | Export/Push    │
+└─────────────────────────────────────────────────────────┘
+</code></pre>
+<hr />
+<h2 id="project-folder-structure">Project Folder Structure</h2>
+<pre><code>test-generator/
+├── server/
+│   ├── index.js                 # Express app, routes, orchestration
+│   ├── prompt.js                # All prompt builders (analysis, per-skill, preflight)
+│   ├── schema.js                # AJV JSON schemas
+│   ├── util.js                  # JSON parsing, dedup, suite merging
+│   ├── selectSkills.js          # Keyword-based skill selection (preflight fallback)
+│   ├── skills.js                # Loads .md skill files
+│   ├── aio.js                   # AIO test management integration
+│   ├── jira.js                  # Jira project/story import integration
+│   └── llm/                     # Provider adapters (openai, anthropic, gemini)
+├── client/src/
+│   ├── App.jsx                  # Main shell: state, effects, orchestration
+│   ├── StepRequirements.jsx     # Step 1 UI
+│   ├── StepAnalyze.jsx          # Step 2 UI
+│   ├── StepResults.jsx          # Step 3 UI
+│   ├── DiagramDialog.jsx        # Fullscreen diagram viewer
+│   ├── MermaidDiagram.jsx       # Mermaid.js renderer
+│   ├── helpers.jsx              # Shared utility components
+│   └── theme.js                 # Theme constants, model options
+├── skills/                      # 12 QA technique playbooks (.md)
+├── web/                         # Static files served in production
+└── .env.example
+</code></pre>
+<hr />
+<h2 id="technology-stack">Technology Stack</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Component</th>
+      <th>Technology</th>
+      <th>Reason</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Language</td>
+      <td>JavaScript (Node.js)</td>
+      <td>Full-stack JS, shared ecosystem</td>
+    </tr>
+    <tr>
+      <td>Backend</td>
+      <td>Express.js (CommonJS)</td>
+      <td>Lightweight, flexible routing</td>
+    </tr>
+    <tr>
+      <td>LLM Providers</td>
+      <td>OpenAI / Anthropic / Gemini</td>
+      <td>Multi-provider support, avoid lock-in</td>
+    </tr>
+    <tr>
+      <td>Frontend</td>
+      <td>React + Material UI (Vite)</td>
+      <td>Rich component library, dark theme</td>
+    </tr>
+    <tr>
+      <td>Diagrams</td>
+      <td>Mermaid.js (client-side)</td>
+      <td>No server dependency, interactive SVGs</td>
+    </tr>
+    <tr>
+      <td>Integration</td>
+      <td>Jira / AIO Test Management</td>
+      <td>Import stories, push test cases</td>
+    </tr>
+    <tr>
+      <td>Env Management</td>
+      <td>dotenv</td>
+      <td>Secure API key handling</td>
+    </tr>
+  </tbody>
+</table>
+<hr />
+<h2 id="key-dependencies">Key Dependencies</h2>
+<pre><code># Server
+express, cors, helmet, dotenv, multer
+openai, @anthropic-ai/sdk, @google/generative-ai
+ajv, pdf-parse, mammoth, cheerio
+
+# Client
+react, @mui/material, mermaid, vite
+</code></pre>
+<hr />
+<h2 id="phase-by-phase-build-plan">Phase-by-Phase Build Plan</h2>
+<h3 id="phase-1-project-scaffold">Phase 1 — Project Scaffold</h3>
+<ul>
+  <li>Create folder structure (server/, client/, skills/)</li>
+  <li>Set up <code>package.json</code> and <code>.env.example</code></li>
+  <li>Verify Express server + LLM provider connections work</li>
+</ul>
+<h3 id="phase-2-agent-core-prompts-chains-">
+  Phase 2 — Agent Core (Prompts + Routes)
+</h3>
+<ul>
+  <li>Write prompt builders for analysis, per-skill generation, and preflight</li>
+  <li>
+    Build Express routes (analyze → generate-tests with per-skill parallel calls)
+  </li>
+  <li>Build orchestration logic in <code>server/index.js</code></li>
+</ul>
+<h3 id="phase-3-mermaid-rendering">Phase 3 — Mermaid.js Diagrams</h3>
+<ul>
+  <li>Integrate Mermaid.js for client-side SVG rendering</li>
+  <li>Test all diagram types render correctly</li>
+</ul>
+<h3 id="phase-4-react-ui">Phase 4 — React UI</h3>
+<ul>
+  <li>
+    Build React + MUI 3-step wizard with input, analysis, and results views
+  </li>
+  <li>Wire UI to the Express API endpoints</li>
+  <li>Add export (JSON/CSV) and push-to-Jira functionality</li>
+</ul>
+<h3 id="phase-5-testing-refinement">Phase 5 — Testing &amp; Refinement</h3>
+<ul>
+  <li>
+    Test with sample requirements (login form, e-commerce checkout, state
+    machine)
+  </li>
+  <li>Refine prompts based on output quality</li>
+  <li>Add error handling and edge case management</li>
+</ul>
+<hr />
+<h2 id="example-input-output">Example Input / Output</h2>
+<p><strong>Input (User Story):</strong></p>
+<blockquote>
+  <p>
+    As a user, I want to log in with my email and password. The password must be
+    8-20 characters. After 3 failed attempts, the account is locked for 15
+    minutes.
+  </p>
+</blockquote>
+<p><strong>Expected Output:</strong></p>
+<ul>
+  <li>
+    Technique selected:
+    <strong>Boundary Value Analysis + State Transition Testing</strong> (with
+    reasoning)
+  </li>
+  <li>
+    Mermaid.js State Diagram showing:
+    <code>Unlocked → Failed Attempt → Locked → Cooldown</code> states
+  </li>
+  <li>
+    Test Cases including:
+    <ul>
+      <li>
+        <strong>Positive:</strong> valid email + valid password → login success
+      </li>
+      <li><strong>Negative:</strong> wrong password → error message shown</li>
+      <li><strong>Edge:</strong> exactly 3 failed attempts → account locked</li>
+      <li>
+        <strong>Boundary:</strong> password of 8 chars (valid), 7 chars
+        (invalid), 20 chars (valid), 21 chars (invalid)
+      </li>
+    </ul>
+  </li>
+</ul>
+<hr />
+<h2 id="success-criteria">Success Criteria</h2>
+<ul>
+  <li>[x] Supports text input, file uploads, and Jira user story import</li>
+  <li>[x] Jira import auto-advances to analysis, checkboxes reactively sync requirement text</li>
+  <li>[x] AI recommends testing techniques with confidence levels and rationale</li>
+  <li>[x] Per-skill parallel generation produces focused, high-quality test cases</li>
+  <li>[x] Mermaid.js diagrams render client-side without errors</li>
+  <li>[x] Test scenarios cover positive, negative, and edge cases with concrete data</li>
+  <li>[x] Export to JSON/CSV and push to AIO/Jira test management</li>
+</ul>

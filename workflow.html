@@ -377,7 +377,7 @@
 
     <p class="explain">
       The platform is a <strong>two-tier application</strong>: an Express.js backend (<span class="mono">server/</span>) that orchestrates LLM calls and file processing,
-      and a React + Material UI frontend (<span class="mono">client/</span>) that provides the user interface. There is also a legacy vanilla JS UI in <span class="mono">web/</span>.
+      and a React + Material UI frontend (<span class="mono">client/</span>) that provides the user interface. Static files for production are served from <span class="mono">web/</span>.
       The backend communicates with one of three AI providers (OpenAI, Anthropic, or Gemini) to analyze requirements and generate test cases.
       Twelve markdown-based "skill" files in the <span class="mono">skills/</span> directory teach the AI how to apply specific testing techniques.
     </p>
@@ -391,7 +391,7 @@
       <div class="config-item">
         <div class="config-label">Frontend</div>
         <div class="config-value">React + MUI (Vite)</div>
-        <div class="config-desc">Dark theme, purple accent (#a855f7), single-file App.jsx</div>
+        <div class="config-desc">Neon Minimal dark theme, violet-400 (#a78bfa), modular component architecture</div>
       </div>
       <div class="config-item">
         <div class="config-label">AI Providers</div>
@@ -418,39 +418,85 @@
 
     <p class="explain">
       Every path starts the same way: the user provides a <strong>requirement</strong>. This can be plain text typed/pasted into a textarea,
-      or a file upload, or both. The server processes uploaded files into plain text before anything else happens.
+      a file upload, or imported directly from <strong>Jira user stories</strong>. The server processes uploaded files into plain text before anything else happens.
     </p>
 
     <div class="flow-vertical" style="margin-top:20px;">
       <div class="flow-node purple">
         <h4>User Provides Requirement</h4>
-        <p>Paste text into the textarea, drag-and-drop a file, or both. The server combines them.</p>
+        <p>Three input methods available via tabs: <strong>Manual</strong> (paste/type text + optional file upload) or <strong>Jira</strong> (import user stories directly from a Jira project).</p>
       </div>
       <div class="flow-arrow">&#x25BC;</div>
-      <div class="flow-node left-align">
-        <h4>Server-Side File Parsing</h4>
-        <p style="margin-bottom:8px;">Uploaded files (max 2 MB) are converted to plain text based on their extension:</p>
-        <ul>
-          <li><strong>.txt / .md</strong> — Read as raw UTF-8 text, used directly</li>
-          <li><strong>.pdf</strong> — Extracted using the <span class="mono">pdf-parse</span> library, pulls all text content from pages</li>
-          <li><strong>.docx</strong> — Extracted using the <span class="mono">mammoth</span> library, converts Word documents to plain text</li>
-          <li><strong>.html / .htm</strong> — Parsed with <span class="mono">cheerio</span>, script and style tags are stripped, whitespace is normalized</li>
-        </ul>
-        <p style="margin-top:8px;">The extracted file text is <strong>appended</strong> to any text the user typed in the textarea. This combined string becomes the "requirement text" used by all subsequent steps.</p>
+
+      <div class="branch-container" style="margin:0;">
+        <div class="branch-label">Input Method</div>
+        <div class="branch-paths" style="grid-template-columns: 1fr 1fr;">
+
+          <!-- Manual Input -->
+          <div class="branch-path">
+            <div class="branch-connector" style="background: var(--purple-border);"></div>
+            <div class="path-card purple left-align">
+              <h4><span class="tag tag-purple">MANUAL</span> Text + File Upload</h4>
+              <ul>
+                <li>Paste or type requirements into the textarea</li>
+                <li>Optionally drag-and-drop a file (max 2 MB)</li>
+                <li><strong>.txt / .md</strong> — Read as raw UTF-8 text</li>
+                <li><strong>.pdf</strong> — Extracted via <span class="mono">pdf-parse</span></li>
+                <li><strong>.docx</strong> — Extracted via <span class="mono">mammoth</span></li>
+                <li><strong>.html / .htm</strong> — Parsed with <span class="mono">cheerio</span>, scripts stripped</li>
+              </ul>
+              <p style="font-size:0.78rem; color:var(--muted); margin-top:8px;">File text is appended to typed text. User clicks "Next" to proceed.</p>
+            </div>
+          </div>
+
+          <!-- Jira Import -->
+          <div class="branch-path">
+            <div class="branch-connector" style="background: var(--cyan-border);"></div>
+            <div class="path-card cyan left-align">
+              <h4><span class="tag tag-cyan">JIRA</span> Import User Stories</h4>
+              <ol>
+                <li>User selects a <strong>Jira project</strong> from a dropdown (fetched via <span class="mono">GET /api/jira/projects</span>)</li>
+                <li>Optional filters: <strong>Epic</strong>, <strong>Sprint</strong>, <strong>Status</strong> dropdowns narrow down stories</li>
+                <li>Stories are fetched via <span class="mono">GET /api/jira/stories</span> and displayed as a checklist with key, summary, status, and priority</li>
+                <li>User selects individual stories via checkboxes (select all / deselect all available)</li>
+                <li>Click <strong>"Use Selected"</strong> — fetches full story details via <span class="mono">POST /api/jira/story-details</span></li>
+                <li>Story details (key, summary, description) are formatted into structured requirement text</li>
+                <li><strong>Auto-advances to Step 2</strong> (Analyze) immediately — no need to manually click "Next"</li>
+              </ol>
+              <p style="font-size:0.78rem; color:var(--cyan); margin-top:10px; font-weight:600;">Requirement text stays in sync with checkboxes — toggling stories on/off automatically updates the requirement</p>
+            </div>
+          </div>
+
+        </div>
       </div>
+
+      <div class="flow-arrow">&#x25BC;</div>
+
+      <div class="flow-node left-align" style="border-color: var(--cyan-border);">
+        <h4 style="color: var(--cyan);">Jira Reactive Sync</h4>
+        <p style="margin-bottom:8px;">When stories are imported from Jira, the requirement text <strong>stays synchronized</strong> with the checkbox selection:</p>
+        <ul>
+          <li>Imported story details are stored client-side after the initial fetch</li>
+          <li>If the user navigates back to Step 1 and <strong>unchecks or re-checks stories</strong>, the requirement text is automatically re-composed from the currently selected stories</li>
+          <li>The Jira story count chip in the Requirement Analysis card updates to reflect the current selection</li>
+          <li>When the user returns to Step 2 and clicks <strong>Analyze</strong>, the AI analyzes the <strong>updated</strong> requirement — not the original import</li>
+        </ul>
+        <p style="margin-top:8px;">This means users can iteratively refine their selection without needing to click "Use Selected" again.</p>
+      </div>
+
       <div class="flow-arrow">&#x25BC;</div>
       <div class="flow-node" style="border-color: var(--purple-border); background: var(--purple-dim);">
-        <h4 style="color: var(--purple);">User Chooses One of 3 Paths</h4>
-        <p>The UI presents three buttons, each triggering a different workflow. Each path ultimately produces a structured test suite, but with different levels of intelligence, user control, and cost.</p>
+        <h4 style="color: var(--purple);">User Chooses One of 2 Paths</h4>
+        <p>The UI presents two options in the Analyze step. Both ultimately produce a structured test suite, but with different levels of preparation.</p>
       </div>
     </div>
 
     <!-- ============================================================ -->
-    <!-- 3 PATHS BRANCH -->
+    <!-- 2 PATHS BRANCH -->
     <!-- ============================================================ -->
     <div class="branch-container" style="margin-top:32px;">
-      <div class="branch-label">3 Available Paths</div>
-      <div class="branch-paths">
+      <div class="branch-label">2 Available Paths</div>
+      <div class="branch-paths" style="grid-template-columns: 1fr 1fr;">
 
         <!-- PATH A -->
         <div class="branch-path">
@@ -464,7 +510,7 @@
               <li>AI receives requirement + skill markdowns and identifies <strong>ambiguities, assumptions, and gaps</strong></li>
               <li>Returns a list of <strong>clarifying questions</strong> to the UI</li>
               <li>User <strong>answers each question</strong> in text fields</li>
-              <li>Answers are appended to the requirement, then user clicks <strong>Analyze</strong> or <strong>Generate</strong></li>
+              <li>Answers are appended to the requirement, then user clicks <strong>Analyze</strong></li>
             </ol>
             <p style="font-size:0.78rem; color:var(--amber); margin-top:10px; font-weight:600;">Best for: vague, incomplete, or ambiguous requirements</p>
           </div>
@@ -485,23 +531,6 @@
               <li>Each skill gets its own focused LLM call, results are <strong>merged and deduplicated</strong></li>
             </ol>
             <p style="font-size:0.78rem; color:var(--purple); margin-top:10px; font-weight:600;">Best for: highest quality output with user control over techniques</p>
-          </div>
-        </div>
-
-        <!-- PATH C -->
-        <div class="branch-path">
-          <div class="branch-connector blue"></div>
-          <div class="path-card blue">
-            <h4><span class="tag tag-blue">PATH C</span> Generate Directly (Legacy)</h4>
-            <p style="font-size:0.8rem; color:var(--muted); margin-bottom:10px;">Quick one-shot generation — fast but less accurate</p>
-            <ol>
-              <li>Sends requirement to <strong>POST /api/generate-tests</strong> without selectedSkills</li>
-              <li>Server selects skills using <strong>keyword matching</strong> (all 12 always included)</li>
-              <li>All skill markdowns are concatenated into <strong>one massive prompt</strong></li>
-              <li>AI generates the entire test suite in a <strong>single LLM call</strong></li>
-              <li>Simple exact-match deduplication is applied</li>
-            </ol>
-            <p style="font-size:0.78rem; color:var(--blue); margin-top:10px; font-weight:600;">Best for: quick results when speed matters more than depth</p>
           </div>
         </div>
 
@@ -571,7 +600,7 @@
     <p class="explain">
       Path A is a <strong>pre-processing step</strong> that helps when requirements are vague or incomplete.
       It doesn't generate test cases directly — instead, it identifies what's unclear and asks the user to fill in the gaps.
-      After answering, the user proceeds to Path B or C with a richer, more complete requirement.
+      After answering, the user proceeds to Path B (Analyze &amp; Recommend) with a richer, more complete requirement.
     </p>
 
     <div class="flow-vertical" style="margin-top:24px;">
@@ -632,8 +661,8 @@
       </div>
       <div class="flow-arrow amber">&#x25BC;</div>
       <div class="flow-node" style="border-color: var(--amber-border); background: var(--amber-dim);">
-        <h4 style="color: var(--amber);">User Proceeds to Path B or C</h4>
-        <p>The user's answers are formatted as "<strong>Q: [question] A: [answer]</strong>" pairs and appended to the original requirement text. This enriched requirement is then sent to the Analyze or Generate endpoint, giving the AI much better context to work with.</p>
+        <h4 style="color: var(--amber);">User Proceeds to Path B (Analyze)</h4>
+        <p>The user's answers are formatted as "<strong>Q: [question] A: [answer]</strong>" pairs and appended to the original requirement text. This enriched requirement is then sent to the Analyze endpoint, giving the AI much better context to work with.</p>
       </div>
     </div>
 
@@ -740,7 +769,7 @@
     <h3 style="margin-top:36px; color:var(--purple);">Phase 2 — Per-Skill Parallel Generation</h3>
 
     <p class="explain">
-      This is the core innovation of Path B. Instead of dumping all techniques into one prompt (like Path C),
+      This is the core innovation of Path B. Instead of dumping all techniques into one prompt,
       each selected technique gets its own <strong>dedicated, focused LLM call</strong>. This means the AI can deeply apply
       one technique at a time, producing higher quality and more thorough test cases. The calls run in parallel for speed.
     </p>
@@ -862,71 +891,6 @@
     </div>
 
     <!-- ============================================================ -->
-    <!-- PATH C DETAIL -->
-    <!-- ============================================================ -->
-    <h2>Path C — Generate Directly / Legacy (Detailed)</h2>
-
-    <p class="explain">
-      Path C is the original generation method. It's faster and cheaper (single LLM call) but produces lower quality results
-      because all 12 skill markdowns are crammed into one prompt and the AI has to figure out on its own which techniques to apply.
-      Skills tend to be applied shallowly when there are too many competing instructions in one prompt.
-    </p>
-
-    <div class="flow-vertical" style="margin-top:24px;">
-      <div class="flow-node blue">
-        <h4>User clicks "Generate directly (legacy)"</h4>
-        <p>Requirement text + optional file + depth sent to the server</p>
-      </div>
-      <div class="flow-arrow blue">&#x25BC;</div>
-      <div class="flow-node left-align">
-        <h4>POST /api/generate-tests (legacy mode)</h4>
-        <p>The server detects that <span class="mono">selectedSkills</span> is <strong>not present</strong> in the request body, and enters the legacy code path.</p>
-      </div>
-      <div class="flow-arrow blue">&#x25BC;</div>
-      <div class="flow-node left-align">
-        <h4>Keyword-Based Skill Selection</h4>
-        <p style="margin-bottom:8px;">Unlike Path B where the AI recommends skills, Path C uses a simple <strong>keyword matching algorithm</strong>:</p>
-        <ul>
-          <li>All 12 skills are <strong>always included</strong> in the legacy path (the ALWAYS_INCLUDE list contains all skill IDs)</li>
-          <li>Each skill's ID, title, and tags are tokenized and matched against the requirement text</li>
-          <li>Base scoring: <strong>+3 points</strong> per matching token</li>
-          <li>Domain hint bonuses: words like "workflow"/"state" boost the state-transition skill by +2, "rule"/"decision" boost decision-tables by +2, etc.</li>
-          <li>Scores are used for ordering, but in practice all skills are included regardless of score</li>
-        </ul>
-      </div>
-      <div class="flow-arrow blue">&#x25BC;</div>
-      <div class="flow-node left-align">
-        <h4>Build Single Mega-Prompt</h4>
-        <p style="margin-bottom:8px;">All skill markdowns are concatenated into one massive prompt:</p>
-        <ul>
-          <li><strong>System prompt:</strong> "You are a senior QA engineer and test designer. Return strict JSON only."</li>
-          <li><strong>User prompt:</strong> Contains the requirement + depth guidance + ALL selected skill markdowns concatenated as "SELECTED QA SKILLS (markdown; use as guidance): [all skills]" + schema hint</li>
-          <li>The AI receives everything at once and must decide on its own which techniques to apply and how deeply</li>
-        </ul>
-      </div>
-      <div class="flow-arrow blue">&#x25BC;</div>
-      <div class="flow-node">
-        <h4>Single LLM Call</h4>
-        <p>One call with the full mega-prompt. Temperature 0.2, 90-second timeout. The AI generates the entire test suite in one shot.</p>
-      </div>
-      <div class="flow-arrow blue">&#x25BC;</div>
-      <div class="flow-node left-align">
-        <h4>Validate + Repair + Simple Dedup</h4>
-        <ul>
-          <li>Same JSON parse → schema validate → repair pipeline as other paths</li>
-          <li>Deduplication is <strong>exact match only</strong> (compares title + type + priority + steps + expected as a composite key)</li>
-          <li>No weighted Jaccard similarity — only identical test cases are removed</li>
-          <li>IDs are renumbered TC-001, TC-002, ...</li>
-        </ul>
-      </div>
-      <div class="flow-arrow blue">&#x25BC;</div>
-      <div class="flow-node green">
-        <h4>Test Suite Returned</h4>
-        <p>Same output format as Path B, but test cases lack skill attribution in <span class="mono">coverageTags</span> since all skills were mixed in one prompt. Quality is generally lower because skills compete for attention in the prompt.</p>
-      </div>
-    </div>
-
-    <!-- ============================================================ -->
     <!-- MERMAID DIAGRAM FEATURE -->
     <!-- ============================================================ -->
     <h2>Technique Diagrams (Mermaid.js)</h2>
@@ -1039,7 +1003,7 @@
     <h2>Test Case Output Structure</h2>
 
     <p class="explain">
-      All three paths produce test suites in the same JSON format. Here's the exact structure that the LLM is asked to return,
+      Both paths produce test suites in the same JSON format. Here's the exact structure that the LLM is asked to return,
       and that the AJV schema validates against:
     </p>
 
@@ -1087,81 +1051,68 @@
           <th>Aspect</th>
           <th><span class="tag tag-amber">A</span> Missing Info</th>
           <th><span class="tag tag-purple">B</span> Analyze (Recommended)</th>
-          <th><span class="tag tag-blue">C</span> Legacy</th>
         </tr>
       </thead>
       <tbody>
         <tr>
           <td>LLM calls</td>
-          <td>1 (preflight) + then B or C</td>
+          <td>1 (preflight) + then B</td>
           <td>1 (analyze) + N (one per selected skill)</td>
-          <td>1 (single mega-prompt)</td>
         </tr>
         <tr>
           <td>Skill selection method</td>
           <td>Keyword token matching (+3 pts/match, +2 domain hints)</td>
           <td>AI-driven with confidence levels (high/medium/low)</td>
-          <td>Keyword matching, but all 12 always included anyway</td>
         </tr>
         <tr>
           <td>User control</td>
           <td>Answers clarifying questions</td>
           <td>Toggle individual techniques on/off with rationale visible</td>
-          <td>None — fire and forget</td>
         </tr>
         <tr>
           <td>How skills are applied</td>
-          <td>Depends on Path B or C next</td>
+          <td>Feeds into Path B next</td>
           <td>Dedicated prompt per skill with only that skill's markdown</td>
-          <td>All 12 skill markdowns dumped into one prompt</td>
         </tr>
         <tr>
           <td>Prompt focus</td>
           <td>N/A</td>
           <td>AI told "specialize in [technique], focus ONLY on what this technique uncovers"</td>
-          <td>AI told "use these skills as guidance" with everything at once</td>
         </tr>
         <tr>
           <td>Parallelism</td>
           <td>N/A</td>
           <td>Up to 3 concurrent calls (1 for Gemini)</td>
-          <td>Single sequential call</td>
         </tr>
         <tr>
           <td>Deduplication</td>
           <td>Depends on next step</td>
           <td>Weighted Jaccard similarity (40/40/20 weights, 60% threshold)</td>
-          <td>Exact match only (title+type+priority+steps+expected)</td>
         </tr>
         <tr>
           <td>Traceability</td>
           <td>Depends on next step</td>
           <td>Each test case tagged with the source skill in coverageTags</td>
-          <td>No skill attribution — all mixed together</td>
         </tr>
         <tr>
           <td>Quality</td>
           <td>Helps disambiguate requirements before generation</td>
           <td>Highest — each technique applied deeply and thoroughly</td>
-          <td>Lower — techniques applied shallowly, skills compete for attention</td>
         </tr>
         <tr>
           <td>Speed</td>
           <td>Adds ~5-15 seconds for one extra LLM call</td>
           <td>Slower total (multiple calls), but parallel execution helps</td>
-          <td>Fastest — single call, typically 10-30 seconds</td>
         </tr>
         <tr>
           <td>Cost (tokens)</td>
           <td>+1 preflight call</td>
-          <td>Higher — N+1 calls, but each is smaller than the mega-prompt</td>
-          <td>Lowest — 1 call, but with a very large prompt</td>
+          <td>Higher — N+1 calls, but each is smaller</td>
         </tr>
         <tr>
           <td>Technique diagrams</td>
           <td>Not available</td>
           <td>Optional — user selects which techniques get Mermaid.js diagrams</td>
-          <td>Not available</td>
         </tr>
       </tbody>
     </table>
@@ -1377,8 +1328,8 @@
         </tr>
         <tr>
           <td class="mono">/api/generate-tests</td><td>POST</td>
-          <td><span class="tag tag-purple">Path B</span> <span class="tag tag-blue">Path C</span></td>
-          <td>Generate test scenarios. Per-skill mode if <span class="mono">selectedSkills</span> present, otherwise legacy mode.</td>
+          <td><span class="tag tag-purple">Path B</span></td>
+          <td>Generate test scenarios using per-skill parallel generation</td>
           <td><span class="mono">requirement</span>, <span class="mono">file</span>, <span class="mono">provider</span>, <span class="mono">depth</span>, <span class="mono">selectedSkills[]</span> (optional), <span class="mono">diagramSkills[]</span> (optional), <span class="mono">analysisContext</span> (optional), <span class="mono">clarifications</span> (optional)</td>
         </tr>
         <tr>
@@ -1508,7 +1459,7 @@
     <div class="code-block">test-generaror/
 ├── server/
 │   ├── index.js                 <span class="comment">← Express app, routes, orchestration, file parsing</span>
-│   ├── prompt.js                <span class="comment">← All prompt builders (analysis, per-skill, legacy, preflight)</span>
+│   ├── prompt.js                <span class="comment">← All prompt builders (analysis, per-skill, preflight)</span>
 │   ├── schema.js                <span class="comment">← AJV JSON schemas (analysis, testSuite, preflight)</span>
 │   ├── util.js                  <span class="comment">← JSON parsing, dedup, suite merging, normalization</span>
 │   ├── selectSkills.js          <span class="comment">← Keyword-based skill selection + scoring</span>
@@ -1521,10 +1472,16 @@
 │       └── gemini.js            <span class="comment">← Gemini adapter (rate limit retry, schema fallbacks)</span>
 ├── client/
 │   └── src/
-│       ├── App.jsx              <span class="comment">← Main React + MUI app — 3-step wizard (~1800 lines)</span>
-│       └── MermaidDiagram.jsx   <span class="comment">← Mermaid.js diagram renderer (dark theme, error handling)</span>
+│       ├── App.jsx              <span class="comment">← Main shell: state, effects, orchestration, stepper UI</span>
+│       ├── StepRequirements.jsx <span class="comment">← Step 1: provider/model selection, manual input, Jira import</span>
+│       ├── StepAnalyze.jsx      <span class="comment">← Step 2: preflight, analysis, technique selection</span>
+│       ├── StepResults.jsx      <span class="comment">← Step 3: test cases, filters, export, AIO push</span>
+│       ├── DiagramDialog.jsx    <span class="comment">← Fullscreen Mermaid diagram viewer</span>
+│       ├── MermaidDiagram.jsx   <span class="comment">← Mermaid.js diagram renderer with sanitization</span>
+│       ├── helpers.jsx          <span class="comment">← Shared utility components (BulletList, OrderedList, download, CSV)</span>
+│       └── theme.js             <span class="comment">← Theme constants, model options, diagram info</span>
 ├── web/
-│   └── app.js                   <span class="comment">← Legacy vanilla JS UI (not updated for new flow)</span>
+│   └── app.js                   <span class="comment">← Static files served by Express in production</span>
 └── skills/
     └── *.md                     <span class="comment">← 12 QA technique playbooks (YAML front matter + markdown body)</span></div>
 

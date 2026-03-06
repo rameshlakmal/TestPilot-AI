@@ -91,7 +91,17 @@ function buildSkillGenerationSystemPrompt(skillTitle, opts) {
       "- Pairwise / Combinatorial → flowchart TD (show parameter combinations as a tree or matrix)",
       "- Feature Decomposition → mindmap (show decomposed dimensions: actors, data, rules, states, integrations)",
       "- Other techniques → flowchart TD (show the logical flow of the technique applied to this requirement)",
-      "Keep the diagram concise (max ~30 nodes). Use descriptive labels. Do NOT wrap in markdown code fences."
+      "Keep the diagram concise (max ~30 nodes). Use descriptive labels. Do NOT wrap in markdown code fences.",
+    "",
+    "IMPORTANT STYLING RULES for diagrams:",
+    "- For Equivalence Partitioning, Boundary Value Analysis, and Decision Tables: you MUST add classDef styles to distinguish valid vs invalid.",
+    "- Use these exact classDef definitions at the end of your flowchart:",
+    "  classDef valid fill:#065f46,stroke:#10b981,color:#d1fae5,stroke-width:2px",
+    "  classDef invalid fill:#7f1d1d,stroke:#ef4444,color:#fecaca,stroke-width:2px",
+    "  classDef boundary fill:#713f12,stroke:#f59e0b,color:#fef3c7,stroke-width:2px",
+    "- Apply classes to nodes: e.g., A[\"Valid: 3-50 chars\"]:::valid  B[\"Invalid: empty\"]:::invalid  C[\"Boundary: exactly 3\"]:::boundary",
+    "- For State Transition diagrams: no extra styling needed (Mermaid handles state colors).",
+    "- For all diagrams: use high-contrast text. Avoid light text on light backgrounds."
     );
   }
 

@@ -38,6 +38,7 @@ const {
   normalizeSuiteCandidate
 } = require("./util");
 const { analysisSchema, testSuiteSchema, preflightSchema } = require("./schema");
+const jira = require("./jira");
 const {
   normalizeBaseUrl,
   getOrCreateCaseFolderHierarchy,
@@ -126,6 +127,78 @@ app.get("/api/skills", (req, res) => {
     skills: skills.map((s) => ({ id: s.id, title: s.title, tags: s.tags }))
   });
 });
+
+// ─── Jira integration routes ───
+
+app.get("/api/jira/status", (req, res) => {
+  res.json({ configured: jira.isConfigured() });
+});
+
+app.get("/api/jira/projects", async (req, res) => {
+  try {
+    if (!jira.isConfigured()) return res.status(400).json({ error: "Jira is not configured. Set JIRA_BASE_URL, JIRA_EMAIL, and JIRA_API_TOKEN in .env" });
+    const projects = await jira.getProjects();
+    res.json({ projects });
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Failed to fetch projects" });
+  }
+});
+
+app.get("/api/jira/epics", async (req, res) => {
+  try {
+    if (!jira.isConfigured()) return res.status(400).json({ error: "Jira not configured" });
+    const project = String(req.query.project || "").trim();
+    if (!project) return res.status(400).json({ error: "project query param required" });
+    const epics = await jira.getEpics(project);
+    res.json({ epics });
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Failed to fetch epics" });
+  }
+});
+
+app.get("/api/jira/sprints", async (req, res) => {
+  try {
+    if (!jira.isConfigured()) return res.status(400).json({ error: "Jira not configured" });
+    const project = String(req.query.project || "").trim();
+    if (!project) return res.status(400).json({ error: "project query param required" });
+    const sprints = await jira.getSprints(project);
+    res.json({ sprints });
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Failed to fetch sprints" });
+  }
+});
+
+app.get("/api/jira/stories", async (req, res) => {
+  try {
+    if (!jira.isConfigured()) return res.status(400).json({ error: "Jira not configured" });
+    const project = String(req.query.project || "").trim();
+    if (!project) return res.status(400).json({ error: "project query param required" });
+    const stories = await jira.getStories(project, {
+      epic: req.query.epic || "",
+      sprint: req.query.sprint || "",
+      status: req.query.status || "",
+      search: req.query.search || "",
+    });
+    res.json({ stories });
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Failed to fetch stories" });
+  }
+});
+
+app.post("/api/jira/story-details", async (req, res) => {
+  try {
+    if (!jira.isConfigured()) return res.status(400).json({ error: "Jira not configured" });
+    const keys = Array.isArray(req.body.keys) ? req.body.keys : [];
+    if (!keys.length) return res.status(400).json({ error: "keys array required" });
+    const details = await jira.getStoryDetails(keys);
+    const formatted = jira.formatStoriesAsRequirement(details);
+    res.json({ stories: details, formatted });
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Failed to fetch story details" });
+  }
+});
+
+// ─── AIO push ───
 
 app.post("/api/aio/push", async (req, res) => {
   try {

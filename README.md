@@ -32,33 +32,30 @@
 
 ## Overview
 
-TestPilot AI is an intelligent test case generation platform that uses AI to analyze software requirements and produce structured, high-quality test scenarios. It mirrors how a senior QA engineer thinks — analyze first, then apply the right testing techniques.
+TestPilot AI takes software requirements as input and produces structured, prioritized test cases as output. It works the way a senior QA engineer thinks: first understand what needs testing, then pick the right techniques, then generate the scenarios.
 
-The UI is built as a 3-step wizard with a dark theme and purple accent, featuring collapsible configuration panels, inline status feedback, and a unified card-based layout across all stages.
+You provide requirements by typing, uploading a file (PDF, DOCX, Markdown, HTML, plain text), or importing user stories directly from Jira. The system sends these to an AI provider of your choice (OpenAI, Anthropic, or Google Gemini) which analyzes the requirement and extracts testable elements — inputs, business rules, state transitions, boundary conditions, constraints, and integration points.
+
+Based on what it finds, the AI recommends which of the 12 built-in QA techniques to apply, each with a confidence score. You review and adjust the selection, then the system generates test cases in parallel — one focused LLM call per technique, up to 3 running concurrently. The results are merged into a single suite, deduplicated using weighted similarity matching, and presented as a searchable, filterable table with priority and type breakdowns.
+
+From there you can export the suite as PDF or CSV, or push it directly to AIO Tests in Jira with auto-created folder hierarchies, priority mapping, and coverage tags.
 
 ---
 
 ## 3-Step Wizard Flow
 
-The user moves through three stages in a guided wizard. Each step builds on the previous — input your requirements, let the AI analyze and recommend techniques, then review the generated test cases.
-
 <p align="center"><img src="docs/Diagram-1.png" alt="3-Step Wizard Flow" width="850"/></p>
 
-| Step | Name | What Happens |
-|------|------|-------------|
-| **1** | **Requirements** | Provide input (write/upload/Jira), configure AI provider & model. Collapsible provider panel auto-hides when server-configured. Unified drag-drop + textarea with live word count. |
-| **2** | **Analyze** | AI extracts testable elements, recommends techniques grouped by confidence (high/medium/low). Optional clarify step in a collapsible panel. Diagram selection as toggle chips. |
-| **3** | **Results** | Summary stats with priority/type breakdown. Test case table with color-coded priorities, search & filters. Collapsible insights and AIO push sections. Export as PDF or CSV. |
+The user moves through three stages: provide requirements and configure the AI provider, let the AI analyze and recommend testing techniques, then review the generated test cases and export them.
 
 ---
 
 ## How It Works — The AI Pipeline
 
-The pipeline has two AI stages separated by a user review step. The Analysis stage extracts what to test, and the Generation stage produces the actual test cases in parallel — one LLM call per selected technique — then merges and deduplicates the results.
-
 <p align="center"><img src="docs/Diagram-2.png" alt="AI Pipeline" width="600"/></p>
 
 **Stage 1 — Analyze** (`POST /api/analyze`)
+
 1. Extract testable elements (inputs, states, rules, boundaries, constraints, integrations)
 2. Recommend QA skills with confidence scores (high / medium / low)
 3. Assess complexity (simple / moderate / complex)
@@ -66,6 +63,7 @@ The pipeline has two AI stages separated by a user review step. The Analysis sta
 **User reviews & confirms** — toggle techniques on/off, select optional diagrams
 
 **Stage 2 — Generate** (`POST /api/generate-tests`)
+
 1. Run parallel LLM calls (max 3 concurrent), one per selected skill
 2. Each skill gets its own focused prompt with the full requirement context
 3. Merge all results into a single suite
@@ -74,32 +72,16 @@ The pipeline has two AI stages separated by a user review step. The Analysis sta
 
 ---
 
-## Architecture Overview
-
-Four layers make up the system: the React client talks to the Express server over REST, the server fans out to one of three LLM providers for AI generation, and two external integrations handle Jira import and AIO export.
+## Architecture
 
 <p align="center"><img src="docs/Diagram-3.png" alt="Architecture Overview" width="800"/></p>
 
 | Layer | Components |
 |-------|-----------|
-| **Client** | React 19 + MUI 6 + Vite &mdash; 3-step wizard (StepRequirements, StepAnalyze, StepResults), Mermaid.js diagrams, dark theme |
-| **Server** | Express 5 + Node.js &mdash; Prompt Engine, Skill Loader (12 .md playbooks), API Routes, Schema Validator (Ajv), Merge + Dedup, Auth Middleware |
-| **AI Providers** | OpenAI (GPT-4.1), Anthropic (Claude), Google Gemini &mdash; switchable from UI dropdown |
-| **Integrations** | Jira Cloud (import projects/stories), AIO Tests (export cases with folders/tags) &mdash; server-configured or user-provided credentials |
-
----
-
-## Features at a Glance
-
-| Category | Highlights |
-|----------|-----------|
-| **Multi-Provider AI** | OpenAI, Anthropic Claude, Google Gemini &mdash; switch from dropdown, auto-detect from key prefix, server keys auto-collapse the config panel |
-| **12 QA Skill Playbooks** | Boundary Value, State Transition, Decision Tables, Equivalence Partitioning, Error Guessing, Risk-Based, Traceability, Feature Decomposition, Functional Core, Non-Functional, Pairwise, General Fallback |
-| **Smart Pipeline** | Parallel LLM calls (max 3), weighted Jaccard dedup, confidence-grouped recommendations |
-| **Modern UI/UX** | Single-card layout, collapsible accordion panels with chevron + hover, inline success/error alerts, drag-drop overlay, live word count, color-coded priority chips, summary stats bar |
-| **Integrations** | Jira Cloud import (projects/epics/sprints/stories), AIO Tests export (folders/priorities/tags), user-provided credentials fallback |
-| **Export** | PDF (landscape, color-coded), CSV, optional Mermaid technique diagrams |
-| **Security** | JWT auth, Helmet headers, rate limiting, CORS control |
+| **Client** | React 19 + MUI 6 + Vite &mdash; 3-step wizard, Mermaid.js diagram viewer, login page |
+| **Server** | Express 5 + Node.js &mdash; Prompt Engine, Skill Loader (12 .md playbooks), Schema Validator (Ajv), Merge + Dedup, Auth Middleware |
+| **AI Providers** | OpenAI, Anthropic Claude, Google Gemini &mdash; switchable per request |
+| **Integrations** | Jira Cloud (import stories), AIO Tests (export cases) &mdash; server-configured or user-provided credentials |
 
 ---
 
@@ -121,16 +103,6 @@ Four layers make up the system: the React client talks to the Express server ove
 | 10 | **Functional Core** | Core happy-path and business logic validation |
 | 11 | **Non-Functional Baseline** | Performance, security, usability baselines |
 | 12 | **General Fallback** | Catch-all baseline — always included |
-
----
-
-## Test Depth Modes
-
-| Mode | Max Cases | Use Case |
-|------|-----------|----------|
-| **Smoke** | 30 | Quick sanity checks, CI gate validation |
-| **Standard** | 120 | Sprint-level coverage, feature testing |
-| **Deep** | 220 | Full regression suites, compliance audits |
 
 ---
 
@@ -163,35 +135,6 @@ Each generated test case is structured and atomic:
 **Types:** `functional` &middot; `negative` &middot; `boundary` &middot; `security` &middot; `accessibility` &middot; `performance` &middot; `usability` &middot; `compatibility` &middot; `resilience`
 
 **Priorities:** `P0` Critical &middot; `P1` High &middot; `P2` Medium &middot; `P3` Low
-
----
-
-## Technique Diagrams
-
-Optional Mermaid.js diagrams visualize how each technique applies to your requirement:
-
-| Technique | Diagram Type | Visualization |
-|-----------|-------------|---------------|
-| State Transition | `stateDiagram-v2` | State machines with transitions |
-| Decision Tables | `flowchart TD` | Decision flows with condition branches |
-| Equivalence Partitioning | `flowchart LR` | Partition ranges and classes |
-| Boundary Value Analysis | `flowchart LR` | Boundary points on value ranges |
-| Pairwise / Combinatorial | `flowchart TD` | Combination trees |
-| Feature Decomposition | `mindmap` | Feature hierarchy maps |
-
-Diagrams are opt-in per technique and rendered as clickable chips in the Analyze stage.
-
----
-
-## Available AI Models
-
-Selectable from the UI dropdown (or auto-detected from API key prefix):
-
-| Provider | Default Model | Other Options |
-|----------|--------------|---------------|
-| **OpenAI** | GPT-4.1 | GPT-4.1 Mini, GPT-4.1 Nano, GPT-4o, GPT-4o Mini, o3-mini, o4-mini |
-| **Anthropic** | Claude Sonnet 4.5 | Claude 3.5 Sonnet, Claude 3.5 Haiku, Claude 3 Haiku |
-| **Gemini** | Gemini 2.5 Flash | Gemini 2.0 Flash, Gemini 1.5 Pro, Gemini 1.5 Flash |
 
 ---
 
@@ -251,7 +194,7 @@ JIRA_EMAIL=you@company.com
 JIRA_API_TOKEN=your-token
 ```
 
-Enables the **Import from Jira** tab in Step 1 — browse projects, epics, sprints, and pull user stories directly. When not server-configured, users can enter credentials directly in the UI.
+Enables the **Import from Jira** tab — browse projects, epics, sprints, and pull user stories directly. When not server-configured, users can enter credentials in the UI.
 
 </details>
 
@@ -263,7 +206,7 @@ AIO_BASE_URL=https://tcms.aiojiraapps.com/aio-tcms
 AIO_TOKEN=your-token
 ```
 
-Push generated test cases to [AIO Tests](https://marketplace.atlassian.com/apps/1222843) with auto-created folder hierarchies, priority mapping, and coverage tags. When not server-configured, users can enter AIO Base URL and API Token directly in the Results stage.
+Push generated test cases to [AIO Tests](https://marketplace.atlassian.com/apps/1222843) with auto-created folder hierarchies, priority mapping, and coverage tags. When not server-configured, users can enter credentials in the Results stage.
 
 </details>
 
@@ -302,8 +245,6 @@ Seed an admin user on startup. JWT tokens protect all API routes except health c
 | `POST` | `/api/jira/story-details` | Fetch full story details |
 | `POST` | `/api/aio/push` | Export test cases to AIO Tests |
 
-> All routes except `/api/health` and `/api/auth/*` require JWT authentication when configured.
-
 ---
 
 ## Project Structure
@@ -313,7 +254,7 @@ testpilot-ai/
 |
 +-- server/                         <- Express.js backend (CommonJS)
 |   +-- index.js                    # Routes, orchestration, main entry
-|   +-- prompt.js                   # Prompt builders (analysis, per-skill, legacy, preflight)
+|   +-- prompt.js                   # Prompt builders (analysis, per-skill, preflight)
 |   +-- schema.js                   # JSON schemas for validation (Ajv)
 |   +-- util.js                     # JSON parsing, dedup, suite merging
 |   +-- selectSkills.js             # Keyword-based skill selection (fallback)
@@ -340,16 +281,10 @@ testpilot-ai/
 |       +-- DiagramDialog.jsx       # Fullscreen Mermaid diagram viewer
 |       +-- MermaidDiagram.jsx      # Mermaid.js renderer
 |       +-- helpers.jsx             # Shared utility components (PDF, CSV, lists)
-|       +-- theme.js                # Theme constants, model options, diagram info
+|       +-- theme.js                # Theme constants, model options
 |
 +-- skills/                         <- 12 QA technique playbooks (.md)
-|   +-- boundary-value-analysis.md
-|   +-- equivalence-partitioning.md
-|   +-- decision-tables.md
-|   +-- state-transition.md
-|   +-- ...
-|
-+-- web/                            <- Static vanilla JS UI (legacy)
++-- docs/                           <- Architecture and flow diagrams
 +-- .env.example                    # Environment variable template
 +-- package.json
 ```
@@ -361,12 +296,10 @@ testpilot-ai/
 | Layer | Technology |
 |-------|-----------|
 | **Backend** | Express.js 5, Node.js 18+, Ajv, JWT, Helmet |
-| **Frontend** | React 19, Material UI 6, Vite 7 |
-| **Diagrams** | Mermaid.js 11 |
+| **Frontend** | React 19, Material UI 6, Vite 7, Mermaid.js 11 |
 | **AI Providers** | OpenAI, Anthropic Claude, Google Gemini |
 | **Integrations** | Jira Cloud REST API, AIO Tests TCMS |
 | **File Parsing** | pdf-parse, mammoth (DOCX), cheerio (HTML) |
-| **Theme** | MUI dark theme with violet accent (`#a78bfa`) |
 
 ---
 

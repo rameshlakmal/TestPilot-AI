@@ -3,7 +3,7 @@
  * Uses Basic Auth (email + API token) against Jira Cloud v2/v3 endpoints.
  */
 
-function getConfig() {
+function getEnvConfig() {
   return {
     baseUrl: (process.env.JIRA_BASE_URL || "").replace(/\/+$/, ""),
     email: process.env.JIRA_EMAIL || "",
@@ -11,23 +11,42 @@ function getConfig() {
   };
 }
 
-function isConfigured() {
-  const c = getConfig();
+function isEnvConfigured() {
+  const c = getEnvConfig();
   return Boolean(c.baseUrl && c.email && c.token);
 }
 
-function authHeader() {
-  const c = getConfig();
-  const encoded = Buffer.from(`${c.email}:${c.token}`).toString("base64");
+/**
+ * Resolve Jira config: request headers override .env values.
+ * Headers: X-Jira-Base-URL, X-Jira-Email, X-Jira-Token
+ */
+function resolveConfig(req) {
+  const env = getEnvConfig();
+  const h = req && req.headers ? req.headers : {};
+  return {
+    baseUrl: (String(h["x-jira-base-url"] || "") || env.baseUrl).replace(/\/+$/, ""),
+    email: String(h["x-jira-email"] || "") || env.email,
+    token: String(h["x-jira-token"] || "") || env.token,
+  };
+}
+
+function isConfigured(req) {
+  const c = resolveConfig(req);
+  return Boolean(c.baseUrl && c.email && c.token);
+}
+
+function authHeaderFrom(cfg) {
+  const encoded = Buffer.from(`${cfg.email}:${cfg.token}`).toString("base64");
   return `Basic ${encoded}`;
 }
 
-async function jiraFetch(path, opts) {
-  const url = `${getConfig().baseUrl}${path}`;
+async function jiraFetch(path, opts, cfg) {
+  const config = cfg || getEnvConfig();
+  const url = `${config.baseUrl}${path}`;
   const res = await fetch(url, {
     ...opts,
     headers: {
-      Authorization: authHeader(),
+      Authorization: authHeaderFrom(config),
       Accept: "application/json",
       "Content-Type": "application/json",
       ...(opts && opts.headers ? opts.headers : {}),
@@ -44,7 +63,7 @@ async function jiraFetch(path, opts) {
  * Search issues using the new POST /rest/api/3/search/jql endpoint.
  * Returns array of issue objects.
  */
-async function jiraSearchJql(jql, fields, maxResults) {
+async function jiraSearchJql(jql, fields, maxResults, cfg) {
   const data = await jiraFetch("/rest/api/3/search/jql", {
     method: "POST",
     body: JSON.stringify({
@@ -52,7 +71,7 @@ async function jiraSearchJql(jql, fields, maxResults) {
       fields: fields || ["summary"],
       maxResults: maxResults || 100,
     }),
-  });
+  }, cfg);
   return Array.isArray(data.issues) ? data.issues : [];
 }
 
@@ -60,8 +79,8 @@ async function jiraSearchJql(jql, fields, maxResults) {
  * List all accessible projects.
  * Returns [{ key, name, avatarUrl }]
  */
-async function getProjects() {
-  const data = await jiraFetch("/rest/api/3/project/search?maxResults=100&orderBy=name");
+async function getProjects(cfg) {
+  const data = await jiraFetch("/rest/api/3/project/search?maxResults=100&orderBy=name", undefined, cfg);
   const projects = Array.isArray(data.values) ? data.values : [];
   return projects.map((p) => ({
     key: p.key,
@@ -74,9 +93,9 @@ async function getProjects() {
  * List epics for a project.
  * Returns [{ key, summary }]
  */
-async function getEpics(projectKey) {
+async function getEpics(projectKey, cfg) {
   const jql = `project = "${projectKey}" AND issuetype = Epic ORDER BY created DESC`;
-  const data = await jiraSearchJql(jql, ["summary"], 100);
+  const data = await jiraSearchJql(jql, ["summary"], 100, cfg);
   return data.map((i) => ({
     key: i.key,
     summary: i.fields && i.fields.summary ? i.fields.summary : "",
@@ -87,17 +106,19 @@ async function getEpics(projectKey) {
  * List sprints for a project (via board).
  * Returns [{ id, name, state }]
  */
-async function getSprints(projectKey) {
+async function getSprints(projectKey, cfg) {
   // First find the board for the project
   const boardData = await jiraFetch(
-    `/rest/agile/1.0/board?projectKeyOrId=${encodeURIComponent(projectKey)}&maxResults=1`
+    `/rest/agile/1.0/board?projectKeyOrId=${encodeURIComponent(projectKey)}&maxResults=1`,
+    undefined, cfg
   );
   const boards = Array.isArray(boardData.values) ? boardData.values : [];
   if (!boards.length) return [];
 
   const boardId = boards[0].id;
   const sprintData = await jiraFetch(
-    `/rest/agile/1.0/board/${boardId}/sprint?maxResults=50&state=active,future`
+    `/rest/agile/1.0/board/${boardId}/sprint?maxResults=50&state=active,future`,
+    undefined, cfg
   );
   const sprints = Array.isArray(sprintData.values) ? sprintData.values : [];
   return sprints.map((s) => ({
@@ -111,7 +132,7 @@ async function getSprints(projectKey) {
  * Search user stories for a project with optional filters.
  * Returns [{ key, summary, status, priority, epic, labels }]
  */
-async function getStories(projectKey, opts) {
+async function getStories(projectKey, opts, cfg) {
   const epic = opts && opts.epic ? opts.epic : "";
   const sprint = opts && opts.sprint ? opts.sprint : "";
   const status = opts && opts.status ? opts.status : "";
@@ -124,7 +145,7 @@ async function getStories(projectKey, opts) {
   if (search) conditions.push(`summary ~ "${search}"`);
 
   const jql = conditions.join(" AND ") + " ORDER BY created DESC";
-  const issues = await jiraSearchJql(jql, ["summary", "status", "priority", "labels", "customfield_10014"], 100);
+  const issues = await jiraSearchJql(jql, ["summary", "status", "priority", "labels", "customfield_10014"], 100, cfg);
 
   return issues.map((i) => {
     const f = i.fields || {};
@@ -143,11 +164,11 @@ async function getStories(projectKey, opts) {
  * Fetch full details for multiple stories by key.
  * Returns [{ key, summary, description, acceptanceCriteria }]
  */
-async function getStoryDetails(keys) {
+async function getStoryDetails(keys, cfg) {
   if (!keys.length) return [];
 
   const jql = `key in (${keys.map((k) => `"${k}"`).join(",")}) ORDER BY key ASC`;
-  const issues = await jiraSearchJql(jql, ["summary", "description", "customfield_10014"], keys.length);
+  const issues = await jiraSearchJql(jql, ["summary", "description", "customfield_10014"], keys.length, cfg);
 
   return issues.map((i) => {
     const f = i.fields || {};
@@ -224,7 +245,9 @@ function formatStoriesAsRequirement(stories) {
 }
 
 module.exports = {
+  isEnvConfigured,
   isConfigured,
+  resolveConfig,
   getProjects,
   getEpics,
   getSprints,

@@ -2,11 +2,13 @@
 
 <br/>
 
-<img src="https://img.shields.io/badge/AI-Powered-blueviolet?style=for-the-badge&labelColor=1a1a2e" alt="AI Powered"/>
+<img src="client/public/test-cases.png" width="80" alt="TestPilot AI Logo"/>
 
-# AI Test Case Generator
+<br/>
 
-### From requirements to production-ready test cases — in seconds, not hours.
+# TestPilot AI
+
+### Intelligent test design — from requirements to production-ready test cases in seconds.
 
 <br/>
 
@@ -18,7 +20,7 @@
 
 <br/>
 
-**OpenAI** &nbsp;·&nbsp; **Anthropic Claude** &nbsp;·&nbsp; **Google Gemini** &nbsp;·&nbsp; **Jira Import** &nbsp;·&nbsp; **AIO Tests Export**
+**OpenAI** &nbsp;&middot;&nbsp; **Anthropic Claude** &nbsp;&middot;&nbsp; **Google Gemini** &nbsp;&middot;&nbsp; **Jira Import** &nbsp;&middot;&nbsp; **AIO Tests Export**
 
 ---
 
@@ -30,193 +32,102 @@
 
 ## Overview
 
-A skills-driven test case generation platform that uses AI to analyze software requirements and produce structured, high-quality test scenarios. It mirrors how a senior QA engineer thinks — analyze first, then apply the right testing techniques.
+TestPilot AI is an intelligent test case generation platform that uses AI to analyze software requirements and produce structured, high-quality test scenarios. It mirrors how a senior QA engineer thinks — analyze first, then apply the right testing techniques.
+
+The UI is built as a 3-step wizard with a dark theme and purple accent, featuring collapsible configuration panels, inline status feedback, and a unified card-based layout across all stages.
 
 ---
 
 ## 3-Step Wizard Flow
 
-```mermaid
-graph LR
-    subgraph step1["<b>1 &nbsp; REQUIREMENTS</b>"]
-        A1["Paste text"]
-        A2["Upload file<br/><i>PDF / DOCX / MD / TXT / HTML</i>"]
-        A3["Import from Jira"]
-        A4["Select AI provider & model"]
-        A5["Clarify <i>(optional)</i>"]
-    end
+<!-- Replace with Eraser.io generated diagram -->
+<!-- DIAGRAM: 3-step-wizard-flow -->
 
-    subgraph step2["<b>2 &nbsp; ANALYZE</b>"]
-        B1["AI analyzes requirement"]
-        B2["Extracts testable elements"]
-        B3["Recommends QA techniques<br/>with confidence scores"]
-        B4["Toggle techniques on/off"]
-        B5["Select diagrams"]
-    end
-
-    subgraph step3["<b>3 &nbsp; RESULTS</b>"]
-        C1["Structured test cases"]
-        C2["Technique diagrams"]
-        C3["Filter & search"]
-        C4["Export JSON / CSV"]
-        C5["Push to AIO Tests"]
-    end
-
-    step1 ==> step2 ==> step3
-
-    style step1 fill:#1e1b4b,stroke:#7c3aed,stroke-width:2px,color:#e9d5ff
-    style step2 fill:#1e1b4b,stroke:#7c3aed,stroke-width:2px,color:#e9d5ff
-    style step3 fill:#1e1b4b,stroke:#7c3aed,stroke-width:2px,color:#e9d5ff
-```
+| Step | Name | What Happens |
+|------|------|-------------|
+| **1** | **Requirements** | Provide input (write/upload/Jira), configure AI provider & model. Collapsible provider panel auto-hides when server-configured. Unified drag-drop + textarea with live word count. |
+| **2** | **Analyze** | AI extracts testable elements, recommends techniques grouped by confidence (high/medium/low). Optional clarify step in a collapsible panel. Diagram selection as toggle chips. |
+| **3** | **Results** | Summary stats with priority/type breakdown. Test case table with color-coded priorities, search & filters. Collapsible insights and AIO push sections. Export as PDF or CSV. |
 
 ---
 
 ## How It Works — The AI Pipeline
 
-```mermaid
-graph TB
-    INPUT["<b>INPUT</b><br/>Requirements text, file upload,<br/>or Jira user stories"]
+<!-- Replace with Eraser.io generated diagram -->
+<!-- DIAGRAM: ai-pipeline -->
 
-    subgraph analyze["<b>STAGE 1 — ANALYZE</b> &nbsp; <code>POST /api/analyze</code>"]
-        direction TB
-        AN1["Extract testable elements<br/><i>inputs, states, rules, boundaries,<br/>constraints, integrations</i>"]
-        AN2["Recommend skills with<br/>confidence scores<br/><i>high / medium / low</i>"]
-        AN3["Assess complexity<br/><i>simple / moderate / complex</i>"]
-        AN1 --> AN2 --> AN3
-    end
+**Stage 1 — Analyze** (`POST /api/analyze`)
+1. Extract testable elements (inputs, states, rules, boundaries, constraints, integrations)
+2. Recommend QA skills with confidence scores (high / medium / low)
+3. Assess complexity (simple / moderate / complex)
 
-    PICK{{"Select & confirm<br/>techniques"}}
+**User reviews & confirms** — toggle techniques on/off, select optional diagrams
 
-    subgraph generate["<b>STAGE 2 — GENERATE</b> &nbsp; <code>POST /api/generate-tests</code>"]
-        direction TB
-        subgraph parallel["Parallel LLM Calls &nbsp; <i>(max 3 concurrent)</i>"]
-            direction LR
-            S1["Boundary Value<br/>Analysis"]
-            S2["State<br/>Transition"]
-            S3["Decision<br/>Tables"]
-            S4["Error<br/>Guessing"]
-            S5["... more<br/>skills"]
-        end
-        MERGE["<b>Merge + Deduplicate</b><br/><i>Weighted Jaccard similarity</i><br/>Title 40% · Steps 40% · Expected 20%<br/>Threshold: 60%"]
-        parallel --> MERGE
-    end
-
-    OUTPUT["<b>FINAL TEST SUITE</b><br/>Deduplicated, renumbered,<br/>tagged test cases"]
-
-    INPUT ==> analyze
-    analyze ==> PICK
-    PICK ==> generate
-    generate ==> OUTPUT
-
-    style INPUT fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#e0f2fe
-    style analyze fill:#1e1b4b,stroke:#7c3aed,stroke-width:2px,color:#e9d5ff
-    style generate fill:#14532d,stroke:#4ade80,stroke-width:2px,color:#dcfce7
-    style PICK fill:#78350f,stroke:#fbbf24,stroke-width:2px,color:#fef3c7
-    style OUTPUT fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#e0f2fe
-    style parallel fill:#166534,stroke:#4ade80,stroke-width:1px,color:#dcfce7
-    style MERGE fill:#14532d,stroke:#4ade80,stroke-width:1px,color:#bbf7d0
-    style S1 fill:#166534,stroke:#86efac,color:#f0fdf4
-    style S2 fill:#166534,stroke:#86efac,color:#f0fdf4
-    style S3 fill:#166534,stroke:#86efac,color:#f0fdf4
-    style S4 fill:#166534,stroke:#86efac,color:#f0fdf4
-    style S5 fill:#166534,stroke:#86efac,color:#f0fdf4
-```
+**Stage 2 — Generate** (`POST /api/generate-tests`)
+1. Run parallel LLM calls (max 3 concurrent), one per selected skill
+2. Each skill gets its own focused prompt with the full requirement context
+3. Merge all results into a single suite
+4. Deduplicate using weighted Jaccard similarity (title 40% &middot; steps 40% &middot; expected 20%, threshold 60%)
+5. Renumber and tag final test cases
 
 ---
 
 ## Architecture Overview
 
-```mermaid
-graph TB
-    subgraph client["<b>CLIENT</b> &nbsp; React 19 + MUI 6 + Vite"]
-        direction LR
-        UI["Wizard UI<br/><i>3-step stepper</i>"]
-        DIAGRAMS["Mermaid.js<br/><i>Technique diagrams</i>"]
-    end
+<!-- Replace with Eraser.io generated diagram -->
+<!-- DIAGRAM: architecture -->
 
-    subgraph server["<b>SERVER</b> &nbsp; Express 5 + Node.js"]
-        direction TB
-        AUTH["Auth Middleware<br/><i>JWT + Helmet + Rate Limit</i>"]
-        ROUTES["API Routes"]
-        PROMPTS["Prompt Engine<br/><i>Analysis · Per-skill · Preflight</i>"]
-        SKILLS["Skill Loader<br/><i>12 QA playbooks (.md)</i>"]
-        VALIDATOR["Schema Validator<br/><i>Ajv JSON Schema</i>"]
-        UTIL["Merge + Dedup<br/><i>Weighted Jaccard</i>"]
-    end
-
-    subgraph llm["<b>LLM PROVIDERS</b>"]
-        direction LR
-        OPENAI["OpenAI<br/><i>GPT-4.1</i>"]
-        CLAUDE["Anthropic<br/><i>Claude</i>"]
-        GEMINI["Google<br/><i>Gemini</i>"]
-    end
-
-    subgraph integrations["<b>INTEGRATIONS</b>"]
-        direction LR
-        JIRA["Jira Cloud<br/><i>Import stories</i>"]
-        AIO["AIO Tests<br/><i>Export cases</i>"]
-    end
-
-    client <--> AUTH
-    AUTH --> ROUTES
-    ROUTES --> PROMPTS
-    PROMPTS --> SKILLS
-    ROUTES --> VALIDATOR
-    ROUTES --> UTIL
-    PROMPTS <--> llm
-    ROUTES <--> integrations
-
-    style client fill:#1e1b4b,stroke:#7c3aed,stroke-width:2px,color:#e9d5ff
-    style server fill:#0c4a6e,stroke:#38bdf8,stroke-width:2px,color:#e0f2fe
-    style llm fill:#14532d,stroke:#4ade80,stroke-width:2px,color:#dcfce7
-    style integrations fill:#78350f,stroke:#fbbf24,stroke-width:2px,color:#fef3c7
-    style OPENAI fill:#166534,stroke:#86efac,color:#f0fdf4
-    style CLAUDE fill:#166534,stroke:#86efac,color:#f0fdf4
-    style GEMINI fill:#166534,stroke:#86efac,color:#f0fdf4
-    style JIRA fill:#92400e,stroke:#fcd34d,color:#fefce8
-    style AIO fill:#92400e,stroke:#fcd34d,color:#fefce8
-```
+| Layer | Components |
+|-------|-----------|
+| **Client** | React 19 + MUI 6 + Vite &mdash; 3-step wizard (StepRequirements, StepAnalyze, StepResults), Mermaid.js diagrams, dark theme |
+| **Server** | Express 5 + Node.js &mdash; Auth (JWT + Helmet + Rate Limit), Prompt Engine, Skill Loader, Schema Validator (Ajv), Merge + Dedup |
+| **LLM Providers** | OpenAI (GPT-4.1), Anthropic (Claude), Google (Gemini) &mdash; switchable from UI |
+| **Integrations** | Jira Cloud (import stories), AIO Tests (export cases) &mdash; server-configured or user-provided credentials |
 
 ---
 
 ## Features at a Glance
 
-```mermaid
-mindmap
-    root(("AI Test<br/>Generator"))
-        **Multi-Provider AI**
-            OpenAI
-            Anthropic Claude
-            Google Gemini
-            Switch from UI dropdown
-        **12 QA Skill Playbooks**
-            Boundary Value Analysis
-            State Transition
-            Decision Tables
-            Equivalence Partitioning
-            Error Guessing
-            Risk-Based Prioritization
-            and 6 more...
-        **Smart Pipeline**
-            Parallel LLM calls
-            Weighted Jaccard dedup
-            Max 3 concurrent
-        **Integrations**
-            Jira import
-            AIO Tests export
-            File upload
-            PDF / DOCX / MD / HTML
-        **Security**
-            JWT Authentication
-            Helmet headers
-            Rate limiting
-            CORS control
-        **Export & Diagrams**
-            JSON export
-            CSV export
-            Mermaid technique diagrams
-            State machines & flowcharts
-```
+<!-- Replace with Eraser.io generated diagram -->
+<!-- DIAGRAM: features-mindmap -->
+
+### Multi-Provider AI
+- OpenAI, Anthropic Claude, Google Gemini
+- Switch from UI dropdown, auto-detect from API key prefix
+- Server-configured keys auto-collapse the provider panel
+
+### 12 QA Skill Playbooks
+- Boundary Value Analysis, State Transition, Decision Tables, Equivalence Partitioning
+- Error Guessing, Risk-Based Prioritization, Requirements Traceability
+- Feature Decomposition, Functional Core, Non-Functional Baseline, Pairwise/Combinatorial
+- General Fallback (always included as baseline)
+
+### Smart Pipeline
+- Parallel LLM calls (max 3 concurrent)
+- Weighted Jaccard deduplication
+- Confidence-grouped technique recommendations
+
+### Modern UI/UX
+- Single-card layout with collapsible sections across all stages
+- Bordered accordion bars with chevron + hover states for clear expandability
+- Inline success/error alerts for Jira connection and AIO push
+- Drag-drop overlay on textarea, live word count, file type chips
+- Color-coded priority chips (P0 red, P1 amber, P2 blue, P3 gray)
+- Summary stats bar with priority and type breakdown
+
+### Integrations
+- Jira Cloud import (projects, epics, sprints, stories)
+- AIO Tests export with folder hierarchies, priority mapping, coverage tags
+- User-provided credentials when not server-configured (Base URL + Token fields)
+
+### Export & Diagrams
+- PDF export (landscape, color-coded priorities)
+- CSV export
+- Optional Mermaid technique diagrams (state machines, flowcharts, mindmaps)
+
+### Security
+- JWT Authentication with admin seed from env vars
+- Helmet headers, rate limiting, CORS control
 
 ---
 
@@ -243,18 +154,11 @@ mindmap
 
 ## Test Depth Modes
 
-```mermaid
-graph LR
-    SMOKE["<b>SMOKE</b><br/>Max 30 cases<br/><i>Quick sanity · CI gates</i>"]
-    STANDARD["<b>STANDARD</b><br/>Max 120 cases<br/><i>Sprint-level coverage</i>"]
-    DEEP["<b>DEEP</b><br/>Max 220 cases<br/><i>Full regression ·<br/>Compliance audits</i>"]
-
-    SMOKE ---|"+"| STANDARD ---|"++"| DEEP
-
-    style SMOKE fill:#422006,stroke:#f59e0b,stroke-width:2px,color:#fef3c7
-    style STANDARD fill:#1e1b4b,stroke:#7c3aed,stroke-width:2px,color:#e9d5ff
-    style DEEP fill:#14532d,stroke:#4ade80,stroke-width:2px,color:#dcfce7
-```
+| Mode | Max Cases | Use Case |
+|------|-----------|----------|
+| **Smoke** | 30 | Quick sanity checks, CI gate validation |
+| **Standard** | 120 | Sprint-level coverage, feature testing |
+| **Deep** | 220 | Full regression suites, compliance audits |
 
 ---
 
@@ -284,9 +188,9 @@ Each generated test case is structured and atomic:
 }
 ```
 
-**Types:** `functional` · `negative` · `boundary` · `security` · `accessibility` · `performance` · `usability` · `compatibility` · `resilience`
+**Types:** `functional` &middot; `negative` &middot; `boundary` &middot; `security` &middot; `accessibility` &middot; `performance` &middot; `usability` &middot; `compatibility` &middot; `resilience`
 
-**Priorities:** `P0` Critical · `P1` High · `P2` Medium · `P3` Low
+**Priorities:** `P0` Critical &middot; `P1` High &middot; `P2` Medium &middot; `P3` Low
 
 ---
 
@@ -303,18 +207,18 @@ Optional Mermaid.js diagrams visualize how each technique applies to your requir
 | Pairwise / Combinatorial | `flowchart TD` | Combination trees |
 | Feature Decomposition | `mindmap` | Feature hierarchy maps |
 
-Diagrams are opt-in per technique — no extra tokens consumed when not selected.
+Diagrams are opt-in per technique and rendered as clickable chips in the Analyze stage.
 
 ---
 
 ## Available AI Models
 
-Selectable from the UI dropdown:
+Selectable from the UI dropdown (or auto-detected from API key prefix):
 
 | Provider | Default Model | Other Options |
 |----------|--------------|---------------|
-| **OpenAI** | GPT-4.1 | GPT-4.1 Mini, GPT-4.1 Nano, GPT-4o, GPT-4o Mini |
-| **Anthropic** | Claude Sonnet 4.5 | Claude Haiku 3.5 |
+| **OpenAI** | GPT-4.1 | GPT-4.1 Mini, GPT-4.1 Nano, GPT-4o, GPT-4o Mini, o3-mini, o4-mini |
+| **Anthropic** | Claude Sonnet 4.5 | Claude 3.5 Sonnet, Claude 3.5 Haiku, Claude 3 Haiku |
 | **Gemini** | Gemini 2.5 Flash | Gemini 2.0 Flash, Gemini 1.5 Pro, Gemini 1.5 Flash |
 
 ---
@@ -325,7 +229,7 @@ Selectable from the UI dropdown:
 
 - **Node.js 18+** (20+ recommended)
 - An API key for at least one provider:
-  [OpenAI](https://platform.openai.com/api-keys) · [Anthropic](https://console.anthropic.com/settings/keys) · [Google AI Studio](https://aistudio.google.com/apikey)
+  [OpenAI](https://platform.openai.com/api-keys) &middot; [Anthropic](https://console.anthropic.com/settings/keys) &middot; [Google AI Studio](https://aistudio.google.com/apikey)
 
 ### Install & Run
 
@@ -375,7 +279,7 @@ JIRA_EMAIL=you@company.com
 JIRA_API_TOKEN=your-token
 ```
 
-Enables the **Import from Jira** tab in Step 1 — browse projects, epics, sprints, and pull user stories directly.
+Enables the **Import from Jira** tab in Step 1 — browse projects, epics, sprints, and pull user stories directly. When not server-configured, users can enter credentials directly in the UI.
 
 </details>
 
@@ -387,7 +291,20 @@ AIO_BASE_URL=https://tcms.aiojiraapps.com/aio-tcms
 AIO_TOKEN=your-token
 ```
 
-Push generated test cases to [AIO Tests](https://marketplace.atlassian.com/apps/1222843) with auto-created folder hierarchies, priority mapping, and coverage tags.
+Push generated test cases to [AIO Tests](https://marketplace.atlassian.com/apps/1222843) with auto-created folder hierarchies, priority mapping, and coverage tags. When not server-configured, users can enter AIO Base URL and API Token directly in the Results stage.
+
+</details>
+
+<details>
+<summary><strong>Authentication (Optional)</strong></summary>
+
+```env
+JWT_SECRET=your-secret-key
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=your-password
+```
+
+Seed an admin user on startup. JWT tokens protect all API routes except health check and auth endpoints.
 
 </details>
 
@@ -398,62 +315,71 @@ Push generated test cases to [AIO Tests](https://marketplace.atlassian.com/apps/
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` | `/api/health` | Health check |
+| `GET` | `/api/providers` | List server-configured providers (LLM, Jira, AIO) |
 | `GET` | `/api/skills` | List loaded QA skills |
+| `POST` | `/api/validate-key` | Validate a user-provided API key |
+| `POST` | `/api/models` | List available models for a provider |
 | `POST` | `/api/preflight` | Identify ambiguities before generation |
 | `POST` | `/api/analyze` | Analyze requirement, recommend techniques |
 | `POST` | `/api/generate-tests` | Generate test suite (per-skill parallel) |
+| `GET` | `/api/jira/status` | Check Jira connection status |
 | `GET` | `/api/jira/projects` | List Jira projects |
+| `GET` | `/api/jira/epics` | List epics for a project |
+| `GET` | `/api/jira/sprints` | List sprints for a project |
 | `GET` | `/api/jira/stories` | Search stories with filters |
 | `POST` | `/api/jira/story-details` | Fetch full story details |
 | `POST` | `/api/aio/push` | Export test cases to AIO Tests |
 
-> All routes except `/api/health` and `/api/auth/*` require JWT authentication.
+> All routes except `/api/health` and `/api/auth/*` require JWT authentication when configured.
 
 ---
 
 ## Project Structure
 
 ```
-test-generator/
-│
-├── server/                         ← Express.js backend (CommonJS)
-│   ├── index.js                    # Routes, orchestration, main entry
-│   ├── prompt.js                   # Prompt builders (analysis, per-skill, legacy, preflight)
-│   ├── schema.js                   # JSON schemas for validation (Ajv)
-│   ├── util.js                     # JSON parsing, dedup, suite merging
-│   ├── selectSkills.js             # Keyword-based skill selection (fallback)
-│   ├── skills.js                   # Skill loader (parses markdown playbooks)
-│   ├── auth.js                     # JWT authentication routes
-│   ├── authMiddleware.js           # Route protection middleware
-│   ├── jira.js                     # Jira Cloud API integration
-│   ├── aio.js                      # AIO Tests export
-│   └── llm/
-│       ├── index.js                # Provider router
-│       ├── openai.js               # OpenAI adapter
-│       ├── anthropic.js            # Anthropic Claude adapter
-│       └── gemini.js               # Google Gemini adapter
-│
-├── client/                         ← React + Vite SPA (ESM)
-│   └── src/
-│       ├── App.jsx                 # Main shell, state, stepper orchestration
-│       ├── StepRequirements.jsx    # Step 1: input, provider, Jira import
-│       ├── StepAnalyze.jsx         # Step 2: analysis, technique selection
-│       ├── StepResults.jsx         # Step 3: results, filters, export
-│       ├── DiagramDialog.jsx       # Fullscreen Mermaid diagram viewer
-│       ├── MermaidDiagram.jsx      # Mermaid.js renderer
-│       ├── helpers.jsx             # Shared utility components
-│       └── theme.js                # Theme constants, model options
-│
-├── skills/                         ← 12 QA technique playbooks (.md)
-│   ├── boundary-value-analysis.md
-│   ├── equivalence-partitioning.md
-│   ├── decision-tables.md
-│   ├── state-transition.md
-│   └── ...
-│
-├── web/                            ← Static files served by Express
-├── .env.example                    # Environment variable template
-└── package.json
+testpilot-ai/
+|
++-- server/                         <- Express.js backend (CommonJS)
+|   +-- index.js                    # Routes, orchestration, main entry
+|   +-- prompt.js                   # Prompt builders (analysis, per-skill, legacy, preflight)
+|   +-- schema.js                   # JSON schemas for validation (Ajv)
+|   +-- util.js                     # JSON parsing, dedup, suite merging
+|   +-- selectSkills.js             # Keyword-based skill selection (fallback)
+|   +-- skills.js                   # Skill loader (parses markdown playbooks)
+|   +-- auth.js                     # JWT authentication routes
+|   +-- authMiddleware.js           # Route protection middleware
+|   +-- jira.js                     # Jira Cloud API integration
+|   +-- aio.js                      # AIO Tests export
+|   +-- llm/
+|       +-- index.js                # Provider router
+|       +-- openai.js               # OpenAI adapter
+|       +-- anthropic.js            # Anthropic Claude adapter
+|       +-- gemini.js               # Google Gemini adapter
+|
++-- client/                         <- React + Vite SPA (ESM)
+|   +-- public/
+|   |   +-- test-cases.png          # App logo
+|   +-- src/
+|       +-- App.jsx                 # Main shell, state, stepper orchestration
+|       +-- StepRequirements.jsx    # Step 1: input, provider config, Jira import
+|       +-- StepAnalyze.jsx         # Step 2: analysis, technique selection, diagrams
+|       +-- StepResults.jsx         # Step 3: results, filters, export, AIO push
+|       +-- LoginPage.jsx           # Authentication login page
+|       +-- DiagramDialog.jsx       # Fullscreen Mermaid diagram viewer
+|       +-- MermaidDiagram.jsx      # Mermaid.js renderer
+|       +-- helpers.jsx             # Shared utility components (PDF, CSV, lists)
+|       +-- theme.js                # Theme constants, model options, diagram info
+|
++-- skills/                         <- 12 QA technique playbooks (.md)
+|   +-- boundary-value-analysis.md
+|   +-- equivalence-partitioning.md
+|   +-- decision-tables.md
+|   +-- state-transition.md
+|   +-- ...
+|
++-- web/                            <- Static vanilla JS UI (legacy)
++-- .env.example                    # Environment variable template
++-- package.json
 ```
 
 ---

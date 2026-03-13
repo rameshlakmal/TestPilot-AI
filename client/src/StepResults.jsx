@@ -3,18 +3,21 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Alert,
   Box,
   Button,
   Card,
   CardContent,
   Checkbox,
   Chip,
+  Collapse,
   Divider,
   FormControl,
   FormControlLabel,
   Grid,
+  IconButton,
+  InputAdornment,
   InputLabel,
-  LinearProgress,
   MenuItem,
   Pagination,
   Select,
@@ -27,16 +30,30 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material'
+import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import DownloadIcon from '@mui/icons-material/Download'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import AccountTreeIcon from '@mui/icons-material/AccountTree'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
+import VisibilityIcon from '@mui/icons-material/Visibility'
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
+import CloudUploadIcon from '@mui/icons-material/CloudUpload'
+import SearchIcon from '@mui/icons-material/Search'
+import AssignmentIcon from '@mui/icons-material/Assignment'
 import { purpleMain, purpleDeep } from './theme'
-import { download, toCsv, joinLines, BulletList, OrderedList, listOrNone } from './helpers'
-import MermaidDiagram from './MermaidDiagram'
+import { download, toCsv, exportPdf, joinLines, BulletList, OrderedList, listOrNone } from './helpers'
+
+const priorityColors = {
+  P0: { color: '#ef4444', bg: 'rgba(239, 68, 68, 0.12)', border: 'rgba(239, 68, 68, 0.25)', label: 'Critical' },
+  P1: { color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.12)', border: 'rgba(245, 158, 11, 0.25)', label: 'High' },
+  P2: { color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.12)', border: 'rgba(59, 130, 246, 0.25)', label: 'Medium' },
+  P3: { color: '#6b7280', bg: 'rgba(107, 114, 128, 0.12)', border: 'rgba(107, 114, 128, 0.25)', label: 'Low' },
+}
 
 export default function StepResults({
   theme, isSmDown,
@@ -56,9 +73,11 @@ export default function StepResults({
   // AIO
   aioProject, setAioProject,
   aioFolder, setAioFolder,
+  aioBaseUrl, setAioBaseUrl,
   aioToken, setAioToken,
   aioIncludeTags, setAioIncludeTags,
-  aioBusy, aioResult,
+  aioServerConfigured,
+  aioBusy, aioResult, aioStatus,
   pushToAio,
   // Diagrams
   setDiagramDialogOpen, setActiveDiagram, setDiagramZoom,
@@ -67,7 +86,9 @@ export default function StepResults({
   // Extra callbacks used inside the JSX
   cancelInFlight, setInfo, setError,
 }) {
-  const [expandedInfoCard, setExpandedInfoCard] = useState('skills')
+  const [aioOpen, setAioOpen] = useState(false)
+  const [insightsOpen, setInsightsOpen] = useState(false)
+  const [showAioToken, setShowAioToken] = useState(false)
 
   const displayedSkills = useMemo(() => {
     const list = Array.isArray(selectedSkills) ? selectedSkills.slice() : []
@@ -79,23 +100,74 @@ export default function StepResults({
     return list
   }, [selectedSkills])
 
+  // Summary stats
+  const totalCases = suite && Array.isArray(suite.testCases) ? suite.testCases.length : 0
+  const priorityCounts = useMemo(() => {
+    const counts = { P0: 0, P1: 0, P2: 0, P3: 0 }
+    if (suite && Array.isArray(suite.testCases)) {
+      for (const tc of suite.testCases) {
+        const p = String(tc.priority || 'P2')
+        if (counts[p] !== undefined) counts[p]++
+        else counts.P2++
+      }
+    }
+    return counts
+  }, [suite])
+
+  const typeCounts = useMemo(() => {
+    const counts = {}
+    if (suite && Array.isArray(suite.testCases)) {
+      for (const tc of suite.testCases) {
+        const t = String(tc.type || 'functional')
+        counts[t] = (counts[t] || 0) + 1
+      }
+    }
+    return counts
+  }, [suite])
+
+  const insightsCount = useMemo(() => {
+    let n = 0
+    if (Array.isArray(suite && suite.missingInfoQuestions) && suite.missingInfoQuestions.length) n++
+    if (Array.isArray(suite && suite.assumptions) && suite.assumptions.length) n++
+    if (Array.isArray(suite && suite.risks) && suite.risks.length) n++
+    if (displayedSkills.length) n++
+    if (skillDiagrams.length) n++
+    return n
+  }, [suite, displayedSkills, skillDiagrams])
+
+  // ─── Empty state ───
   if (!suite) {
     return (
-      <Card>
+      <Card sx={{ overflow: 'visible' }}>
         <CardContent>
-          <Stack spacing={1.5} alignItems="center" sx={{ py: 4 }}>
-            <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.60)' }}>No results yet</Typography>
-            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.45)' }}>
-              Go back to the Analyze step to generate test cases.
+          <Stack spacing={2} alignItems="center" sx={{ py: 5 }}>
+            <Box
+              sx={{
+                width: 56,
+                height: 56,
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'rgba(167, 139, 250, 0.08)',
+              }}
+            >
+              <AssignmentIcon sx={{ color: 'rgba(255,255,255,0.25)', fontSize: 28 }} />
+            </Box>
+            <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.55)', fontWeight: 600 }}>No results yet</Typography>
+            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.38)', textAlign: 'center', maxWidth: 320 }}>
+              Go back to the Analyze step to generate test cases from your requirements.
             </Typography>
             <Button
               variant="outlined"
               startIcon={<ArrowBackIcon />}
               onClick={() => goToStep(1)}
               sx={{
-                borderColor: 'rgba(255,255,255,0.14)',
-                color: 'rgba(255,255,255,0.85)',
-                '&:hover': { borderColor: 'rgba(167, 139, 250, 0.45)', backgroundColor: 'rgba(167, 139, 250, 0.08)' }
+                mt: 1,
+                borderColor: 'rgba(255,255,255,0.12)',
+                color: 'rgba(255,255,255,0.80)',
+                textTransform: 'none',
+                '&:hover': { borderColor: 'rgba(167, 139, 250, 0.40)', backgroundColor: 'rgba(167, 139, 250, 0.06)' }
               }}
             >
               Go to Analyze
@@ -106,421 +178,239 @@ export default function StepResults({
     )
   }
 
+  // ─── Results ───
   return (
-    <Card
-      sx={{
-        borderColor: 'rgba(167, 139, 250, 0.28)',
-        boxShadow: '0 0 0 1px rgba(167, 139, 250, 0.22), 0 22px 80px rgba(0,0,0,0.65)'
-      }}
-    >
-      <CardContent>
-        <Stack spacing={2}>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', sm: 'center' }}>
-            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-              {suiteMeta ? (
-                <>
-                  <Chip size="small" variant="outlined" label={`provider: ${suiteMeta.provider}`} sx={{ fontFamily: theme.typography.fontFamilyMonospace }} />
-                  <Chip size="small" variant="outlined" label={`model: ${suiteMeta.model}`} sx={{ fontFamily: theme.typography.fontFamilyMonospace }} />
+    <Card sx={{ overflow: 'visible', borderColor: 'rgba(167, 139, 250, 0.18)' }}>
+      <CardContent sx={{ p: '0 !important' }}>
+
+        {/* ─── Header: Title + Stats + Exports ─── */}
+        <Box sx={{ px: 2.5, pt: 2.5, pb: 2 }}>
+          <Stack spacing={2}>
+            {/* Title row */}
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ xs: 'flex-start', sm: 'center' }}>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <CheckCircleIcon sx={{ color: '#4ade80', fontSize: 20 }} />
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, fontSize: '1rem' }}>
+                  Test Results
+                </Typography>
+                <Chip
+                  size="small"
+                  label={`${totalCases} test case${totalCases !== 1 ? 's' : ''}`}
+                  sx={{
+                    height: 24,
+                    fontWeight: 700,
+                    fontSize: '0.78rem',
+                    fontFamily: theme.typography.fontFamilyMonospace,
+                    backgroundColor: 'rgba(74, 222, 128, 0.08)',
+                    color: '#4ade80',
+                  }}
+                />
+                {duplicateGroups.length > 0 && (
                   <Chip
                     size="small"
-                    variant="outlined"
-                    label={`schema repair: ${suiteMeta.repaired ? 'yes' : 'no'}`}
-                    sx={{ fontFamily: theme.typography.fontFamilyMonospace }}
-                  />
-                  {suiteMeta.mode ? (
-                    <Chip
-                      size="small"
-                      variant="outlined"
-                      label={`mode: ${suiteMeta.mode}`}
-                      sx={{
-                        fontFamily: theme.typography.fontFamilyMonospace,
-                        borderColor: suiteMeta.mode === 'per-skill' ? 'rgba(22, 163, 74, 0.40)' : 'rgba(255,255,255,0.14)',
-                        color: suiteMeta.mode === 'per-skill' ? 'rgba(22, 163, 74, 0.92)' : undefined
-                      }}
-                    />
-                  ) : null}
-                  {duplicateGroups.length > 0 ? (
-                    <Chip
-                      size="small"
-                      variant="outlined"
-                      label={`${duplicateGroups.length} duplicate(s) removed`}
-                      sx={{ fontFamily: theme.typography.fontFamilyMonospace, borderColor: 'rgba(217, 119, 6, 0.40)', color: 'rgba(217, 119, 6, 0.92)' }}
-                    />
-                  ) : null}
-                </>
-              ) : null}
-            </Stack>
-            <Box sx={{ flex: 1 }} />
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-              <Button
-                variant="outlined"
-                startIcon={<DownloadIcon />}
-                onClick={() => download('test-suite.json', JSON.stringify(suite, null, 2), 'application/json')}
-                sx={{
-                  borderColor: 'rgba(255,255,255,0.14)',
-                  color: 'rgba(255,255,255,0.92)',
-                  '&:hover': {
-                    borderColor: 'rgba(167, 139, 250, 0.55)',
-                    backgroundColor: 'rgba(167, 139, 250, 0.08)'
-                  }
-                }}
-              >
-                Export JSON
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<DownloadIcon />}
-                onClick={() => download('test-cases.csv', toCsv(suite), 'text/csv')}
-                sx={{
-                  borderColor: 'rgba(255,255,255,0.14)',
-                  color: 'rgba(255,255,255,0.92)',
-                  '&:hover': {
-                    borderColor: 'rgba(167, 139, 250, 0.55)',
-                    backgroundColor: 'rgba(167, 139, 250, 0.08)'
-                  }
-                }}
-              >
-                Export CSV
-              </Button>
-            </Stack>
-          </Stack>
-
-          <Card sx={{ backgroundColor: 'rgba(0,0,0,0.18)' }}>
-            <CardContent>
-              <Stack spacing={1.5}>
-                <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'stretch', sm: 'center' }} spacing={1}>
-                  <Box>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                      Push to AIO Tests
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.68)' }}>
-                      Create a folder (if needed) and create test cases in AIO.
-                    </Typography>
-                  </Box>
-                  <Box sx={{ flex: 1 }} />
-                  <FormControlLabel
-                    control={<Switch checked={aioIncludeTags} onChange={(e) => setAioIncludeTags(e.target.checked)} sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: purpleMain }, '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: purpleMain } }} />}
-                    label="Include coverage tags"
-                  />
-                </Stack>
-
-                <Grid container spacing={1.5} alignItems="center">
-                  <Grid item xs={12} md={3}>
-                    <TextField
-                      size="small"
-                      label="Jira project key/id"
-                      placeholder="e.g., AT"
-                      value={aioProject}
-                      onChange={(e) => setAioProject(e.target.value)}
-                      fullWidth
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      size="small"
-                      label="Folder path (optional)"
-                      placeholder="Release 1.0 / Regression / Checkout"
-                      value={aioFolder}
-                      onChange={(e) => setAioFolder(e.target.value)}
-                      fullWidth
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={3}>
-                    <Button
-                      variant="contained"
-                      disabled={aioBusy}
-                      onClick={pushToAio}
-                      fullWidth
-                      sx={{
-                        backgroundColor: purpleMain,
-                        '&:hover': { backgroundColor: 'rgba(167, 139, 250, 0.85)' },
-                        textTransform: 'none',
-                        fontWeight: 600,
-                      }}
-                    >
-                      Push to AIO
-                    </Button>
-                  </Grid>
-                </Grid>
-
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', sm: 'center' }}>
-                  {aioBusy ? (
-                    <Button
-                      variant="text"
-                      onClick={() => {
-                        cancelInFlight()
-                        setInfo('Cancelling...')
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                  ) : null}
-                  <Box sx={{ flex: 1 }} />
-                  {aioResult ? (
-                    <Button
-                      variant="text"
-                      startIcon={<ContentCopyIcon />}
-                      onClick={async () => {
-                        try {
-                          await navigator.clipboard.writeText(aioResult)
-                          setInfo('Copied AIO result.')
-                        } catch {
-                          setError('Copy failed.')
-                        }
-                      }}
-                    >
-                      Copy result
-                    </Button>
-                  ) : null}
-                </Stack>
-
-                {aioResult ? (
-                  <Box
-                    component="pre"
+                    label={`${duplicateGroups.length} deduped`}
                     sx={{
-                      m: 0,
-                      p: 1.5,
-                      borderRadius: 2,
-                      border: '1px solid rgba(255,255,255,0.10)',
-                      background: 'rgba(0,0,0,0.25)',
+                      height: 22,
+                      fontSize: '0.70rem',
                       fontFamily: theme.typography.fontFamilyMonospace,
-                      fontSize: 12,
-                      whiteSpace: 'pre-wrap'
+                      backgroundColor: 'rgba(217, 119, 6, 0.08)',
+                      color: 'rgba(217, 119, 6, 0.85)',
+                    }}
+                  />
+                )}
+              </Stack>
+              <Box sx={{ flex: 1 }} />
+              <Stack direction="row" spacing={0.75}>
+                <Tooltip title="Export as PDF">
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<DownloadIcon sx={{ fontSize: 16 }} />}
+                    onClick={() => exportPdf(suite)}
+                    sx={{
+                      borderColor: 'rgba(255,255,255,0.10)',
+                      color: 'rgba(255,255,255,0.70)',
+                      textTransform: 'none',
+                      fontSize: '0.80rem',
+                      '&:hover': { borderColor: 'rgba(167, 139, 250, 0.40)', backgroundColor: 'rgba(167, 139, 250, 0.06)' }
                     }}
                   >
-                    {aioResult}
-                  </Box>
-                ) : null}
+                    PDF
+                  </Button>
+                </Tooltip>
+                <Tooltip title="Export as CSV">
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<DownloadIcon sx={{ fontSize: 16 }} />}
+                    onClick={() => download('test-cases.csv', toCsv(suite), 'text/csv')}
+                    sx={{
+                      borderColor: 'rgba(255,255,255,0.10)',
+                      color: 'rgba(255,255,255,0.70)',
+                      textTransform: 'none',
+                      fontSize: '0.80rem',
+                      '&:hover': { borderColor: 'rgba(167, 139, 250, 0.40)', backgroundColor: 'rgba(167, 139, 250, 0.06)' }
+                    }}
+                  >
+                    CSV
+                  </Button>
+                </Tooltip>
               </Stack>
-            </CardContent>
-          </Card>
+            </Stack>
 
-          <Stack spacing={0}>
-            {[
-              {
-                key: 'skills',
-                label: 'Selected Skills',
-                content: (
-                  <BulletList
-                    items={listOrNone(displayedSkills)}
-                    renderItem={(s) => {
-                      if (typeof s === 'string') {
-                        return <Typography variant="body2">{s}</Typography>
-                      }
-                      const score = Number.isFinite(s.score) ? s.score : null
-                      const reason = s.reason && typeof s.reason === 'object' ? s.reason : null
-                      const alwaysInclude = Boolean(reason && reason.alwaysInclude)
-                      const matched = Array.isArray(reason && reason.matched) ? reason.matched : []
-                      const boosts = Array.isArray(reason && reason.boosts) ? reason.boosts : []
-                      const scoreLabel = score !== null ? `match score: ${score}` : ''
-                      const why = alwaysInclude
-                        ? ['baseline (always included)', scoreLabel].filter(Boolean).join(' | ')
-                        : [
-                            scoreLabel,
-                            matched.length ? `matched: ${matched.join(', ')}` : '',
-                            boosts.length ? `boosts: ${boosts.map((b) => (b && b.tag ? `${b.hint}->${b.tag}` : String(b))).join(', ')}` : ''
-                          ]
-                            .filter(Boolean)
-                            .join(' | ')
-                      return (
-                        <Box>
-                          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.78)' }}>
-                            <Box component="span" sx={{ fontFamily: theme.typography.fontFamilyMonospace, color: 'rgba(255,255,255,0.66)' }}>
-                              {String(s.id)}
-                            </Box>
-                            {' — '}
-                            {String(s.title)}
-                          </Typography>
-                          {why ? (
-                            <Typography
-                              variant="caption"
-                              sx={{ display: 'block', mt: 0.35, color: 'rgba(255,255,255,0.55)', fontFamily: theme.typography.fontFamilyMonospace }}
-                            >
-                              {why}
-                            </Typography>
-                          ) : null}
-                        </Box>
-                      )
+            {/* Priority breakdown bar */}
+            <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
+              {['P0', 'P1', 'P2', 'P3'].map((p) => {
+                const count = priorityCounts[p]
+                if (!count) return null
+                const conf = priorityColors[p]
+                return (
+                  <Chip
+                    key={p}
+                    size="small"
+                    label={`${p} ${conf.label}: ${count}`}
+                    sx={{
+                      height: 22,
+                      fontSize: '0.70rem',
+                      fontFamily: theme.typography.fontFamilyMonospace,
+                      backgroundColor: conf.bg,
+                      color: conf.color,
+                      border: '1px solid',
+                      borderColor: conf.border,
                     }}
                   />
                 )
-              },
-              { key: 'missing', label: 'Missing Info Questions', content: <BulletList items={listOrNone(suite.missingInfoQuestions)} /> },
-              { key: 'assumptions', label: 'Assumptions', content: <BulletList items={listOrNone(suite.assumptions)} /> },
-              { key: 'risks', label: 'Risks', content: <BulletList items={listOrNone(suite.risks)} /> }
-            ].map((card) => (
-              <Accordion
-                key={card.key}
-                disableGutters
-                expanded={expandedInfoCard === card.key}
-                onChange={(_, isExpanded) => setExpandedInfoCard(isExpanded ? card.key : false)}
-                sx={{
-                  backgroundColor: 'rgba(0,0,0,0.20)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  '&:not(:last-child)': { borderBottom: 'none' },
-                  '&:first-of-type': { borderTopLeftRadius: 8, borderTopRightRadius: 8 },
-                  '&:last-of-type': { borderBottomLeftRadius: 8, borderBottomRightRadius: 8 },
-                  '&:before': { display: 'none' },
-                }}
-              >
-                <AccordionSummary
-                  expandIcon={<ExpandMoreIcon sx={{ color: 'rgba(255,255,255,0.60)' }} />}
-                  sx={{ px: 2, '& .MuiAccordionSummary-content': { my: 1 } }}
-                >
-                  <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>{card.label}</Typography>
-                </AccordionSummary>
-                <AccordionDetails sx={{ px: 2, pb: 2 }}>
-                  {card.content}
-                </AccordionDetails>
-              </Accordion>
-            ))}
+              })}
+              <Box sx={{ width: 4 }} />
+              {Object.entries(typeCounts).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([type, count]) => (
+                <Chip
+                  key={type}
+                  size="small"
+                  label={`${type}: ${count}`}
+                  sx={{
+                    height: 22,
+                    fontSize: '0.70rem',
+                    fontFamily: theme.typography.fontFamilyMonospace,
+                    backgroundColor: 'rgba(167, 139, 250, 0.08)',
+                    color: 'rgba(167, 139, 250, 0.80)',
+                  }}
+                />
+              ))}
+            </Stack>
+
+            {/* Meta chips — subtle */}
+            {suiteMeta && (
+              <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
+                <Chip size="small" variant="outlined" label={suiteMeta.provider} sx={{ height: 20, fontSize: '0.64rem', fontFamily: theme.typography.fontFamilyMonospace, borderColor: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.35)' }} />
+                <Chip size="small" variant="outlined" label={suiteMeta.model} sx={{ height: 20, fontSize: '0.64rem', fontFamily: theme.typography.fontFamilyMonospace, borderColor: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.35)' }} />
+                {suiteMeta.mode && (
+                  <Chip size="small" variant="outlined" label={suiteMeta.mode} sx={{ height: 20, fontSize: '0.64rem', fontFamily: theme.typography.fontFamilyMonospace, borderColor: suiteMeta.mode === 'per-skill' ? 'rgba(22, 163, 74, 0.20)' : 'rgba(255,255,255,0.06)', color: suiteMeta.mode === 'per-skill' ? 'rgba(22, 163, 74, 0.60)' : 'rgba(255,255,255,0.35)' }} />
+                )}
+                {suiteMeta.repaired && (
+                  <Chip size="small" variant="outlined" label="schema repaired" sx={{ height: 20, fontSize: '0.64rem', fontFamily: theme.typography.fontFamilyMonospace, borderColor: 'rgba(217, 119, 6, 0.15)', color: 'rgba(217, 119, 6, 0.50)' }} />
+                )}
+              </Stack>
+            )}
+          </Stack>
+        </Box>
+
+        <Divider sx={{ borderColor: 'rgba(255,255,255,0.06)' }} />
+
+        {/* ─── Search / Filter Toolbar ─── */}
+        <Box sx={{ px: 2.5, py: 1.5 }}>
+          <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ xs: 'stretch', md: 'center' }}>
+            <TextField
+              size="small"
+              placeholder="Search title, id, or tag..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ color: 'rgba(255,255,255,0.25)', fontSize: 18 }} />
+                  </InputAdornment>
+                ),
+                sx: { fontSize: '0.85rem' },
+              }}
+              sx={{ minWidth: 200, flex: { xs: 1, md: 'unset' } }}
+            />
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <InputLabel>Type</InputLabel>
+              <Select value={filterType} label="Type" onChange={(e) => setFilterType(e.target.value)}>
+                <MenuItem value="">All types</MenuItem>
+                {['functional', 'negative', 'boundary', 'security', 'accessibility', 'performance', 'usability', 'compatibility', 'resilience'].map((t) => (
+                  <MenuItem key={t} value={t}>{t}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <InputLabel>Priority</InputLabel>
+              <Select value={filterPriority} label="Priority" onChange={(e) => setFilterPriority(e.target.value)}>
+                <MenuItem value="">All priorities</MenuItem>
+                {['P0', 'P1', 'P2', 'P3'].map((p) => (
+                  <MenuItem key={p} value={p}>{p}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Box sx={{ flex: 1 }} />
+            <Stack direction="row" spacing={0.5} alignItems="center">
+              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>
+                {Math.min((page - 1) * rowsPerPage + 1, filteredCases.length)}–{Math.min(page * rowsPerPage, filteredCases.length)} of {filteredCases.length}
+                {filteredCases.length < totalCases ? ` (${totalCases})` : ''}
+              </Typography>
+              <Box sx={{ width: 8 }} />
+              {[10, 50, 100].map((n) => (
+                <Chip
+                  key={n}
+                  size="small"
+                  label={n}
+                  clickable
+                  onClick={() => { setRowsPerPage(n); setPage(1) }}
+                  sx={{
+                    fontFamily: theme.typography.fontFamilyMonospace,
+                    fontSize: '0.68rem',
+                    height: 22,
+                    backgroundColor: rowsPerPage === n ? 'rgba(167, 139, 250, 0.15)' : 'rgba(255,255,255,0.03)',
+                    color: rowsPerPage === n ? purpleMain : 'rgba(255,255,255,0.40)',
+                    borderColor: rowsPerPage === n ? 'rgba(167, 139, 250, 0.30)' : 'transparent',
+                    border: '1px solid',
+                  }}
+                />
+              ))}
+            </Stack>
           </Stack>
 
-          {/* Mermaid Diagram Buttons */}
-          {skillDiagrams.length > 0 && (
-            <Card sx={{ backgroundColor: 'rgba(0,0,0,0.20)' }}>
-              <CardContent>
-                <Stack spacing={1.5}>
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <AccountTreeIcon sx={{ color: purpleMain, fontSize: 20 }} />
-                    <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                      Technique Diagrams
-                    </Typography>
-                    <Chip
-                      size="small"
-                      variant="outlined"
-                      label={`${skillDiagrams.length} diagram(s)`}
-                      sx={{ fontFamily: theme.typography.fontFamilyMonospace, borderColor: 'rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.60)' }}
-                    />
-                  </Stack>
-                  <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                    {skillDiagrams.map((d) => (
-                      <Button
-                        key={d.skillId}
-                        variant="outlined"
-                        startIcon={<AccountTreeIcon />}
-                        onClick={() => { setActiveDiagram(d); setDiagramZoom(1); setDiagramDialogOpen(true) }}
-                        sx={{
-                          borderColor: 'rgba(167, 139, 250, 0.25)',
-                          color: 'rgba(255,255,255,0.85)',
-                          backgroundColor: 'rgba(167, 139, 250, 0.06)',
-                          textTransform: 'none',
-                          '&:hover': {
-                            borderColor: 'rgba(167, 139, 250, 0.50)',
-                            backgroundColor: 'rgba(167, 139, 250, 0.12)',
-                          }
-                        }}
-                      >
-                        {d.skillTitle}
-                      </Button>
-                    ))}
-                  </Stack>
-                </Stack>
-              </CardContent>
-            </Card>
-          )}
+          {/* Selection row */}
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1 }}>
+            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.40)', fontSize: '0.75rem' }}>
+              <Box component="span" sx={{ color: selectedCaseIds.size > 0 ? purpleMain : 'rgba(255,255,255,0.40)', fontWeight: selectedCaseIds.size > 0 ? 600 : 400 }}>
+                {selectedCaseIds.size}
+              </Box>{' '}
+              selected
+            </Typography>
+            <Button
+              size="small"
+              variant="text"
+              onClick={() => { if (suite && Array.isArray(suite.testCases)) setSelectedCaseIds(new Set(suite.testCases.map((tc) => String(tc.id)))) }}
+              sx={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.40)', textTransform: 'none', minWidth: 0, px: 0.5 }}
+            >
+              All
+            </Button>
+            <Button
+              size="small"
+              variant="text"
+              onClick={() => setSelectedCaseIds(new Set())}
+              sx={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.40)', textTransform: 'none', minWidth: 0, px: 0.5 }}
+            >
+              None
+            </Button>
+          </Stack>
+        </Box>
 
-          <Box>
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems={{ xs: 'stretch', md: 'center' }}>
-              <Typography variant="h6" sx={{ fontWeight: 700, flex: 1 }}>
-                Test cases
-              </Typography>
-              <TextField
-                size="small"
-                label="Search"
-                placeholder="Search title/id/tag..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              <FormControl size="small" sx={{ minWidth: 170 }}>
-                <InputLabel>Type</InputLabel>
-                <Select value={filterType} label="Type" onChange={(e) => setFilterType(e.target.value)}>
-                  <MenuItem value="">All types</MenuItem>
-                  {[
-                    'functional',
-                    'negative',
-                    'boundary',
-                    'security',
-                    'accessibility',
-                    'performance',
-                    'usability',
-                    'compatibility',
-                    'resilience'
-                  ].map((t) => (
-                    <MenuItem key={t} value={t}>
-                      {t}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <FormControl size="small" sx={{ minWidth: 170 }}>
-                <InputLabel>Priority</InputLabel>
-                <Select value={filterPriority} label="Priority" onChange={(e) => setFilterPriority(e.target.value)}>
-                  <MenuItem value="">All priorities</MenuItem>
-                  {['P0', 'P1', 'P2', 'P3'].map((p) => (
-                    <MenuItem key={p} value={p}>
-                      {p}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Stack>
-            <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" useFlexGap sx={{ mt: 1.5 }}>
-              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.60)' }}>
-                Showing {Math.min((page - 1) * rowsPerPage + 1, filteredCases.length)}-{Math.min(page * rowsPerPage, filteredCases.length)} of {filteredCases.length}
-                {filteredCases.length < (Array.isArray(suite.testCases) ? suite.testCases.length : 0)
-                  ? ` (${Array.isArray(suite.testCases) ? suite.testCases.length : 0} total)`
-                  : ''}
-                {' · '}
-                <Box component="span" sx={{ color: purpleMain }}>{selectedCaseIds.size} selected</Box>
-              </Typography>
-              <Button
-                size="small"
-                variant="text"
-                onClick={() => {
-                  if (suite && Array.isArray(suite.testCases)) {
-                    setSelectedCaseIds(new Set(suite.testCases.map((tc) => String(tc.id))))
-                  }
-                }}
-                sx={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.50)', textTransform: 'none', minWidth: 0, px: 0.5 }}
-              >
-                Select all
-              </Button>
-              <Button
-                size="small"
-                variant="text"
-                onClick={() => setSelectedCaseIds(new Set())}
-                sx={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.50)', textTransform: 'none', minWidth: 0, px: 0.5 }}
-              >
-                Deselect all
-              </Button>
-              <Box sx={{ flex: 1 }} />
-              <Stack direction="row" spacing={0.5} alignItems="center">
-                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.45)' }}>Per page:</Typography>
-                {[10, 50, 100].map((n) => (
-                  <Chip
-                    key={n}
-                    size="small"
-                    label={n}
-                    clickable
-                    onClick={() => { setRowsPerPage(n); setPage(1) }}
-                    sx={{
-                      fontFamily: theme.typography.fontFamilyMonospace,
-                      fontSize: '0.72rem',
-                      height: 24,
-                      backgroundColor: rowsPerPage === n ? 'rgba(167, 139, 250, 0.18)' : 'rgba(255,255,255,0.04)',
-                      color: rowsPerPage === n ? purpleMain : 'rgba(255,255,255,0.55)',
-                      borderColor: rowsPerPage === n ? 'rgba(167, 139, 250, 0.35)' : 'transparent',
-                      border: '1px solid',
-                    }}
-                  />
-                ))}
-              </Stack>
-            </Stack>
-          </Box>
-
+        {/* ─── Test Cases ─── */}
+        <Box sx={{ px: 2.5, pb: 2 }}>
           {isSmDown ? (
-            <Stack spacing={1.25}>
+            <Stack spacing={1}>
               {paginatedCases.map((tc) => (
                 <Stack key={String(tc.id)} direction="row" spacing={0} alignItems="flex-start">
                   <Checkbox
@@ -539,99 +429,63 @@ export default function StepResults({
                     sx={{
                       flex: 1,
                       borderRadius: '12px',
-                      border: '1px solid rgba(255,255,255,0.10)',
-                      backgroundColor: 'rgba(0,0,0,0.22)',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      backgroundColor: 'rgba(0,0,0,0.16)',
                       overflow: 'hidden',
                       '&:before': { display: 'none' }
                     }}
                   >
-                  <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: 'rgba(255,255,255,0.80)' }} />}
-                    sx={{
-                      px: 1.5,
-                      '& .MuiAccordionSummary-content': { my: 1.25 }
-                    }}
-                  >
-                    <Stack spacing={0.75} sx={{ minWidth: 0 }}>
-                      <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-                        <Chip
-                          size="small"
-                          variant="outlined"
-                          label={String(tc.id || '')}
-                          sx={{ fontFamily: theme.typography.fontFamilyMonospace, borderColor: 'rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.78)' }}
-                        />
-                        <Chip
-                          size="small"
-                          variant="outlined"
-                          label={String(tc.type || '')}
-                          sx={{ fontFamily: theme.typography.fontFamilyMonospace, borderColor: 'rgba(167, 139, 250, 0.40)', color: 'rgba(167, 139, 250, 0.92)' }}
-                        />
-                        <Chip
-                          size="small"
-                          variant="outlined"
-                          label={String(tc.priority || '')}
-                          sx={{ fontFamily: theme.typography.fontFamilyMonospace, borderColor: 'rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.72)' }}
-                        />
-                      </Stack>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          color: 'rgba(255,255,255,0.92)',
-                          display: '-webkit-box',
-                          overflow: 'hidden',
-                          WebkitBoxOrient: 'vertical',
-                          WebkitLineClamp: 2
-                        }}
-                      >
-                        {String(tc.title || '')}
-                      </Typography>
-                    </Stack>
-                  </AccordionSummary>
-                  <AccordionDetails sx={{ px: 1.5, pb: 1.5 }}>
-                    <Stack spacing={1.1}>
-                      <Box>
-                        <Typography variant="caption" sx={{ color: 'rgba(167, 139, 250, 0.92)', fontFamily: theme.typography.fontFamilyMonospace, letterSpacing: '0.06em' }}>
-                          PRECONDITIONS
-                        </Typography>
-                        <OrderedList items={tc.preconditions} sx={{ mt: 0.5 }} />
-                      </Box>
-                      <Box>
-                        <Typography variant="caption" sx={{ color: 'rgba(167, 139, 250, 0.92)', fontFamily: theme.typography.fontFamilyMonospace, letterSpacing: '0.06em' }}>
-                          STEPS
-                        </Typography>
-                        <OrderedList items={tc.steps} sx={{ mt: 0.5 }} />
-                      </Box>
-                      <Box>
-                        <Typography variant="caption" sx={{ color: 'rgba(167, 139, 250, 0.92)', fontFamily: theme.typography.fontFamilyMonospace, letterSpacing: '0.06em' }}>
-                          EXPECTED
-                        </Typography>
-                        <OrderedList items={tc.expected} sx={{ mt: 0.5 }} />
-                      </Box>
-                      {(Array.isArray(tc.coverageTags) && tc.coverageTags.length) || (Array.isArray(tc.requirementRefs) && tc.requirementRefs.length) ? (
-                        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                          {Array.isArray(tc.coverageTags)
-                            ? tc.coverageTags.slice(0, 12).map((t) => (
-                                <Chip key={String(t)} size="small" label={String(t)} sx={{ backgroundColor: 'rgba(167, 139, 250, 0.10)', color: 'rgba(255,255,255,0.78)' }} />
-                              ))
-                            : null}
-                          {Array.isArray(tc.requirementRefs)
-                            ? tc.requirementRefs.slice(0, 6).map((r) => (
-                                <Chip key={String(r)} size="small" variant="outlined" label={String(r)} sx={{ borderColor: 'rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.70)' }} />
-                              ))
-                            : null}
+                    <AccordionSummary
+                      expandIcon={<ExpandMoreIcon sx={{ color: 'rgba(255,255,255,0.60)' }} />}
+                      sx={{ px: 1.5, '& .MuiAccordionSummary-content': { my: 1 } }}
+                    >
+                      <Stack spacing={0.5} sx={{ minWidth: 0 }}>
+                        <Stack direction="row" spacing={0.5} alignItems="center" flexWrap="wrap" useFlexGap>
+                          <Chip size="small" variant="outlined" label={String(tc.id || '')} sx={{ fontFamily: theme.typography.fontFamilyMonospace, fontSize: '0.68rem', height: 20, borderColor: 'rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.65)' }} />
+                          <Chip size="small" label={String(tc.type || '')} sx={{ fontFamily: theme.typography.fontFamilyMonospace, fontSize: '0.68rem', height: 20, backgroundColor: 'rgba(167, 139, 250, 0.10)', color: 'rgba(167, 139, 250, 0.85)' }} />
+                          {tc.priority && (() => { const pc = priorityColors[tc.priority]; return pc ? <Chip size="small" label={tc.priority} sx={{ fontFamily: theme.typography.fontFamilyMonospace, fontSize: '0.68rem', height: 20, backgroundColor: pc.bg, color: pc.color }} /> : null })()}
                         </Stack>
-                      ) : null}
-                    </Stack>
-                  </AccordionDetails>
-                </Accordion>
+                        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.88)', fontSize: '0.85rem', display: '-webkit-box', overflow: 'hidden', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2 }}>
+                          {String(tc.title || '')}
+                        </Typography>
+                      </Stack>
+                    </AccordionSummary>
+                    <AccordionDetails sx={{ px: 1.5, pb: 1.5 }}>
+                      <Stack spacing={1}>
+                        {[
+                          { label: 'PRECONDITIONS', items: tc.preconditions },
+                          { label: 'STEPS', items: tc.steps },
+                          { label: 'EXPECTED', items: tc.expected },
+                        ].map((section) => (
+                          <Box key={section.label}>
+                            <Typography variant="caption" sx={{ color: 'rgba(167, 139, 250, 0.85)', fontFamily: theme.typography.fontFamilyMonospace, fontSize: '0.65rem', letterSpacing: '0.06em' }}>
+                              {section.label}
+                            </Typography>
+                            <OrderedList items={section.items} sx={{ mt: 0.25 }} />
+                          </Box>
+                        ))}
+                        {(Array.isArray(tc.coverageTags) && tc.coverageTags.length) || (Array.isArray(tc.requirementRefs) && tc.requirementRefs.length) ? (
+                          <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
+                            {Array.isArray(tc.coverageTags) && tc.coverageTags.slice(0, 12).map((t) => (
+                              <Chip key={String(t)} size="small" label={String(t)} sx={{ height: 20, fontSize: '0.64rem', backgroundColor: 'rgba(167, 139, 250, 0.08)', color: 'rgba(255,255,255,0.65)' }} />
+                            ))}
+                            {Array.isArray(tc.requirementRefs) && tc.requirementRefs.slice(0, 6).map((r) => (
+                              <Chip key={String(r)} size="small" variant="outlined" label={String(r)} sx={{ height: 20, fontSize: '0.64rem', borderColor: 'rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.55)' }} />
+                            ))}
+                          </Stack>
+                        ) : null}
+                      </Stack>
+                    </AccordionDetails>
+                  </Accordion>
                 </Stack>
               ))}
             </Stack>
           ) : (
-            <TableContainer sx={{ borderRadius: 1.5, border: '1px solid rgba(255,255,255,0.10)', overflow: 'auto', background: 'rgba(0,0,0,0.18)' }}>
+            <TableContainer sx={{ borderRadius: 2, border: '1px solid rgba(255,255,255,0.06)', overflow: 'auto', background: 'rgba(0,0,0,0.12)' }}>
               <Table size="small" sx={{ minWidth: 1100 }} stickyHeader>
                 <TableHead>
                   <TableRow>
-                    <TableCell padding="checkbox" sx={{ backgroundColor: 'rgba(8, 8, 8, 0.96)', borderBottomColor: 'rgba(255,255,255,0.10)' }}>
+                    <TableCell padding="checkbox" sx={{ backgroundColor: 'rgba(8, 8, 8, 0.96)', borderBottomColor: 'rgba(255,255,255,0.08)' }}>
                       <Checkbox
                         size="small"
                         checked={paginatedCases.length > 0 && paginatedCases.every((tc) => selectedCaseIds.has(String(tc.id)))}
@@ -644,7 +498,7 @@ export default function StepResults({
                           })
                           setSelectedCaseIds(next)
                         }}
-                        sx={{ color: 'rgba(255,255,255,0.30)', '&.Mui-checked, &.MuiCheckbox-indeterminate': { color: purpleMain } }}
+                        sx={{ color: 'rgba(255,255,255,0.25)', '&.Mui-checked, &.MuiCheckbox-indeterminate': { color: purpleMain } }}
                       />
                     </TableCell>
                     {['ID', 'Title', 'Type', 'Priority', 'Preconditions', 'Steps', 'Expected', 'Tags', 'Req refs'].map((h) => (
@@ -653,10 +507,10 @@ export default function StepResults({
                         sx={{
                           fontWeight: 700,
                           backgroundColor: 'rgba(8, 8, 8, 0.96)',
-                          borderBottomColor: 'rgba(255,255,255,0.10)'
+                          borderBottomColor: 'rgba(255,255,255,0.08)',
                         }}
                       >
-                        <Typography variant="caption" sx={{ fontFamily: ['ID', 'Type', 'Priority'].includes(h) ? theme.typography.fontFamilyMonospace : undefined }}>
+                        <Typography variant="caption" sx={{ fontFamily: ['ID', 'Type', 'Priority'].includes(h) ? theme.typography.fontFamilyMonospace : undefined, fontSize: '0.70rem', color: 'rgba(255,255,255,0.50)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                           {h}
                         </Typography>
                       </TableCell>
@@ -664,32 +518,51 @@ export default function StepResults({
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {paginatedCases.map((tc) => (
-                    <TableRow key={String(tc.id)} hover>
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          size="small"
-                          checked={selectedCaseIds.has(String(tc.id))}
-                          onChange={(e) => {
-                            const next = new Set(selectedCaseIds)
-                            if (e.target.checked) next.add(String(tc.id))
-                            else next.delete(String(tc.id))
-                            setSelectedCaseIds(next)
-                          }}
-                          sx={{ color: 'rgba(255,255,255,0.30)', '&.Mui-checked': { color: purpleMain } }}
-                        />
-                      </TableCell>
-                      <TableCell sx={{ fontFamily: theme.typography.fontFamilyMonospace, color: 'rgba(255,255,255,0.78)' }}>{String(tc.id || '')}</TableCell>
-                      <TableCell sx={{ color: 'rgba(255,255,255,0.86)' }}>{String(tc.title || '')}</TableCell>
-                      <TableCell sx={{ fontFamily: theme.typography.fontFamilyMonospace, color: 'rgba(167, 139, 250, 0.92)' }}>{String(tc.type || '')}</TableCell>
-                      <TableCell sx={{ fontFamily: theme.typography.fontFamilyMonospace, color: 'rgba(255,255,255,0.70)' }}>{String(tc.priority || '')}</TableCell>
-                      <TableCell sx={{ whiteSpace: 'pre-line', color: 'rgba(255,255,255,0.70)' }}>{joinLines(tc.preconditions)}</TableCell>
-                      <TableCell sx={{ whiteSpace: 'pre-line', color: 'rgba(255,255,255,0.70)' }}>{joinLines(tc.steps)}</TableCell>
-                      <TableCell sx={{ whiteSpace: 'pre-line', color: 'rgba(255,255,255,0.70)' }}>{joinLines(tc.expected)}</TableCell>
-                      <TableCell sx={{ color: 'rgba(255,255,255,0.70)' }}>{Array.isArray(tc.coverageTags) ? tc.coverageTags.join(', ') : ''}</TableCell>
-                      <TableCell sx={{ color: 'rgba(255,255,255,0.70)' }}>{Array.isArray(tc.requirementRefs) ? tc.requirementRefs.join(', ') : ''}</TableCell>
-                    </TableRow>
-                  ))}
+                  {paginatedCases.map((tc) => {
+                    const selected = selectedCaseIds.has(String(tc.id))
+                    return (
+                      <TableRow
+                        key={String(tc.id)}
+                        hover
+                        sx={{
+                          backgroundColor: selected ? 'rgba(167, 139, 250, 0.03)' : 'transparent',
+                          '&:hover': { backgroundColor: 'rgba(255,255,255,0.02)' },
+                        }}
+                      >
+                        <TableCell padding="checkbox">
+                          <Checkbox
+                            size="small"
+                            checked={selected}
+                            onChange={(e) => {
+                              const next = new Set(selectedCaseIds)
+                              if (e.target.checked) next.add(String(tc.id))
+                              else next.delete(String(tc.id))
+                              setSelectedCaseIds(next)
+                            }}
+                            sx={{ color: 'rgba(255,255,255,0.25)', '&.Mui-checked': { color: purpleMain } }}
+                          />
+                        </TableCell>
+                        <TableCell sx={{ fontFamily: theme.typography.fontFamilyMonospace, color: 'rgba(255,255,255,0.65)', fontSize: '0.80rem' }}>{String(tc.id || '')}</TableCell>
+                        <TableCell sx={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.82rem' }}>{String(tc.title || '')}</TableCell>
+                        <TableCell sx={{ fontFamily: theme.typography.fontFamilyMonospace, color: 'rgba(167, 139, 250, 0.85)', fontSize: '0.80rem' }}>{String(tc.type || '')}</TableCell>
+                        <TableCell>
+                          {tc.priority && (() => {
+                            const pc = priorityColors[tc.priority]
+                            return pc ? (
+                              <Chip size="small" label={tc.priority} sx={{ height: 20, fontSize: '0.68rem', fontFamily: theme.typography.fontFamilyMonospace, fontWeight: 700, backgroundColor: pc.bg, color: pc.color, minWidth: 30 }} />
+                            ) : (
+                              <Typography variant="caption" sx={{ fontFamily: theme.typography.fontFamilyMonospace, color: 'rgba(255,255,255,0.55)' }}>{String(tc.priority)}</Typography>
+                            )
+                          })()}
+                        </TableCell>
+                        <TableCell sx={{ whiteSpace: 'pre-line', color: 'rgba(255,255,255,0.60)', fontSize: '0.78rem' }}>{joinLines(tc.preconditions)}</TableCell>
+                        <TableCell sx={{ whiteSpace: 'pre-line', color: 'rgba(255,255,255,0.60)', fontSize: '0.78rem' }}>{joinLines(tc.steps)}</TableCell>
+                        <TableCell sx={{ whiteSpace: 'pre-line', color: 'rgba(255,255,255,0.60)', fontSize: '0.78rem' }}>{joinLines(tc.expected)}</TableCell>
+                        <TableCell sx={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.76rem' }}>{Array.isArray(tc.coverageTags) ? tc.coverageTags.join(', ') : ''}</TableCell>
+                        <TableCell sx={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.76rem' }}>{Array.isArray(tc.requirementRefs) ? tc.requirementRefs.join(', ') : ''}</TableCell>
+                      </TableRow>
+                    )
+                  })}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -697,7 +570,7 @@ export default function StepResults({
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <Stack direction="row" justifyContent="center" sx={{ pt: 1 }}>
+            <Stack direction="row" justifyContent="center" sx={{ pt: 1.5 }}>
               <Pagination
                 count={totalPages}
                 page={page}
@@ -705,22 +578,306 @@ export default function StepResults({
                 size="small"
                 sx={{
                   '& .MuiPaginationItem-root': {
-                    color: 'rgba(255,255,255,0.60)',
-                    borderColor: 'rgba(255,255,255,0.10)',
-                    '&.Mui-selected': {
-                      backgroundColor: 'rgba(167, 139, 250, 0.20)',
-                      color: purpleMain,
-                      borderColor: 'rgba(167, 139, 250, 0.35)',
-                    },
-                    '&:hover': {
-                      backgroundColor: 'rgba(167, 139, 250, 0.10)',
-                    },
+                    color: 'rgba(255,255,255,0.50)',
+                    borderColor: 'rgba(255,255,255,0.08)',
+                    '&.Mui-selected': { backgroundColor: 'rgba(167, 139, 250, 0.18)', color: purpleMain, borderColor: 'rgba(167, 139, 250, 0.30)' },
+                    '&:hover': { backgroundColor: 'rgba(167, 139, 250, 0.08)' },
                   },
                 }}
               />
             </Stack>
           )}
-        </Stack>
+        </Box>
+
+        {/* ─── Collapsible: Insights (Skills, Risks, Assumptions, Missing Info, Diagrams) ─── */}
+        <Box
+          onClick={() => setInsightsOpen((o) => !o)}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            mx: 2.5,
+            my: 1.5,
+            px: 1.5,
+            py: 1.25,
+            cursor: 'pointer',
+            userSelect: 'none',
+            borderRadius: 2,
+            border: '1px solid',
+            borderColor: insightsOpen ? 'rgba(167, 139, 250, 0.20)' : 'rgba(255,255,255,0.08)',
+            backgroundColor: insightsOpen ? 'rgba(167, 139, 250, 0.03)' : 'rgba(255,255,255,0.02)',
+            transition: 'all 200ms ease',
+            '&:hover': {
+              backgroundColor: 'rgba(167, 139, 250, 0.06)',
+              borderColor: 'rgba(167, 139, 250, 0.25)',
+            },
+          }}
+        >
+          <ExpandMoreIcon sx={{ color: 'rgba(255,255,255,0.45)', fontSize: 20, transform: insightsOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 250ms cubic-bezier(0.4,0,0.2,1)' }} />
+          <InfoOutlinedIcon sx={{ color: 'rgba(255,255,255,0.35)', fontSize: 18 }} />
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.88rem', color: 'rgba(255,255,255,0.75)' }}>
+            Insights & Details
+          </Typography>
+          {!insightsOpen && insightsCount > 0 && (
+            <Chip size="small" label={`${insightsCount} sections`} sx={{ height: 20, fontSize: '0.64rem', backgroundColor: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.35)' }} />
+          )}
+          <Box sx={{ flex: 1 }} />
+        </Box>
+
+        <Collapse in={insightsOpen} timeout={300}>
+          <Box sx={{ px: 2.5, pb: 2 }}>
+            <Stack spacing={0}>
+              {[
+                {
+                  key: 'skills',
+                  label: `Selected Skills (${displayedSkills.length})`,
+                  content: (
+                    <BulletList
+                      items={listOrNone(displayedSkills)}
+                      renderItem={(s) => {
+                        if (typeof s === 'string') return <Typography variant="body2">{s}</Typography>
+                        const score = Number.isFinite(s.score) ? s.score : null
+                        const reason = s.reason && typeof s.reason === 'object' ? s.reason : null
+                        const alwaysInclude = Boolean(reason && reason.alwaysInclude)
+                        const matched = Array.isArray(reason && reason.matched) ? reason.matched : []
+                        const boosts = Array.isArray(reason && reason.boosts) ? reason.boosts : []
+                        const scoreLabel = score !== null ? `match score: ${score}` : ''
+                        const why = alwaysInclude
+                          ? ['baseline (always included)', scoreLabel].filter(Boolean).join(' | ')
+                          : [scoreLabel, matched.length ? `matched: ${matched.join(', ')}` : '', boosts.length ? `boosts: ${boosts.map((b) => (b && b.tag ? `${b.hint}->${b.tag}` : String(b))).join(', ')}` : ''].filter(Boolean).join(' | ')
+                        return (
+                          <Box>
+                            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.78)' }}>
+                              <Box component="span" sx={{ fontFamily: theme.typography.fontFamilyMonospace, color: 'rgba(255,255,255,0.55)' }}>{String(s.id)}</Box>
+                              {' — '}{String(s.title)}
+                            </Typography>
+                            {why && <Typography variant="caption" sx={{ display: 'block', mt: 0.2, color: 'rgba(255,255,255,0.40)', fontFamily: theme.typography.fontFamilyMonospace, fontSize: '0.72rem' }}>{why}</Typography>}
+                          </Box>
+                        )
+                      }}
+                    />
+                  )
+                },
+                { key: 'missing', label: 'Missing Info Questions', content: <BulletList items={listOrNone(suite.missingInfoQuestions)} /> },
+                { key: 'assumptions', label: 'Assumptions', content: <BulletList items={listOrNone(suite.assumptions)} /> },
+                { key: 'risks', label: 'Risks', content: <BulletList items={listOrNone(suite.risks)} /> }
+              ].map((card) => (
+                <Accordion
+                  key={card.key}
+                  disableGutters
+                  sx={{
+                    backgroundColor: 'rgba(0,0,0,0.12)',
+                    border: '1px solid rgba(255,255,255,0.05)',
+                    '&:not(:last-child)': { borderBottom: 'none' },
+                    '&:first-of-type': { borderTopLeftRadius: 8, borderTopRightRadius: 8 },
+                    '&:last-of-type': { borderBottomLeftRadius: 8, borderBottomRightRadius: 8 },
+                    '&:before': { display: 'none' },
+                  }}
+                >
+                  <AccordionSummary
+                    expandIcon={<ExpandMoreIcon sx={{ color: 'rgba(255,255,255,0.40)' }} />}
+                    sx={{ px: 2, '& .MuiAccordionSummary-content': { my: 0.75 } }}
+                  >
+                    <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.85rem', color: 'rgba(255,255,255,0.70)' }}>{card.label}</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails sx={{ px: 2, pb: 1.5 }}>
+                    {card.content}
+                  </AccordionDetails>
+                </Accordion>
+              ))}
+            </Stack>
+
+            {/* Diagrams */}
+            {skillDiagrams.length > 0 && (
+              <Box sx={{ mt: 1.5, p: 1.5, borderRadius: 2, backgroundColor: 'rgba(0,0,0,0.12)', border: '1px solid rgba(167, 139, 250, 0.08)' }}>
+                <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mb: 1 }}>
+                  <AccountTreeIcon sx={{ color: purpleMain, fontSize: 16 }} />
+                  <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.85rem', color: 'rgba(255,255,255,0.70)' }}>
+                    Technique Diagrams
+                  </Typography>
+                  <Chip size="small" label={`${skillDiagrams.length}`} sx={{ height: 18, fontSize: '0.62rem', fontFamily: theme.typography.fontFamilyMonospace, backgroundColor: 'rgba(167, 139, 250, 0.10)', color: purpleMain }} />
+                </Stack>
+                <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
+                  {skillDiagrams.map((d) => (
+                    <Chip
+                      key={d.skillId}
+                      size="small"
+                      clickable
+                      icon={<AccountTreeIcon sx={{ fontSize: '14px !important', color: `${purpleMain} !important` }} />}
+                      label={d.skillTitle}
+                      onClick={() => { setActiveDiagram(d); setDiagramZoom(1); setDiagramDialogOpen(true) }}
+                      sx={{
+                        height: 28,
+                        fontSize: '0.76rem',
+                        backgroundColor: 'rgba(167, 139, 250, 0.06)',
+                        color: 'rgba(255,255,255,0.80)',
+                        border: '1px solid rgba(167, 139, 250, 0.18)',
+                        '&:hover': { backgroundColor: 'rgba(167, 139, 250, 0.14)', borderColor: 'rgba(167, 139, 250, 0.35)' },
+                      }}
+                    />
+                  ))}
+                </Stack>
+              </Box>
+            )}
+          </Box>
+        </Collapse>
+
+        {/* ─── Collapsible: Push to AIO ─── */}
+        <Box
+          onClick={() => setAioOpen((o) => !o)}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            mx: 2.5,
+            mt: 0,
+            mb: 2,
+            px: 1.5,
+            py: 1.25,
+            cursor: 'pointer',
+            userSelect: 'none',
+            borderRadius: 2,
+            border: '1px solid',
+            borderColor: aioOpen ? 'rgba(167, 139, 250, 0.20)' : 'rgba(255,255,255,0.08)',
+            backgroundColor: aioOpen ? 'rgba(167, 139, 250, 0.03)' : 'rgba(255,255,255,0.02)',
+            transition: 'all 200ms ease',
+            '&:hover': {
+              backgroundColor: 'rgba(167, 139, 250, 0.06)',
+              borderColor: 'rgba(167, 139, 250, 0.25)',
+            },
+          }}
+        >
+          <ExpandMoreIcon sx={{ color: 'rgba(255,255,255,0.45)', fontSize: 20, transform: aioOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 250ms cubic-bezier(0.4,0,0.2,1)' }} />
+          <CloudUploadIcon sx={{ color: 'rgba(255,255,255,0.35)', fontSize: 18 }} />
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.88rem', color: 'rgba(255,255,255,0.75)' }}>
+            Push to AIO Tests
+          </Typography>
+          {aioServerConfigured && !aioOpen && (
+            <Chip size="small" icon={<CheckCircleIcon sx={{ color: '#4ade80 !important', fontSize: 12 }} />} label="configured" sx={{ height: 20, fontSize: '0.62rem', backgroundColor: 'rgba(74, 222, 128, 0.06)', color: 'rgba(74, 222, 128, 0.70)', '& .MuiChip-icon': { ml: 0.5 } }} variant="outlined" />
+          )}
+          {aioStatus === 'success' && !aioOpen && (
+            <Chip size="small" icon={<CheckCircleIcon sx={{ color: '#4ade80 !important', fontSize: 12 }} />} label="pushed" sx={{ height: 20, fontSize: '0.62rem', backgroundColor: 'rgba(74, 222, 128, 0.06)', color: 'rgba(74, 222, 128, 0.70)', '& .MuiChip-icon': { ml: 0.5 } }} variant="outlined" />
+          )}
+          <Box sx={{ flex: 1 }} />
+        </Box>
+
+        <Collapse in={aioOpen} timeout={300}>
+          <Box sx={{ px: 2.5, pb: 2.5 }}>
+            <Stack spacing={1.5}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={1}>
+                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.50)', fontSize: '0.82rem' }}>
+                  Create a folder (if needed) and push test cases to AIO.
+                </Typography>
+                <Box sx={{ flex: 1 }} />
+                <FormControlLabel
+                  control={<Switch checked={aioIncludeTags} onChange={(e) => setAioIncludeTags(e.target.checked)} size="small" sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: purpleMain }, '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: purpleMain } }} />}
+                  label={<Typography variant="caption" sx={{ fontSize: '0.78rem' }}>Include tags</Typography>}
+                  sx={{ mr: 0 }}
+                />
+              </Stack>
+
+              {aioServerConfigured ? (
+                <Alert
+                  severity="success"
+                  variant="outlined"
+                  icon={<CheckCircleIcon sx={{ color: '#4ade80' }} />}
+                  sx={{ borderColor: 'rgba(74, 222, 128, 0.20)', backgroundColor: 'rgba(74, 222, 128, 0.03)', '& .MuiAlert-message': { color: 'rgba(255,255,255,0.65)', fontSize: '0.80rem' } }}
+                >
+                  AIO is configured on the server. You can push test cases directly.
+                </Alert>
+              ) : (
+                <>
+                  <Alert
+                    severity="info"
+                    variant="outlined"
+                    icon={<InfoOutlinedIcon sx={{ color: 'rgba(167, 139, 250, 0.7)' }} />}
+                    sx={{ borderColor: 'rgba(167, 139, 250, 0.20)', backgroundColor: 'rgba(167, 139, 250, 0.03)', '& .MuiAlert-message': { color: 'rgba(255,255,255,0.65)', fontSize: '0.80rem' } }}
+                  >
+                    Enter your AIO base URL and API token to push test cases.
+                  </Alert>
+                  <Grid container spacing={1.5}>
+                    <Grid item xs={12} md={6}>
+                      <TextField size="small" label="AIO Base URL" placeholder="https://tcms.aiojiraapps.com/aio-tcms" value={aioBaseUrl} onChange={(e) => setAioBaseUrl(e.target.value)} fullWidth InputProps={{ sx: { fontSize: '0.85rem' } }} />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        size="small" label="AIO API Token" placeholder="Your AIO API token" type={showAioToken ? 'text' : 'password'}
+                        value={aioToken} onChange={(e) => setAioToken(e.target.value)} fullWidth
+                        InputProps={{
+                          sx: { fontSize: '0.85rem' },
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <IconButton size="small" onClick={() => setShowAioToken(!showAioToken)} edge="end" sx={{ color: 'rgba(255,255,255,0.40)' }}>
+                                {showAioToken ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                              </IconButton>
+                            </InputAdornment>
+                          ),
+                        }}
+                      />
+                    </Grid>
+                  </Grid>
+                </>
+              )}
+
+              <Grid container spacing={1.5} alignItems="center">
+                <Grid item xs={12} md={3}>
+                  <TextField size="small" label="Jira project key/id" placeholder="e.g., AT" value={aioProject} onChange={(e) => setAioProject(e.target.value)} fullWidth />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField size="small" label="Folder path (optional)" placeholder="Release 1.0 / Regression / Checkout" value={aioFolder} onChange={(e) => setAioFolder(e.target.value)} fullWidth />
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Button
+                      variant="contained"
+                      disabled={aioBusy || (!aioServerConfigured && (!aioBaseUrl.trim() || !aioToken.trim()))}
+                      onClick={pushToAio}
+                      fullWidth
+                      sx={{
+                        backgroundColor: purpleMain,
+                        '&:hover': { backgroundColor: purpleDeep },
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        fontSize: '0.85rem',
+                      }}
+                    >
+                      {aioBusy ? 'Pushing...' : 'Push to AIO'}
+                    </Button>
+                    {aioBusy && (
+                      <Button variant="text" size="small" onClick={() => { cancelInFlight(); setInfo('Cancelling...') }} sx={{ color: 'rgba(255,255,255,0.50)', textTransform: 'none', whiteSpace: 'nowrap' }}>
+                        Cancel
+                      </Button>
+                    )}
+                  </Stack>
+                </Grid>
+              </Grid>
+
+              {aioStatus === 'success' && aioResult && (
+                <Alert
+                  severity="success" variant="outlined" icon={<CheckCircleIcon sx={{ color: '#4ade80' }} />}
+                  action={
+                    <IconButton size="small" onClick={async () => { try { await navigator.clipboard.writeText(aioResult); setInfo('Copied.') } catch { setError('Copy failed.') } }} sx={{ color: 'rgba(255,255,255,0.50)' }}>
+                      <ContentCopyIcon sx={{ fontSize: 16 }} />
+                    </IconButton>
+                  }
+                  sx={{ borderColor: 'rgba(74, 222, 128, 0.20)', backgroundColor: 'rgba(74, 222, 128, 0.03)', '& .MuiAlert-message': { color: 'rgba(255,255,255,0.70)', fontSize: '0.82rem' } }}
+                >
+                  {aioResult}
+                </Alert>
+              )}
+
+              {aioStatus === 'error' && aioResult && (
+                <Alert
+                  severity="error" variant="outlined"
+                  sx={{ borderColor: 'rgba(239, 68, 68, 0.25)', backgroundColor: 'rgba(239, 68, 68, 0.03)', '& .MuiAlert-message': { color: 'rgba(255,255,255,0.70)', fontSize: '0.82rem' } }}
+                >
+                  {aioResult}
+                </Alert>
+              )}
+            </Stack>
+          </Box>
+        </Collapse>
+
       </CardContent>
     </Card>
   )

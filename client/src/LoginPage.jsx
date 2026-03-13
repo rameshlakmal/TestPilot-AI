@@ -102,7 +102,7 @@ export default function LoginPage({ onLogin }) {
             Welcome Back
           </Typography>
           <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.50)' }}>
-            Sign in to AI Test Case Generator
+            Sign in to TestPilot AI
           </Typography>
         </Box>
 

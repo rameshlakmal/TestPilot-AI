@@ -11,8 +11,7 @@ const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const Ajv = require("ajv");
 
-const authRoutes = require("./auth");
-const authMiddleware = require("./authMiddleware");
+// Auth removed — users provide their own API keys via X-LLM-API-Key header
 const { loadSkills } = require("./skills");
 const { selectSkills } = require("./selectSkills");
 const {
@@ -123,11 +122,135 @@ app.get("/api/health", (req, res) => {
   res.json({ ok: true });
 });
 
-// Auth routes (public — no middleware)
-app.use("/api/auth", authRoutes);
+// ─── Server-configured providers ───
 
-// Protect all routes below this line
-app.use("/api", authMiddleware);
+app.get("/api/providers", (req, res) => {
+  res.json({
+    llm: {
+      openai: Boolean(process.env.OPENAI_API_KEY),
+      anthropic: Boolean(process.env.ANTHROPIC_API_KEY),
+      gemini: Boolean(process.env.GEMINI_API_KEY),
+    },
+    jira: jira.isEnvConfigured(),
+    aio: Boolean(process.env.AIO_BASE_URL && process.env.AIO_TOKEN),
+  });
+});
+
+// ─── API key validation ───
+
+app.post("/api/validate-key", async (req, res) => {
+  try {
+    const apiKey = String((req.body && req.body.apiKey) || "").trim();
+    const provider = String((req.body && req.body.provider) || "").toLowerCase();
+
+    if (!apiKey) return res.status(400).json({ valid: false, error: "API key is required" });
+    if (!provider || !["openai", "anthropic", "gemini"].includes(provider)) {
+      return res.status(400).json({ valid: false, error: "Invalid provider" });
+    }
+
+    if (provider === "openai") {
+      const r = await fetch("https://api.openai.com/v1/models", {
+        headers: { Authorization: `Bearer ${apiKey}` }
+      });
+      if (!r.ok) return res.json({ valid: false, error: "Invalid OpenAI API key" });
+      return res.json({ valid: true });
+    }
+
+    if (provider === "anthropic") {
+      // Anthropic has no list-models endpoint; do a minimal ping
+      const r = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "claude-3-haiku-20240307",
+          max_tokens: 1,
+          messages: [{ role: "user", content: "hi" }]
+        })
+      });
+      // 401/403 = invalid key; 200 or 400 (bad request) means key works
+      if (r.status === 401 || r.status === 403) {
+        return res.json({ valid: false, error: "Invalid Anthropic API key" });
+      }
+      return res.json({ valid: true });
+    }
+
+    if (provider === "gemini") {
+      const r = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`
+      );
+      if (!r.ok) return res.json({ valid: false, error: "Invalid Gemini API key" });
+      return res.json({ valid: true });
+    }
+  } catch (err) {
+    res.status(500).json({ valid: false, error: err.message || "Validation failed" });
+  }
+});
+
+// ─── Fetch available models for a key ───
+
+app.post("/api/models", async (req, res) => {
+  try {
+    const provider = String((req.body && req.body.provider) || "").toLowerCase();
+    // Use provided key, fall back to server .env key
+    const envKeys = { openai: process.env.OPENAI_API_KEY, anthropic: process.env.ANTHROPIC_API_KEY, gemini: process.env.GEMINI_API_KEY };
+    const apiKey = String((req.body && req.body.apiKey) || "").trim() || (envKeys[provider] || "");
+
+    if (!apiKey || !provider) {
+      return res.status(400).json({ error: "apiKey and provider required" });
+    }
+
+    if (provider === "openai") {
+      const r = await fetch("https://api.openai.com/v1/models", {
+        headers: { Authorization: `Bearer ${apiKey}` }
+      });
+      if (!r.ok) return res.status(401).json({ error: "Invalid API key" });
+      const data = await r.json();
+      // Filter to chat-capable models
+      const chatPrefixes = ["gpt-4", "gpt-3.5", "o1", "o3", "o4"];
+      const models = (data.data || [])
+        .filter((m) => chatPrefixes.some((p) => m.id.startsWith(p)))
+        .filter((m) => !m.id.includes("realtime") && !m.id.includes("audio") && !m.id.includes("transcri"))
+        .map((m) => m.id)
+        .sort();
+      return res.json({ provider, models });
+    }
+
+    if (provider === "anthropic") {
+      // Anthropic doesn't have a list-models endpoint — return hardcoded list
+      return res.json({
+        provider,
+        models: [
+          "claude-sonnet-4-5-20250514",
+          "claude-3-5-sonnet-latest",
+          "claude-3-5-haiku-latest",
+          "claude-3-haiku-20240307"
+        ]
+      });
+    }
+
+    if (provider === "gemini") {
+      const r = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`
+      );
+      if (!r.ok) return res.status(401).json({ error: "Invalid API key" });
+      const data = await r.json();
+      const models = (data.models || [])
+        .filter((m) => m.supportedGenerationMethods && m.supportedGenerationMethods.includes("generateContent"))
+        .map((m) => m.name.replace("models/", ""))
+        .filter((id) => id.startsWith("gemini"))
+        .sort();
+      return res.json({ provider, models });
+    }
+
+    return res.status(400).json({ error: `Unsupported provider: ${provider}` });
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Failed to fetch models" });
+  }
+});
 
 app.get("/api/skills", (req, res) => {
   res.json({
@@ -139,13 +262,15 @@ app.get("/api/skills", (req, res) => {
 // ─── Jira integration routes ───
 
 app.get("/api/jira/status", (req, res) => {
-  res.json({ configured: jira.isConfigured() });
+  // Check both server .env and request headers
+  res.json({ configured: jira.isConfigured(req) });
 });
 
 app.get("/api/jira/projects", async (req, res) => {
   try {
-    if (!jira.isConfigured()) return res.status(400).json({ error: "Jira is not configured. Set JIRA_BASE_URL, JIRA_EMAIL, and JIRA_API_TOKEN in .env" });
-    const projects = await jira.getProjects();
+    const cfg = jira.resolveConfig(req);
+    if (!cfg.baseUrl || !cfg.email || !cfg.token) return res.status(400).json({ error: "Jira is not configured. Provide credentials in the UI or set JIRA_BASE_URL, JIRA_EMAIL, and JIRA_API_TOKEN in .env" });
+    const projects = await jira.getProjects(cfg);
     res.json({ projects });
   } catch (err) {
     res.status(500).json({ error: err.message || "Failed to fetch projects" });
@@ -154,10 +279,11 @@ app.get("/api/jira/projects", async (req, res) => {
 
 app.get("/api/jira/epics", async (req, res) => {
   try {
-    if (!jira.isConfigured()) return res.status(400).json({ error: "Jira not configured" });
+    const cfg = jira.resolveConfig(req);
+    if (!cfg.baseUrl || !cfg.email || !cfg.token) return res.status(400).json({ error: "Jira not configured" });
     const project = String(req.query.project || "").trim();
     if (!project) return res.status(400).json({ error: "project query param required" });
-    const epics = await jira.getEpics(project);
+    const epics = await jira.getEpics(project, cfg);
     res.json({ epics });
   } catch (err) {
     res.status(500).json({ error: err.message || "Failed to fetch epics" });
@@ -166,10 +292,11 @@ app.get("/api/jira/epics", async (req, res) => {
 
 app.get("/api/jira/sprints", async (req, res) => {
   try {
-    if (!jira.isConfigured()) return res.status(400).json({ error: "Jira not configured" });
+    const cfg = jira.resolveConfig(req);
+    if (!cfg.baseUrl || !cfg.email || !cfg.token) return res.status(400).json({ error: "Jira not configured" });
     const project = String(req.query.project || "").trim();
     if (!project) return res.status(400).json({ error: "project query param required" });
-    const sprints = await jira.getSprints(project);
+    const sprints = await jira.getSprints(project, cfg);
     res.json({ sprints });
   } catch (err) {
     res.status(500).json({ error: err.message || "Failed to fetch sprints" });
@@ -178,7 +305,8 @@ app.get("/api/jira/sprints", async (req, res) => {
 
 app.get("/api/jira/stories", async (req, res) => {
   try {
-    if (!jira.isConfigured()) return res.status(400).json({ error: "Jira not configured" });
+    const cfg = jira.resolveConfig(req);
+    if (!cfg.baseUrl || !cfg.email || !cfg.token) return res.status(400).json({ error: "Jira not configured" });
     const project = String(req.query.project || "").trim();
     if (!project) return res.status(400).json({ error: "project query param required" });
     const stories = await jira.getStories(project, {
@@ -186,7 +314,7 @@ app.get("/api/jira/stories", async (req, res) => {
       sprint: req.query.sprint || "",
       status: req.query.status || "",
       search: req.query.search || "",
-    });
+    }, cfg);
     res.json({ stories });
   } catch (err) {
     res.status(500).json({ error: err.message || "Failed to fetch stories" });
@@ -195,10 +323,11 @@ app.get("/api/jira/stories", async (req, res) => {
 
 app.post("/api/jira/story-details", async (req, res) => {
   try {
-    if (!jira.isConfigured()) return res.status(400).json({ error: "Jira not configured" });
+    const cfg = jira.resolveConfig(req);
+    if (!cfg.baseUrl || !cfg.email || !cfg.token) return res.status(400).json({ error: "Jira not configured" });
     const keys = Array.isArray(req.body.keys) ? req.body.keys : [];
     if (!keys.length) return res.status(400).json({ error: "keys array required" });
-    const details = await jira.getStoryDetails(keys);
+    const details = await jira.getStoryDetails(keys, cfg);
     const formatted = jira.formatStoriesAsRequirement(details);
     res.json({ stories: details, formatted });
   } catch (err) {
@@ -214,7 +343,7 @@ app.post("/api/aio/push", async (req, res) => {
     const folderPath = String(req.body && req.body.folderPath ? req.body.folderPath : "").trim();
     const includeCoverageTags = Boolean(req.body && req.body.includeCoverageTags);
     const aioToken = String(req.body && req.body.aioToken ? req.body.aioToken : process.env.AIO_TOKEN || "").trim();
-    const baseUrl = normalizeBaseUrl(process.env.AIO_BASE_URL);
+    const baseUrl = normalizeBaseUrl(req.body && req.body.aioBaseUrl ? req.body.aioBaseUrl : process.env.AIO_BASE_URL || "");
 
     const suite = req.body && req.body.suite;
     const testCases = suite && Array.isArray(suite.testCases) ? suite.testCases : [];
@@ -222,6 +351,7 @@ app.post("/api/aio/push", async (req, res) => {
 
     if (!jiraProjectId) return res.status(400).json({ error: "jiraProjectId is required" });
     if (!suite || testCases.length === 0) return res.status(400).json({ error: "suite with testCases is required" });
+    if (!baseUrl) return res.status(400).json({ error: "AIO base URL is required (aioBaseUrl or AIO_BASE_URL env var)" });
     if (!aioToken) return res.status(400).json({ error: "AIO token is required (aioToken or AIO_TOKEN env var)" });
 
     const folder = folderPath
@@ -276,34 +406,46 @@ app.post("/api/aio/push", async (req, res) => {
   }
 });
 
-function getProviderConfig(provider) {
+/**
+ * Detect provider from API key prefix.
+ * OpenAI keys start with "sk-", Anthropic with "sk-ant-", Gemini with "AIza".
+ */
+function detectProviderFromKey(key) {
+  const k = String(key || "");
+  if (k.startsWith("sk-ant-")) return "anthropic";
+  if (k.startsWith("sk-")) return "openai";
+  if (k.startsWith("AIza")) return "gemini";
+  return null;
+}
+
+/**
+ * Build provider config from request headers + body + env fallback.
+ * Priority: X-LLM-API-Key header > .env key
+ */
+function getProviderConfig(provider, req) {
+  const headerKey = String((req && req.headers && req.headers["x-llm-api-key"]) || "").trim();
   const p = String(provider || process.env.LLM_PROVIDER || "openai").toLowerCase();
 
-  if (p === "openai") {
-    return {
-      provider: "openai",
-      apiKey: process.env.OPENAI_API_KEY,
-      model: process.env.OPENAI_MODEL || "gpt-4.1-mini"
-    };
-  }
+  const envKeys = {
+    openai: process.env.OPENAI_API_KEY,
+    anthropic: process.env.ANTHROPIC_API_KEY,
+    gemini: process.env.GEMINI_API_KEY
+  };
 
-  if (p === "anthropic") {
-    return {
-      provider: "anthropic",
-      apiKey: process.env.ANTHROPIC_API_KEY,
-      model: process.env.ANTHROPIC_MODEL || "claude-3-5-sonnet-latest"
-    };
-  }
+  const envModels = {
+    openai: process.env.OPENAI_MODEL || "gpt-4.1-mini",
+    anthropic: process.env.ANTHROPIC_MODEL || "claude-3-5-sonnet-latest",
+    gemini: process.env.GEMINI_MODEL || "gemini-1.5-flash"
+  };
 
-  if (p === "gemini") {
-    return {
-      provider: "gemini",
-      apiKey: process.env.GEMINI_API_KEY,
-      model: process.env.GEMINI_MODEL || "gemini-1.5-flash"
-    };
-  }
+  // Header key takes priority over env
+  const apiKey = headerKey || envKeys[p] || "";
 
-  return { provider: p };
+  return {
+    provider: p,
+    apiKey,
+    model: envModels[p] || ""
+  };
 }
 
 function validateProviderAndKey(cfg) {
@@ -311,9 +453,9 @@ function validateProviderAndKey(cfg) {
   if (p !== "openai" && p !== "anthropic" && p !== "gemini") {
     return { ok: false, error: `Unsupported provider: ${p || "(empty)"}` };
   }
-  if (p === "openai" && !cfg.apiKey) return { ok: false, error: "Missing OPENAI_API_KEY" };
-  if (p === "anthropic" && !cfg.apiKey) return { ok: false, error: "Missing ANTHROPIC_API_KEY" };
-  if (p === "gemini" && !cfg.apiKey) return { ok: false, error: "Missing GEMINI_API_KEY" };
+  if (!cfg.apiKey) {
+    return { ok: false, error: `No API key provided for ${p}. Enter your key in the UI or set it in .env` };
+  }
   return { ok: true };
 }
 
@@ -796,7 +938,7 @@ app.post(
 
       const provider = String((req.body && req.body.provider) || "");
       const modelOverride = String((req.body && req.body.model) || "").trim();
-      const cfg = getProviderConfig(provider);
+      const cfg = getProviderConfig(provider, req);
       const model = modelOverride || cfg.model;
 
       const okProvider = validateProviderAndKey(cfg);
@@ -873,7 +1015,7 @@ app.post(
 
       const provider = String((req.body && req.body.provider) || "");
       const modelOverride = String((req.body && req.body.model) || "").trim();
-      const cfg = getProviderConfig(provider);
+      const cfg = getProviderConfig(provider, req);
       const model = modelOverride || cfg.model;
 
        const okProvider = validateProviderAndKey(cfg);
@@ -941,7 +1083,7 @@ app.post(
 
       const provider = String((req.body && req.body.provider) || "");
       const modelOverride = String((req.body && req.body.model) || "").trim();
-      const cfg = getProviderConfig(provider);
+      const cfg = getProviderConfig(provider, req);
       const model = modelOverride || cfg.model;
 
       const okProvider = validateProviderAndKey(cfg);

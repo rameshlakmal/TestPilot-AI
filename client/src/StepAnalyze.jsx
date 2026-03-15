@@ -27,7 +27,7 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
-import { purpleMain, purpleDeep, accentLime, diagramInfo } from './theme'
+import { purple, diagramInfo } from './theme'
 
 export default function StepAnalyze({
   theme,
@@ -49,6 +49,20 @@ export default function StepAnalyze({
   setAnalysis, setAnalysisMeta,
 }) {
   const [clarifyOpen, setClarifyOpen] = useState(false)
+  const isDark = theme.palette.mode === 'dark'
+
+  // Theme-aware helpers
+  const purpleAccent = isDark ? purple[500] : purple[600]
+  const purpleBgSubtle = isDark ? 'rgba(167, 139, 250, 0.08)' : 'rgba(124, 58, 237, 0.06)'
+  const purpleBgFaint = isDark ? 'rgba(167, 139, 250, 0.03)' : 'rgba(124, 58, 237, 0.03)'
+  const purpleBorder = isDark ? 'rgba(167, 139, 250, 0.20)' : 'rgba(124, 58, 237, 0.18)'
+  const purpleBorderHover = isDark ? 'rgba(167, 139, 250, 0.25)' : 'rgba(124, 58, 237, 0.22)'
+  const subtleBg = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)'
+  const subtleBg2 = isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)'
+  const subtleBg3 = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)'
+  const subtleBorder = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'
+  const disabledBtnBg = isDark ? 'rgba(167, 139, 250, 0.15)' : 'rgba(124, 58, 237, 0.10)'
+  const disabledBtnColor = isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)'
 
   const missingQuestions = useMemo(() => {
     if (!preflight || !Array.isArray(preflight.missingInfoQuestions)) return []
@@ -117,10 +131,12 @@ export default function StepAnalyze({
     setInfo('Cleared answers.')
   }
 
+  const lowConfColor = isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.40)'
+
   const confidenceConfig = {
     high: { color: '#16a34a', bg: 'rgba(22, 163, 74, 0.08)', border: 'rgba(22, 163, 74, 0.20)', label: 'High confidence' },
     medium: { color: '#d97706', bg: 'rgba(217, 119, 6, 0.08)', border: 'rgba(217, 119, 6, 0.20)', label: 'Medium confidence' },
-    low: { color: 'rgba(255,255,255,0.45)', bg: 'rgba(255,255,255,0.02)', border: 'rgba(255,255,255,0.08)', label: 'Low confidence' },
+    low: { color: lowConfColor, bg: subtleBg2, border: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', label: 'Low confidence' },
   }
 
   // ─── Pre-analysis state (no analysis yet) ───
@@ -136,33 +152,33 @@ export default function StepAnalyze({
               display: 'flex',
               alignItems: 'center',
               gap: 1.5,
-              mx: 2,
-              mt: 2,
+              mx: 2.5,
+              mt: 2.5,
               mb: clarifyOpen ? 0 : 2,
               px: 1.5,
               py: 1.25,
               cursor: 'pointer',
               userSelect: 'none',
-              borderRadius: 2,
+              borderRadius: 3,
               border: '1px solid',
-              borderColor: clarifyOpen ? 'rgba(167, 139, 250, 0.20)' : 'rgba(255,255,255,0.08)',
-              backgroundColor: clarifyOpen ? 'rgba(167, 139, 250, 0.03)' : 'rgba(255,255,255,0.02)',
+              borderColor: clarifyOpen ? purpleBorder : 'divider',
+              backgroundColor: clarifyOpen ? purpleBgFaint : 'transparent',
               transition: 'all 200ms ease',
               '&:hover': {
-                backgroundColor: 'rgba(167, 139, 250, 0.06)',
-                borderColor: 'rgba(167, 139, 250, 0.25)',
+                backgroundColor: purpleBgSubtle,
+                borderColor: purpleBorderHover,
               },
             }}
           >
             <ExpandMoreIcon
               sx={{
-                color: 'rgba(255,255,255,0.45)',
+                color: 'text.secondary',
                 fontSize: 20,
                 transform: clarifyOpen ? 'rotate(180deg)' : 'rotate(0deg)',
                 transition: 'transform 250ms cubic-bezier(0.4,0,0.2,1)',
               }}
             />
-            <HelpOutlineIcon sx={{ color: 'rgba(255,255,255,0.40)', fontSize: 18 }} />
+            <HelpOutlineIcon sx={{ color: 'text.disabled', fontSize: 18 }} />
             <Typography variant="subtitle1" sx={{ fontWeight: 700, fontSize: '0.95rem' }}>
               Clarify Requirements
             </Typography>
@@ -172,8 +188,8 @@ export default function StepAnalyze({
               sx={{
                 height: 20,
                 fontSize: '0.68rem',
-                backgroundColor: 'rgba(255,255,255,0.04)',
-                color: 'rgba(255,255,255,0.40)',
+                backgroundColor: subtleBg,
+                color: 'text.disabled',
                 fontWeight: 500,
               }}
             />
@@ -185,8 +201,8 @@ export default function StepAnalyze({
                   height: 20,
                   fontSize: '0.68rem',
                   fontFamily: theme.typography.fontFamilyMonospace,
-                  backgroundColor: answeredCount === missingQuestions.length ? 'rgba(74, 222, 128, 0.08)' : 'rgba(167, 139, 250, 0.08)',
-                  color: answeredCount === missingQuestions.length ? '#4ade80' : purpleMain,
+                  backgroundColor: answeredCount === missingQuestions.length ? 'rgba(74, 222, 128, 0.08)' : purpleBgSubtle,
+                  color: answeredCount === missingQuestions.length ? '#4ade80' : purpleAccent,
                 }}
               />
             )}
@@ -194,9 +210,9 @@ export default function StepAnalyze({
           </Box>
 
           <Collapse in={clarifyOpen} timeout={300}>
-            <Box sx={{ px: 2.5, pb: 2.5 }}>
+            <Box sx={{ px: 3, pb: 3 }}>
               <Stack spacing={2}>
-                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.50)', fontSize: '0.82rem' }}>
+                <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>
                   Let the AI identify ambiguities in your requirements before analysis. You can skip this step and go straight to Analyze below.
                 </Typography>
 
@@ -209,16 +225,16 @@ export default function StepAnalyze({
                       disabled={busy || !hasAnyRequirements}
                       onClick={(e) => { e.stopPropagation(); callPreflight() }}
                       sx={{
-                        borderColor: 'rgba(255,255,255,0.14)',
-                        color: 'rgba(255,255,255,0.85)',
+                        borderColor: 'divider',
+                        color: 'text.primary',
                         textTransform: 'none',
-                        '&:hover': { borderColor: 'rgba(167, 139, 250, 0.45)', backgroundColor: 'rgba(167, 139, 250, 0.08)' }
+                        '&:hover': { borderColor: purpleAccent, backgroundColor: purpleBgSubtle },
                       }}
                     >
                       {busy && !analysis ? 'Analyzing...' : 'Find missing info'}
                     </Button>
                     {busy && !analysis && (
-                      <Button variant="text" size="small" onClick={cancelInFlight} sx={{ color: 'rgba(255,255,255,0.60)', textTransform: 'none' }}>
+                      <Button variant="text" size="small" onClick={cancelInFlight} sx={{ color: 'text.secondary', textTransform: 'none' }}>
                         Cancel
                       </Button>
                     )}
@@ -236,7 +252,7 @@ export default function StepAnalyze({
                           key={key}
                           sx={{
                             pl: 2,
-                            borderLeft: `2px solid ${answered ? 'rgba(74, 222, 128, 0.30)' : 'rgba(167, 139, 250, 0.20)'}`,
+                            borderLeft: `2px solid ${answered ? 'rgba(74, 222, 128, 0.30)' : purpleBorder}`,
                             transition: 'border-color 200ms',
                           }}
                         >
@@ -246,14 +262,14 @@ export default function StepAnalyze({
                               sx={{
                                 fontFamily: theme.typography.fontFamilyMonospace,
                                 fontSize: '0.68rem',
-                                color: 'rgba(255,255,255,0.35)',
+                                color: 'text.disabled',
                                 mt: 0.1,
                                 flexShrink: 0,
                               }}
                             >
                               Q{idx + 1}
                             </Typography>
-                            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.80)', fontSize: '0.85rem' }}>
+                            <Typography variant="body2" sx={{ color: 'text.primary', fontSize: '0.85rem', opacity: 0.85 }}>
                               {key}
                             </Typography>
                           </Stack>
@@ -281,7 +297,7 @@ export default function StepAnalyze({
                         size="small"
                         variant="outlined"
                         label={`${answeredCount}/${missingQuestions.length} answered`}
-                        sx={{ fontFamily: theme.typography.fontFamilyMonospace, fontSize: '0.72rem', borderColor: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.55)' }}
+                        sx={{ fontFamily: theme.typography.fontFamilyMonospace, fontSize: '0.72rem', borderColor: 'divider', color: 'text.secondary' }}
                       />
                       <Box sx={{ flex: 1 }} />
                       {answeredCount > 0 && (
@@ -290,7 +306,7 @@ export default function StepAnalyze({
                           size="small"
                           startIcon={<ClearAllIcon sx={{ fontSize: 14 }} />}
                           onClick={handleClearAnswers}
-                          sx={{ color: 'rgba(255,255,255,0.50)', textTransform: 'none', fontSize: '0.78rem' }}
+                          sx={{ color: 'text.secondary', textTransform: 'none', fontSize: '0.78rem' }}
                         >
                           Clear answers
                         </Button>
@@ -302,10 +318,10 @@ export default function StepAnalyze({
             </Box>
           </Collapse>
 
-          <Divider sx={{ borderColor: 'rgba(255,255,255,0.06)' }} />
+          <Divider />
 
           {/* Analyze CTA — the main action */}
-          <Box sx={{ px: 2.5, py: 3 }}>
+          <Box sx={{ px: 3, py: 3 }}>
             <Stack spacing={2.5} alignItems="center">
               <Stack alignItems="center" spacing={1}>
                 <Box
@@ -317,17 +333,17 @@ export default function StepAnalyze({
                     alignItems: 'center',
                     justifyContent: 'center',
                     background: busy
-                      ? `linear-gradient(135deg, rgba(167, 139, 250, 0.15), rgba(124, 58, 237, 0.15))`
-                      : `linear-gradient(135deg, rgba(167, 139, 250, 0.10), rgba(124, 58, 237, 0.10))`,
+                      ? `linear-gradient(135deg, ${purpleBgSubtle}, ${purpleBgSubtle})`
+                      : `linear-gradient(135deg, ${purpleBgFaint}, ${purpleBgSubtle})`,
                     transition: 'all 300ms',
                   }}
                 >
-                  <ScienceIcon sx={{ color: purpleMain, fontSize: 26 }} />
+                  <ScienceIcon sx={{ color: purpleAccent, fontSize: 26 }} />
                 </Box>
                 <Typography variant="subtitle1" sx={{ fontWeight: 700, textAlign: 'center' }}>
                   Analyze & Recommend Techniques
                 </Typography>
-                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.50)', textAlign: 'center', maxWidth: 420, fontSize: '0.84rem' }}>
+                <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'center', maxWidth: 420, fontSize: '0.84rem' }}>
                   The AI will extract testable elements from your requirements and recommend the best testing techniques.
                 </Typography>
               </Stack>
@@ -342,21 +358,21 @@ export default function StepAnalyze({
                     px: 3.5,
                     py: 1,
                     backgroundImage: 'none',
-                    backgroundColor: purpleMain,
-                    color: 'rgba(255,255,255,0.96)',
+                    backgroundColor: purple[600],
+                    color: '#fff',
                     fontWeight: 600,
                     fontSize: '0.9rem',
                     textTransform: 'none',
-                    borderRadius: 2,
-                    boxShadow: '0 0 0 1px rgba(167, 139, 250, 0.30), 0 12px 40px rgba(0,0,0,0.35)',
-                    '&:hover': { backgroundColor: purpleDeep, boxShadow: '0 0 0 1px rgba(167, 139, 250, 0.50), 0 16px 50px rgba(0,0,0,0.45)' },
-                    '&.Mui-disabled': { backgroundColor: 'rgba(167, 139, 250, 0.15)', color: 'rgba(255,255,255,0.30)' },
+                    borderRadius: 3,
+                    boxShadow: `0 0 0 1px ${purple[500]}33, 0 12px 40px ${isDark ? 'rgba(0,0,0,0.35)' : 'rgba(124,58,237,0.18)'}`,
+                    '&:hover': { backgroundColor: purple[700] },
+                    '&.Mui-disabled': { backgroundColor: disabledBtnBg, color: disabledBtnColor },
                   }}
                 >
                   {busy ? 'Analyzing...' : 'Analyze requirements'}
                 </Button>
                 {busy && (
-                  <Button variant="text" size="small" onClick={cancelInFlight} sx={{ color: 'rgba(255,255,255,0.60)', textTransform: 'none' }}>
+                  <Button variant="text" size="small" onClick={cancelInFlight} sx={{ color: 'text.secondary', textTransform: 'none' }}>
                     Cancel
                   </Button>
                 )}
@@ -367,16 +383,16 @@ export default function StepAnalyze({
                   sx={{
                     width: '100%',
                     maxWidth: 300,
-                    borderRadius: 2,
+                    borderRadius: 3,
                     height: 3,
-                    backgroundColor: 'rgba(255,255,255,0.06)',
-                    '& .MuiLinearProgress-bar': { backgroundColor: purpleMain },
+                    backgroundColor: subtleBg,
+                    '& .MuiLinearProgress-bar': { backgroundColor: purpleAccent },
                   }}
                 />
               )}
 
               {!hasAnyRequirements && (
-                <Typography variant="caption" sx={{ color: 'rgba(239, 68, 68, 0.7)', fontSize: '0.78rem' }}>
+                <Typography variant="caption" sx={{ color: 'error.main', opacity: 0.7, fontSize: '0.78rem' }}>
                   Go back to step 1 and add requirements first.
                 </Typography>
               )}
@@ -404,30 +420,30 @@ export default function StepAnalyze({
           px: 1.5,
           borderRadius: 2,
           cursor: 'pointer',
-          backgroundColor: checked ? 'rgba(167, 139, 250, 0.05)' : 'transparent',
+          backgroundColor: checked ? purpleBgFaint : 'transparent',
           border: '1px solid',
-          borderColor: checked ? 'rgba(167, 139, 250, 0.20)' : 'rgba(255,255,255,0.04)',
+          borderColor: checked ? purpleBorder : subtleBorder,
           transition: 'all 120ms ease',
-          '&:hover': { backgroundColor: 'rgba(167, 139, 250, 0.06)', borderColor: 'rgba(167, 139, 250, 0.15)' },
+          '&:hover': { backgroundColor: purpleBgSubtle, borderColor: isDark ? 'rgba(167, 139, 250, 0.15)' : 'rgba(124, 58, 237, 0.12)' },
         }}
       >
         <Checkbox
           checked={checked}
           size="small"
-          sx={{ p: 0, color: 'rgba(255,255,255,0.30)', '&.Mui-checked': { color: purpleMain } }}
+          sx={{ p: 0, color: 'text.disabled', '&.Mui-checked': { color: purpleAccent } }}
           onChange={() => setSelectedTechniques((prev) => ({ ...prev, [rec.skillId]: !prev[rec.skillId] }))}
           onClick={(e) => e.stopPropagation()}
         />
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap" useFlexGap>
-            <Typography variant="body2" sx={{ fontWeight: 600, color: checked ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.72)' }}>
+            <Typography variant="body2" sx={{ fontWeight: 600, color: checked ? 'text.primary' : 'text.secondary' }}>
               {rec.skillId}
             </Typography>
-            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.40)', fontFamily: theme.typography.fontFamilyMonospace, fontSize: '0.70rem' }}>
+            <Typography variant="caption" sx={{ color: 'text.disabled', fontFamily: theme.typography.fontFamilyMonospace, fontSize: '0.70rem' }}>
               ~{rec.estimatedScenarios} scenarios
             </Typography>
           </Stack>
-          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.50)', display: 'block', mt: 0.15, lineHeight: 1.4 }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.15, lineHeight: 1.4 }}>
             {rec.rationale}
           </Typography>
         </Box>
@@ -458,13 +474,13 @@ export default function StepAnalyze({
     <Card
       sx={{
         overflow: 'visible',
-        borderColor: 'rgba(167, 139, 250, 0.18)',
+        borderColor: purpleBorder,
       }}
     >
       <CardContent sx={{ p: '0 !important' }}>
 
         {/* ─── Analysis header ─── */}
-        <Box sx={{ px: 2.5, pt: 2.5, pb: 2 }}>
+        <Box sx={{ px: 3, pt: 3, pb: 2 }}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', sm: 'center' }}>
             <Stack direction="row" spacing={1} alignItems="center">
               <CheckCircleIcon sx={{ color: '#4ade80', fontSize: 18 }} />
@@ -474,13 +490,13 @@ export default function StepAnalyze({
             </Stack>
             <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
               {analysisMeta && (
-                <Chip size="small" variant="outlined" label={`${analysisMeta.provider}`} sx={{ height: 22, fontSize: '0.70rem', fontFamily: theme.typography.fontFamilyMonospace, borderColor: 'rgba(255,255,255,0.10)' }} />
+                <Chip size="small" variant="outlined" label={`${analysisMeta.provider}`} sx={{ height: 22, fontSize: '0.70rem', fontFamily: theme.typography.fontFamilyMonospace, borderColor: 'divider' }} />
               )}
               {analysis.complexity && (
-                <Chip size="small" variant="outlined" label={`${analysis.complexity} complexity`} sx={{ height: 22, fontSize: '0.70rem', fontFamily: theme.typography.fontFamilyMonospace, borderColor: 'rgba(255,255,255,0.10)' }} />
+                <Chip size="small" variant="outlined" label={`${analysis.complexity} complexity`} sx={{ height: 22, fontSize: '0.70rem', fontFamily: theme.typography.fontFamilyMonospace, borderColor: 'divider' }} />
               )}
               {jiraImportedCount > 0 && (
-                <Chip size="small" label={`${jiraImportedCount} Jira ${jiraImportedCount === 1 ? 'story' : 'stories'}`} sx={{ height: 22, fontSize: '0.70rem', fontFamily: theme.typography.fontFamilyMonospace, backgroundColor: 'rgba(163, 230, 53, 0.10)', color: accentLime, borderColor: 'rgba(163, 230, 53, 0.30)', border: '1px solid' }} />
+                <Chip size="small" label={`${jiraImportedCount} Jira ${jiraImportedCount === 1 ? 'story' : 'stories'}`} sx={{ height: 22, fontSize: '0.70rem', fontFamily: theme.typography.fontFamilyMonospace, backgroundColor: 'rgba(163, 230, 53, 0.10)', color: '#a3e635', borderColor: 'rgba(163, 230, 53, 0.30)', border: '1px solid' }} />
               )}
             </Stack>
             <Box sx={{ flex: 1 }} />
@@ -488,7 +504,7 @@ export default function StepAnalyze({
               <IconButton
                 size="small"
                 onClick={handleReAnalyze}
-                sx={{ color: 'rgba(255,255,255,0.40)', '&:hover': { color: purpleMain, backgroundColor: 'rgba(167, 139, 250, 0.08)' } }}
+                sx={{ color: 'text.disabled', '&:hover': { color: purpleAccent, backgroundColor: purpleBgSubtle } }}
               >
                 <RefreshIcon sx={{ fontSize: 18 }} />
               </IconButton>
@@ -496,18 +512,18 @@ export default function StepAnalyze({
           </Stack>
         </Box>
 
-        <Divider sx={{ borderColor: 'rgba(255,255,255,0.06)' }} />
+        <Divider />
 
         {/* ─── Summary + Elements — compact two-column layout ─── */}
-        <Box sx={{ px: 2.5, py: 2 }}>
+        <Box sx={{ px: 3, py: 2 }}>
           <Grid container spacing={2}>
             {/* Summary */}
             <Grid item xs={12} md={Array.isArray(analysis.extractedElements) && analysis.extractedElements.length > 0 ? 6 : 12}>
               <Box sx={{ height: '100%' }}>
-                <Typography variant="caption" sx={{ fontWeight: 700, color: 'rgba(255,255,255,0.40)', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', mb: 0.75 }}>
+                <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.disabled', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', mb: 0.75 }}>
                   Summary
                 </Typography>
-                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.75)', lineHeight: 1.6, fontSize: '0.85rem' }}>
+                <Typography variant="body2" sx={{ color: 'text.primary', opacity: 0.8, lineHeight: 1.6, fontSize: '0.85rem' }}>
                   {analysis.summary || '(no summary)'}
                 </Typography>
               </Box>
@@ -517,33 +533,45 @@ export default function StepAnalyze({
             {Array.isArray(analysis.extractedElements) && analysis.extractedElements.length > 0 && (
               <Grid item xs={12} md={6}>
                 <Box>
-                  <Typography variant="caption" sx={{ fontWeight: 700, color: 'rgba(255,255,255,0.40)', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', mb: 0.75 }}>
+                  <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.disabled', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', mb: 0.75 }}>
                     Testable Elements ({analysis.extractedElements.length})
                   </Typography>
-                  <Stack spacing={0.5}>
+                  <Stack spacing={1}>
                     {analysis.extractedElements.map((el, idx) => (
-                      <Stack key={idx} direction="row" spacing={0.75} alignItems="baseline">
-                        <Chip
-                          size="small"
-                          label={el.type}
-                          sx={{
-                            fontFamily: theme.typography.fontFamilyMonospace,
-                            fontSize: '0.64rem',
-                            height: 18,
-                            backgroundColor: 'rgba(167, 139, 250, 0.10)',
-                            color: 'rgba(167, 139, 250, 0.85)',
-                            flexShrink: 0,
-                          }}
-                        />
-                        <Typography variant="body2" sx={{ fontWeight: 600, color: 'rgba(255,255,255,0.82)', fontSize: '0.82rem' }}>
-                          {el.name}
-                        </Typography>
+                      <Box
+                        key={idx}
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 0.25,
+                          pl: 1.5,
+                          borderLeft: `2px solid ${purpleBorder}`,
+                          py: 0.5,
+                        }}
+                      >
+                        <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap" useFlexGap>
+                          <Chip
+                            size="small"
+                            label={el.type}
+                            sx={{
+                              fontFamily: theme.typography.fontFamilyMonospace,
+                              fontSize: '0.64rem',
+                              height: 20,
+                              backgroundColor: purpleBgSubtle,
+                              color: purpleAccent,
+                              flexShrink: 0,
+                            }}
+                          />
+                          <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary', opacity: 0.85, fontSize: '0.84rem' }}>
+                            {el.name}
+                          </Typography>
+                        </Stack>
                         {el.description && (
-                          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.76rem' }}>
-                            — {el.description}
+                          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.76rem', lineHeight: 1.4 }}>
+                            {el.description}
                           </Typography>
                         )}
-                      </Stack>
+                      </Box>
                     ))}
                   </Stack>
                 </Box>
@@ -552,10 +580,10 @@ export default function StepAnalyze({
           </Grid>
         </Box>
 
-        <Divider sx={{ borderColor: 'rgba(255,255,255,0.06)' }} />
+        <Divider />
 
         {/* ─── Techniques selection ─── */}
-        <Box sx={{ px: 2.5, py: 2 }}>
+        <Box sx={{ px: 3, py: 2 }}>
           <Stack spacing={2}>
             <Stack direction="row" spacing={1} alignItems="center">
               <Typography variant="subtitle1" sx={{ fontWeight: 700, fontSize: '0.95rem' }}>
@@ -568,12 +596,12 @@ export default function StepAnalyze({
                   height: 22,
                   fontSize: '0.70rem',
                   fontFamily: theme.typography.fontFamilyMonospace,
-                  backgroundColor: selectedCount > 0 ? 'rgba(167, 139, 250, 0.10)' : 'rgba(255,255,255,0.04)',
-                  color: selectedCount > 0 ? purpleMain : 'rgba(255,255,255,0.45)',
+                  backgroundColor: selectedCount > 0 ? purpleBgSubtle : subtleBg,
+                  color: selectedCount > 0 ? purpleAccent : 'text.disabled',
                 }}
               />
               {estimatedTotal > 0 && (
-                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.35)', fontFamily: theme.typography.fontFamilyMonospace, fontSize: '0.72rem' }}>
+                <Typography variant="caption" sx={{ color: 'text.disabled', fontFamily: theme.typography.fontFamilyMonospace, fontSize: '0.72rem' }}>
                   ~{estimatedTotal} scenarios
                 </Typography>
               )}
@@ -581,7 +609,7 @@ export default function StepAnalyze({
               <Button
                 size="small"
                 variant="text"
-                sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)', textTransform: 'none', minWidth: 0, px: 1 }}
+                sx={{ fontSize: '0.72rem', color: 'text.disabled', textTransform: 'none', minWidth: 0, px: 1 }}
                 onClick={() => {
                   const allOn = techniqueRecs.every((r) => selectedTechniques[r.skillId])
                   const next = {}
@@ -605,34 +633,34 @@ export default function StepAnalyze({
               <Box
                 sx={{
                   p: 1.5,
-                  borderRadius: 2,
-                  backgroundColor: 'rgba(0,0,0,0.12)',
-                  border: '1px solid rgba(167, 139, 250, 0.08)',
+                  borderRadius: 3,
+                  backgroundColor: isDark ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.02)',
+                  border: `1px solid ${isDark ? 'rgba(167, 139, 250, 0.08)' : 'rgba(124, 58, 237, 0.06)'}`,
                 }}
               >
                 <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mb: 1 }}>
-                  <AccountTreeIcon sx={{ color: purpleMain, fontSize: 16 }} />
-                  <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.76rem', color: 'rgba(255,255,255,0.70)' }}>
+                  <AccountTreeIcon sx={{ color: purpleAccent, fontSize: 16 }} />
+                  <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.76rem', color: 'text.secondary' }}>
                     Diagrams
                   </Typography>
                   <Chip
                     size="small"
                     label="optional"
-                    sx={{ height: 18, fontSize: '0.62rem', backgroundColor: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.35)' }}
+                    sx={{ height: 18, fontSize: '0.62rem', backgroundColor: subtleBg, color: 'text.disabled' }}
                   />
                   {selectedDiagramCount > 0 && (
                     <Chip
                       size="small"
                       variant="outlined"
                       label={`${selectedDiagramCount} selected`}
-                      sx={{ height: 18, fontSize: '0.62rem', fontFamily: theme.typography.fontFamilyMonospace, borderColor: 'rgba(167, 139, 250, 0.25)', color: 'rgba(167, 139, 250, 0.70)' }}
+                      sx={{ height: 18, fontSize: '0.62rem', fontFamily: theme.typography.fontFamilyMonospace, borderColor: purpleBorder, color: purpleAccent, opacity: 0.7 }}
                     />
                   )}
                   <Box sx={{ flex: 1 }} />
                   <Button
                     size="small"
                     variant="text"
-                    sx={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.40)', textTransform: 'none', minWidth: 0, px: 0.5 }}
+                    sx={{ fontSize: '0.68rem', color: 'text.disabled', textTransform: 'none', minWidth: 0, px: 0.5 }}
                     onClick={() => {
                       const allOn = availableDiags.every((id) => selectedDiagrams[id])
                       const next = {}
@@ -654,15 +682,15 @@ export default function StepAnalyze({
                         label={info.label}
                         clickable
                         onClick={() => setSelectedDiagrams((prev) => ({ ...prev, [id]: !prev[id] }))}
-                        icon={<AccountTreeIcon sx={{ fontSize: '14px !important', color: checked ? `${purpleMain} !important` : 'rgba(255,255,255,0.25) !important' }} />}
+                        icon={<AccountTreeIcon sx={{ fontSize: '14px !important', color: checked ? `${purpleAccent} !important` : `${isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)'} !important` }} />}
                         sx={{
                           height: 26,
                           fontSize: '0.74rem',
-                          backgroundColor: checked ? 'rgba(167, 139, 250, 0.10)' : 'rgba(255,255,255,0.03)',
-                          color: checked ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.50)',
-                          borderColor: checked ? 'rgba(167, 139, 250, 0.25)' : 'rgba(255,255,255,0.06)',
+                          backgroundColor: checked ? purpleBgSubtle : subtleBg3,
+                          color: checked ? 'text.primary' : 'text.secondary',
+                          borderColor: checked ? purpleBorder : subtleBorder,
                           border: '1px solid',
-                          '&:hover': { backgroundColor: 'rgba(167, 139, 250, 0.12)' },
+                          '&:hover': { backgroundColor: purpleBgSubtle },
                         }}
                       />
                     )
@@ -673,25 +701,25 @@ export default function StepAnalyze({
           </Stack>
         </Box>
 
-        <Divider sx={{ borderColor: 'rgba(255,255,255,0.06)' }} />
+        <Divider />
 
         {/* ─── Generate action bar ─── */}
         <Box
           sx={{
-            px: 2.5,
+            px: 3,
             py: 2,
-            background: 'linear-gradient(180deg, rgba(167, 139, 250, 0.02) 0%, rgba(167, 139, 250, 0.06) 100%)',
+            background: `linear-gradient(180deg, ${purpleBgFaint} 0%, ${purpleBgSubtle} 100%)`,
           }}
         >
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ xs: 'stretch', sm: 'center' }}>
             <Stack direction="row" spacing={1} alignItems="center" sx={{ flex: 1 }}>
               {selectedCount > 0 && estimatedTotal > 0 && (
-                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.78rem' }}>
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.78rem' }}>
                   {selectedCount} technique{selectedCount !== 1 ? 's' : ''} &middot; ~{estimatedTotal} scenarios
                 </Typography>
               )}
               {selectedCount === 0 && (
-                <Typography variant="caption" sx={{ color: 'rgba(239, 68, 68, 0.7)', fontSize: '0.78rem' }}>
+                <Typography variant="caption" sx={{ color: 'error.main', opacity: 0.7, fontSize: '0.78rem' }}>
                   Select at least one technique to generate
                 </Typography>
               )}
@@ -703,10 +731,10 @@ export default function StepAnalyze({
                 startIcon={<RefreshIcon sx={{ fontSize: 16 }} />}
                 onClick={handleReAnalyze}
                 sx={{
-                  borderColor: 'rgba(255,255,255,0.12)',
-                  color: 'rgba(255,255,255,0.70)',
+                  borderColor: 'divider',
+                  color: 'text.secondary',
                   textTransform: 'none',
-                  '&:hover': { borderColor: 'rgba(167, 139, 250, 0.35)', backgroundColor: 'rgba(167, 139, 250, 0.06)' }
+                  '&:hover': { borderColor: purpleAccent, backgroundColor: purpleBgSubtle },
                 }}
               >
                 Re-analyze
@@ -719,13 +747,13 @@ export default function StepAnalyze({
                 sx={{
                   px: 3,
                   backgroundImage: 'none',
-                  backgroundColor: purpleMain,
-                  color: 'rgba(255,255,255,0.96)',
+                  backgroundColor: purple[600],
+                  color: '#fff',
                   fontWeight: 600,
                   textTransform: 'none',
-                  boxShadow: '0 0 0 1px rgba(167, 139, 250, 0.30), 0 12px 40px rgba(0,0,0,0.35)',
-                  '&:hover': { backgroundColor: purpleDeep },
-                  '&.Mui-disabled': { backgroundColor: 'rgba(167, 139, 250, 0.15)', color: 'rgba(255,255,255,0.30)' },
+                  boxShadow: `0 0 0 1px ${purple[500]}33, 0 12px 40px ${isDark ? 'rgba(0,0,0,0.35)' : 'rgba(124,58,237,0.18)'}`,
+                  '&:hover': { backgroundColor: purple[700] },
+                  '&.Mui-disabled': { backgroundColor: disabledBtnBg, color: disabledBtnColor },
                 }}
               >
                 {busy ? 'Generating...' : 'Generate test scenarios'}
@@ -736,10 +764,10 @@ export default function StepAnalyze({
             <LinearProgress
               sx={{
                 mt: 1.5,
-                borderRadius: 2,
+                borderRadius: 3,
                 height: 3,
-                backgroundColor: 'rgba(255,255,255,0.06)',
-                '& .MuiLinearProgress-bar': { backgroundColor: purpleMain },
+                backgroundColor: subtleBg,
+                '& .MuiLinearProgress-bar': { backgroundColor: purpleAccent },
               }}
             />
           )}

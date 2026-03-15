@@ -1,6 +1,7 @@
 import { Box, Typography } from '@mui/material'
 import jsPDF from 'jspdf'
-import 'jspdf-autotable'
+import { applyPlugin } from 'jspdf-autotable'
+applyPlugin(jsPDF)
 
 export function download(filename, content, mime) {
   const blob = new Blob([content], { type: mime })
@@ -181,7 +182,7 @@ export function BulletList({ items, renderItem, sx }) {
         pl: 2.5,
         pr: 0.5,
         width: '100%',
-        color: 'rgba(255,255,255,0.72)',
+        color: 'text.primary',
         '& li': {
           marginBlock: '6px'
         },
@@ -205,7 +206,7 @@ export function OrderedList({ items, sx }) {
       sx={{
         m: 0,
         pl: 2.75,
-        color: 'rgba(255,255,255,0.72)',
+        color: 'text.primary',
         '& li': {
           marginBlock: '6px'
         },

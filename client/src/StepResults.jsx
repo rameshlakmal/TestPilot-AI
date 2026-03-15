@@ -45,7 +45,7 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
 import CloudUploadIcon from '@mui/icons-material/CloudUpload'
 import SearchIcon from '@mui/icons-material/Search'
 import AssignmentIcon from '@mui/icons-material/Assignment'
-import { purpleMain, purpleDeep } from './theme'
+import { purple } from './theme'
 import { download, toCsv, exportPdf, joinLines, BulletList, OrderedList, listOrNone } from './helpers'
 
 const priorityColors = {
@@ -86,6 +86,21 @@ export default function StepResults({
   // Extra callbacks used inside the JSX
   cancelInFlight, setInfo, setError,
 }) {
+  const isDark = theme.palette.mode === 'dark'
+  const purpleAccent = isDark ? purple[500] : purple[600]
+  const purpleBgSubtle = isDark ? 'rgba(167, 139, 250, 0.08)' : 'rgba(124, 58, 237, 0.06)'
+  const purpleBgFaint = isDark ? 'rgba(167, 139, 250, 0.03)' : 'rgba(124, 58, 237, 0.03)'
+  const purpleBorder = isDark ? 'rgba(167, 139, 250, 0.20)' : 'rgba(124, 58, 237, 0.18)'
+  const purpleBorderHover = isDark ? 'rgba(167, 139, 250, 0.25)' : 'rgba(124, 58, 237, 0.22)'
+  const subtleBg = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)'
+  const alertMsgColor = isDark ? 'rgba(255,255,255,0.72)' : 'rgba(0,0,0,0.65)'
+  const alertInfoBorder = isDark ? 'rgba(167, 139, 250, 0.25)' : 'rgba(124, 58, 237, 0.20)'
+  const alertInfoBg = isDark ? 'rgba(167, 139, 250, 0.04)' : 'rgba(124, 58, 237, 0.04)'
+  const alertSuccessBorder = isDark ? 'rgba(74, 222, 128, 0.25)' : 'rgba(22, 163, 74, 0.20)'
+  const alertSuccessBg = isDark ? 'rgba(74, 222, 128, 0.04)' : 'rgba(22, 163, 74, 0.04)'
+  const alertErrorBorder = isDark ? 'rgba(239, 68, 68, 0.30)' : 'rgba(220, 38, 38, 0.25)'
+  const alertErrorBg = isDark ? 'rgba(239, 68, 68, 0.04)' : 'rgba(220, 38, 38, 0.04)'
+
   const [aioOpen, setAioOpen] = useState(false)
   const [insightsOpen, setInsightsOpen] = useState(false)
   const [showAioToken, setShowAioToken] = useState(false)
@@ -149,13 +164,13 @@ export default function StepResults({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: 'rgba(167, 139, 250, 0.08)',
+                background: purpleBgSubtle,
               }}
             >
-              <AssignmentIcon sx={{ color: 'rgba(255,255,255,0.25)', fontSize: 28 }} />
+              <AssignmentIcon sx={{ color: 'text.disabled', fontSize: 28 }} />
             </Box>
-            <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.55)', fontWeight: 600 }}>No results yet</Typography>
-            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.38)', textAlign: 'center', maxWidth: 320 }}>
+            <Typography variant="h6" sx={{ color: 'text.secondary', fontWeight: 600 }}>No results yet</Typography>
+            <Typography variant="body2" sx={{ color: 'text.disabled', textAlign: 'center', maxWidth: 320 }}>
               Go back to the Analyze step to generate test cases from your requirements.
             </Typography>
             <Button
@@ -164,10 +179,10 @@ export default function StepResults({
               onClick={() => goToStep(1)}
               sx={{
                 mt: 1,
-                borderColor: 'rgba(255,255,255,0.12)',
-                color: 'rgba(255,255,255,0.80)',
+                borderColor: 'divider',
+                color: 'text.primary',
                 textTransform: 'none',
-                '&:hover': { borderColor: 'rgba(167, 139, 250, 0.40)', backgroundColor: 'rgba(167, 139, 250, 0.06)' }
+                '&:hover': { borderColor: isDark ? 'rgba(167, 139, 250, 0.40)' : 'rgba(124, 58, 237, 0.30)', backgroundColor: purpleBgSubtle }
               }}
             >
               Go to Analyze
@@ -180,11 +195,11 @@ export default function StepResults({
 
   // ─── Results ───
   return (
-    <Card sx={{ overflow: 'visible', borderColor: 'rgba(167, 139, 250, 0.18)' }}>
+    <Card sx={{ overflow: 'visible', borderColor: purpleBorder }}>
       <CardContent sx={{ p: '0 !important' }}>
 
         {/* ─── Header: Title + Stats + Exports ─── */}
-        <Box sx={{ px: 2.5, pt: 2.5, pb: 2 }}>
+        <Box sx={{ px: 3, pt: 3, pb: 2 }}>
           <Stack spacing={2}>
             {/* Title row */}
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ xs: 'flex-start', sm: 'center' }}>
@@ -201,8 +216,8 @@ export default function StepResults({
                     fontWeight: 700,
                     fontSize: '0.78rem',
                     fontFamily: theme.typography.fontFamilyMonospace,
-                    backgroundColor: 'rgba(74, 222, 128, 0.08)',
-                    color: '#4ade80',
+                    backgroundColor: isDark ? 'rgba(74, 222, 128, 0.08)' : 'rgba(22, 163, 74, 0.08)',
+                    color: isDark ? '#4ade80' : '#16a34a',
                   }}
                 />
                 {duplicateGroups.length > 0 && (
@@ -228,11 +243,11 @@ export default function StepResults({
                     startIcon={<DownloadIcon sx={{ fontSize: 16 }} />}
                     onClick={() => exportPdf(suite)}
                     sx={{
-                      borderColor: 'rgba(255,255,255,0.10)',
-                      color: 'rgba(255,255,255,0.70)',
+                      borderColor: 'divider',
+                      color: 'text.secondary',
                       textTransform: 'none',
                       fontSize: '0.80rem',
-                      '&:hover': { borderColor: 'rgba(167, 139, 250, 0.40)', backgroundColor: 'rgba(167, 139, 250, 0.06)' }
+                      '&:hover': { borderColor: isDark ? 'rgba(167, 139, 250, 0.40)' : 'rgba(124, 58, 237, 0.30)', backgroundColor: purpleBgSubtle }
                     }}
                   >
                     PDF
@@ -245,11 +260,11 @@ export default function StepResults({
                     startIcon={<DownloadIcon sx={{ fontSize: 16 }} />}
                     onClick={() => download('test-cases.csv', toCsv(suite), 'text/csv')}
                     sx={{
-                      borderColor: 'rgba(255,255,255,0.10)',
-                      color: 'rgba(255,255,255,0.70)',
+                      borderColor: 'divider',
+                      color: 'text.secondary',
                       textTransform: 'none',
                       fontSize: '0.80rem',
-                      '&:hover': { borderColor: 'rgba(167, 139, 250, 0.40)', backgroundColor: 'rgba(167, 139, 250, 0.06)' }
+                      '&:hover': { borderColor: isDark ? 'rgba(167, 139, 250, 0.40)' : 'rgba(124, 58, 237, 0.30)', backgroundColor: purpleBgSubtle }
                     }}
                   >
                     CSV
@@ -291,8 +306,8 @@ export default function StepResults({
                     height: 22,
                     fontSize: '0.70rem',
                     fontFamily: theme.typography.fontFamilyMonospace,
-                    backgroundColor: 'rgba(167, 139, 250, 0.08)',
-                    color: 'rgba(167, 139, 250, 0.80)',
+                    backgroundColor: purpleBgSubtle,
+                    color: isDark ? 'rgba(167, 139, 250, 0.80)' : 'rgba(124, 58, 237, 0.80)',
                   }}
                 />
               ))}
@@ -301,10 +316,10 @@ export default function StepResults({
             {/* Meta chips — subtle */}
             {suiteMeta && (
               <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
-                <Chip size="small" variant="outlined" label={suiteMeta.provider} sx={{ height: 20, fontSize: '0.64rem', fontFamily: theme.typography.fontFamilyMonospace, borderColor: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.35)' }} />
-                <Chip size="small" variant="outlined" label={suiteMeta.model} sx={{ height: 20, fontSize: '0.64rem', fontFamily: theme.typography.fontFamilyMonospace, borderColor: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.35)' }} />
+                <Chip size="small" variant="outlined" label={suiteMeta.provider} sx={{ height: 20, fontSize: '0.64rem', fontFamily: theme.typography.fontFamilyMonospace, borderColor: 'divider', color: 'text.disabled' }} />
+                <Chip size="small" variant="outlined" label={suiteMeta.model} sx={{ height: 20, fontSize: '0.64rem', fontFamily: theme.typography.fontFamilyMonospace, borderColor: 'divider', color: 'text.disabled' }} />
                 {suiteMeta.mode && (
-                  <Chip size="small" variant="outlined" label={suiteMeta.mode} sx={{ height: 20, fontSize: '0.64rem', fontFamily: theme.typography.fontFamilyMonospace, borderColor: suiteMeta.mode === 'per-skill' ? 'rgba(22, 163, 74, 0.20)' : 'rgba(255,255,255,0.06)', color: suiteMeta.mode === 'per-skill' ? 'rgba(22, 163, 74, 0.60)' : 'rgba(255,255,255,0.35)' }} />
+                  <Chip size="small" variant="outlined" label={suiteMeta.mode} sx={{ height: 20, fontSize: '0.64rem', fontFamily: theme.typography.fontFamilyMonospace, borderColor: suiteMeta.mode === 'per-skill' ? (isDark ? 'rgba(22, 163, 74, 0.20)' : 'rgba(22, 163, 74, 0.25)') : 'divider', color: suiteMeta.mode === 'per-skill' ? (isDark ? 'rgba(22, 163, 74, 0.60)' : 'rgba(22, 163, 74, 0.70)') : 'text.disabled' }} />
                 )}
                 {suiteMeta.repaired && (
                   <Chip size="small" variant="outlined" label="schema repaired" sx={{ height: 20, fontSize: '0.64rem', fontFamily: theme.typography.fontFamilyMonospace, borderColor: 'rgba(217, 119, 6, 0.15)', color: 'rgba(217, 119, 6, 0.50)' }} />
@@ -314,10 +329,10 @@ export default function StepResults({
           </Stack>
         </Box>
 
-        <Divider sx={{ borderColor: 'rgba(255,255,255,0.06)' }} />
+        <Divider sx={{ borderColor: 'divider' }} />
 
         {/* ─── Search / Filter Toolbar ─── */}
-        <Box sx={{ px: 2.5, py: 1.5 }}>
+        <Box sx={{ px: 3, py: 1.5 }}>
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ xs: 'stretch', md: 'center' }}>
             <TextField
               size="small"
@@ -327,7 +342,7 @@ export default function StepResults({
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchIcon sx={{ color: 'rgba(255,255,255,0.25)', fontSize: 18 }} />
+                    <SearchIcon sx={{ color: 'text.disabled', fontSize: 18 }} />
                   </InputAdornment>
                 ),
                 sx: { fontSize: '0.85rem' },
@@ -354,7 +369,7 @@ export default function StepResults({
             </FormControl>
             <Box sx={{ flex: 1 }} />
             <Stack direction="row" spacing={0.5} alignItems="center">
-              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>
+              <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>
                 {Math.min((page - 1) * rowsPerPage + 1, filteredCases.length)}–{Math.min(page * rowsPerPage, filteredCases.length)} of {filteredCases.length}
                 {filteredCases.length < totalCases ? ` (${totalCases})` : ''}
               </Typography>
@@ -370,9 +385,9 @@ export default function StepResults({
                     fontFamily: theme.typography.fontFamilyMonospace,
                     fontSize: '0.68rem',
                     height: 22,
-                    backgroundColor: rowsPerPage === n ? 'rgba(167, 139, 250, 0.15)' : 'rgba(255,255,255,0.03)',
-                    color: rowsPerPage === n ? purpleMain : 'rgba(255,255,255,0.40)',
-                    borderColor: rowsPerPage === n ? 'rgba(167, 139, 250, 0.30)' : 'transparent',
+                    backgroundColor: rowsPerPage === n ? (isDark ? 'rgba(167, 139, 250, 0.15)' : 'rgba(124, 58, 237, 0.10)') : subtleBg,
+                    color: rowsPerPage === n ? purpleAccent : 'text.disabled',
+                    borderColor: rowsPerPage === n ? (isDark ? 'rgba(167, 139, 250, 0.30)' : 'rgba(124, 58, 237, 0.25)') : 'transparent',
                     border: '1px solid',
                   }}
                 />
@@ -382,8 +397,8 @@ export default function StepResults({
 
           {/* Selection row */}
           <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1 }}>
-            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.40)', fontSize: '0.75rem' }}>
-              <Box component="span" sx={{ color: selectedCaseIds.size > 0 ? purpleMain : 'rgba(255,255,255,0.40)', fontWeight: selectedCaseIds.size > 0 ? 600 : 400 }}>
+            <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.75rem' }}>
+              <Box component="span" sx={{ color: selectedCaseIds.size > 0 ? purpleAccent : 'text.disabled', fontWeight: selectedCaseIds.size > 0 ? 600 : 400 }}>
                 {selectedCaseIds.size}
               </Box>{' '}
               selected
@@ -392,7 +407,7 @@ export default function StepResults({
               size="small"
               variant="text"
               onClick={() => { if (suite && Array.isArray(suite.testCases)) setSelectedCaseIds(new Set(suite.testCases.map((tc) => String(tc.id)))) }}
-              sx={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.40)', textTransform: 'none', minWidth: 0, px: 0.5 }}
+              sx={{ fontSize: '0.68rem', color: 'text.disabled', textTransform: 'none', minWidth: 0, px: 0.5 }}
             >
               All
             </Button>
@@ -400,7 +415,7 @@ export default function StepResults({
               size="small"
               variant="text"
               onClick={() => setSelectedCaseIds(new Set())}
-              sx={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.40)', textTransform: 'none', minWidth: 0, px: 0.5 }}
+              sx={{ fontSize: '0.68rem', color: 'text.disabled', textTransform: 'none', minWidth: 0, px: 0.5 }}
             >
               None
             </Button>
@@ -408,7 +423,7 @@ export default function StepResults({
         </Box>
 
         {/* ─── Test Cases ─── */}
-        <Box sx={{ px: 2.5, pb: 2 }}>
+        <Box sx={{ px: 3, pb: 2 }}>
           {isSmDown ? (
             <Stack spacing={1}>
               {paginatedCases.map((tc) => (
@@ -422,30 +437,31 @@ export default function StepResults({
                       else next.delete(String(tc.id))
                       setSelectedCaseIds(next)
                     }}
-                    sx={{ mt: 0.75, color: 'rgba(255,255,255,0.30)', '&.Mui-checked': { color: purpleMain } }}
+                    sx={{ mt: 0.75, color: 'text.disabled', '&.Mui-checked': { color: purpleAccent } }}
                   />
                   <Accordion
                     disableGutters
                     sx={{
                       flex: 1,
                       borderRadius: '12px',
-                      border: '1px solid rgba(255,255,255,0.08)',
-                      backgroundColor: 'rgba(0,0,0,0.16)',
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      backgroundColor: isDark ? 'rgba(0,0,0,0.16)' : 'rgba(0,0,0,0.02)',
                       overflow: 'hidden',
                       '&:before': { display: 'none' }
                     }}
                   >
                     <AccordionSummary
-                      expandIcon={<ExpandMoreIcon sx={{ color: 'rgba(255,255,255,0.60)' }} />}
+                      expandIcon={<ExpandMoreIcon sx={{ color: 'text.secondary' }} />}
                       sx={{ px: 1.5, '& .MuiAccordionSummary-content': { my: 1 } }}
                     >
                       <Stack spacing={0.5} sx={{ minWidth: 0 }}>
                         <Stack direction="row" spacing={0.5} alignItems="center" flexWrap="wrap" useFlexGap>
-                          <Chip size="small" variant="outlined" label={String(tc.id || '')} sx={{ fontFamily: theme.typography.fontFamilyMonospace, fontSize: '0.68rem', height: 20, borderColor: 'rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.65)' }} />
-                          <Chip size="small" label={String(tc.type || '')} sx={{ fontFamily: theme.typography.fontFamilyMonospace, fontSize: '0.68rem', height: 20, backgroundColor: 'rgba(167, 139, 250, 0.10)', color: 'rgba(167, 139, 250, 0.85)' }} />
+                          <Chip size="small" variant="outlined" label={String(tc.id || '')} sx={{ fontFamily: theme.typography.fontFamilyMonospace, fontSize: '0.68rem', height: 20, borderColor: 'divider', color: 'text.secondary' }} />
+                          <Chip size="small" label={String(tc.type || '')} sx={{ fontFamily: theme.typography.fontFamilyMonospace, fontSize: '0.68rem', height: 20, backgroundColor: isDark ? 'rgba(167, 139, 250, 0.10)' : 'rgba(124, 58, 237, 0.08)', color: isDark ? 'rgba(167, 139, 250, 0.85)' : 'rgba(124, 58, 237, 0.85)' }} />
                           {tc.priority && (() => { const pc = priorityColors[tc.priority]; return pc ? <Chip size="small" label={tc.priority} sx={{ fontFamily: theme.typography.fontFamilyMonospace, fontSize: '0.68rem', height: 20, backgroundColor: pc.bg, color: pc.color }} /> : null })()}
                         </Stack>
-                        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.88)', fontSize: '0.85rem', display: '-webkit-box', overflow: 'hidden', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2 }}>
+                        <Typography variant="body2" sx={{ color: 'text.primary', fontSize: '0.85rem', display: '-webkit-box', overflow: 'hidden', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2 }}>
                           {String(tc.title || '')}
                         </Typography>
                       </Stack>
@@ -458,7 +474,7 @@ export default function StepResults({
                           { label: 'EXPECTED', items: tc.expected },
                         ].map((section) => (
                           <Box key={section.label}>
-                            <Typography variant="caption" sx={{ color: 'rgba(167, 139, 250, 0.85)', fontFamily: theme.typography.fontFamilyMonospace, fontSize: '0.65rem', letterSpacing: '0.06em' }}>
+                            <Typography variant="caption" sx={{ color: isDark ? 'rgba(167, 139, 250, 0.85)' : 'rgba(124, 58, 237, 0.85)', fontFamily: theme.typography.fontFamilyMonospace, fontSize: '0.65rem', letterSpacing: '0.06em' }}>
                               {section.label}
                             </Typography>
                             <OrderedList items={section.items} sx={{ mt: 0.25 }} />
@@ -467,10 +483,10 @@ export default function StepResults({
                         {(Array.isArray(tc.coverageTags) && tc.coverageTags.length) || (Array.isArray(tc.requirementRefs) && tc.requirementRefs.length) ? (
                           <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
                             {Array.isArray(tc.coverageTags) && tc.coverageTags.slice(0, 12).map((t) => (
-                              <Chip key={String(t)} size="small" label={String(t)} sx={{ height: 20, fontSize: '0.64rem', backgroundColor: 'rgba(167, 139, 250, 0.08)', color: 'rgba(255,255,255,0.65)' }} />
+                              <Chip key={String(t)} size="small" label={String(t)} sx={{ height: 20, fontSize: '0.64rem', backgroundColor: purpleBgSubtle, color: 'text.secondary' }} />
                             ))}
                             {Array.isArray(tc.requirementRefs) && tc.requirementRefs.slice(0, 6).map((r) => (
-                              <Chip key={String(r)} size="small" variant="outlined" label={String(r)} sx={{ height: 20, fontSize: '0.64rem', borderColor: 'rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.55)' }} />
+                              <Chip key={String(r)} size="small" variant="outlined" label={String(r)} sx={{ height: 20, fontSize: '0.64rem', borderColor: 'divider', color: 'text.secondary' }} />
                             ))}
                           </Stack>
                         ) : null}
@@ -481,11 +497,11 @@ export default function StepResults({
               ))}
             </Stack>
           ) : (
-            <TableContainer sx={{ borderRadius: 2, border: '1px solid rgba(255,255,255,0.06)', overflow: 'auto', background: 'rgba(0,0,0,0.12)' }}>
+            <TableContainer sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider', overflow: 'auto', background: isDark ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.01)' }}>
               <Table size="small" sx={{ minWidth: 1100 }} stickyHeader>
                 <TableHead>
                   <TableRow>
-                    <TableCell padding="checkbox" sx={{ backgroundColor: 'rgba(8, 8, 8, 0.96)', borderBottomColor: 'rgba(255,255,255,0.08)' }}>
+                    <TableCell padding="checkbox" sx={{ backgroundColor: isDark ? 'rgba(8, 8, 8, 0.96)' : 'rgba(245, 243, 255, 0.96)', borderBottomColor: 'divider' }}>
                       <Checkbox
                         size="small"
                         checked={paginatedCases.length > 0 && paginatedCases.every((tc) => selectedCaseIds.has(String(tc.id)))}
@@ -498,7 +514,7 @@ export default function StepResults({
                           })
                           setSelectedCaseIds(next)
                         }}
-                        sx={{ color: 'rgba(255,255,255,0.25)', '&.Mui-checked, &.MuiCheckbox-indeterminate': { color: purpleMain } }}
+                        sx={{ color: 'text.disabled', '&.Mui-checked, &.MuiCheckbox-indeterminate': { color: purpleAccent } }}
                       />
                     </TableCell>
                     {['ID', 'Title', 'Type', 'Priority', 'Preconditions', 'Steps', 'Expected', 'Tags', 'Req refs'].map((h) => (
@@ -506,11 +522,11 @@ export default function StepResults({
                         key={h}
                         sx={{
                           fontWeight: 700,
-                          backgroundColor: 'rgba(8, 8, 8, 0.96)',
-                          borderBottomColor: 'rgba(255,255,255,0.08)',
+                          backgroundColor: isDark ? 'rgba(8, 8, 8, 0.96)' : 'rgba(245, 243, 255, 0.96)',
+                          borderBottomColor: 'divider',
                         }}
                       >
-                        <Typography variant="caption" sx={{ fontFamily: ['ID', 'Type', 'Priority'].includes(h) ? theme.typography.fontFamilyMonospace : undefined, fontSize: '0.70rem', color: 'rgba(255,255,255,0.50)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        <Typography variant="caption" sx={{ fontFamily: ['ID', 'Type', 'Priority'].includes(h) ? theme.typography.fontFamilyMonospace : undefined, fontSize: '0.70rem', color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                           {h}
                         </Typography>
                       </TableCell>
@@ -525,8 +541,8 @@ export default function StepResults({
                         key={String(tc.id)}
                         hover
                         sx={{
-                          backgroundColor: selected ? 'rgba(167, 139, 250, 0.03)' : 'transparent',
-                          '&:hover': { backgroundColor: 'rgba(255,255,255,0.02)' },
+                          backgroundColor: selected ? purpleBgFaint : 'transparent',
+                          '&:hover': { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' },
                         }}
                       >
                         <TableCell padding="checkbox">
@@ -539,27 +555,27 @@ export default function StepResults({
                               else next.delete(String(tc.id))
                               setSelectedCaseIds(next)
                             }}
-                            sx={{ color: 'rgba(255,255,255,0.25)', '&.Mui-checked': { color: purpleMain } }}
+                            sx={{ color: 'text.disabled', '&.Mui-checked': { color: purpleAccent } }}
                           />
                         </TableCell>
-                        <TableCell sx={{ fontFamily: theme.typography.fontFamilyMonospace, color: 'rgba(255,255,255,0.65)', fontSize: '0.80rem' }}>{String(tc.id || '')}</TableCell>
-                        <TableCell sx={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.82rem' }}>{String(tc.title || '')}</TableCell>
-                        <TableCell sx={{ fontFamily: theme.typography.fontFamilyMonospace, color: 'rgba(167, 139, 250, 0.85)', fontSize: '0.80rem' }}>{String(tc.type || '')}</TableCell>
+                        <TableCell sx={{ fontFamily: theme.typography.fontFamilyMonospace, color: 'text.secondary', fontSize: '0.80rem' }}>{String(tc.id || '')}</TableCell>
+                        <TableCell sx={{ color: 'text.primary', fontSize: '0.82rem' }}>{String(tc.title || '')}</TableCell>
+                        <TableCell sx={{ fontFamily: theme.typography.fontFamilyMonospace, color: isDark ? 'rgba(167, 139, 250, 0.85)' : 'rgba(124, 58, 237, 0.85)', fontSize: '0.80rem' }}>{String(tc.type || '')}</TableCell>
                         <TableCell>
                           {tc.priority && (() => {
                             const pc = priorityColors[tc.priority]
                             return pc ? (
                               <Chip size="small" label={tc.priority} sx={{ height: 20, fontSize: '0.68rem', fontFamily: theme.typography.fontFamilyMonospace, fontWeight: 700, backgroundColor: pc.bg, color: pc.color, minWidth: 30 }} />
                             ) : (
-                              <Typography variant="caption" sx={{ fontFamily: theme.typography.fontFamilyMonospace, color: 'rgba(255,255,255,0.55)' }}>{String(tc.priority)}</Typography>
+                              <Typography variant="caption" sx={{ fontFamily: theme.typography.fontFamilyMonospace, color: 'text.secondary' }}>{String(tc.priority)}</Typography>
                             )
                           })()}
                         </TableCell>
-                        <TableCell sx={{ whiteSpace: 'pre-line', color: 'rgba(255,255,255,0.60)', fontSize: '0.78rem' }}>{joinLines(tc.preconditions)}</TableCell>
-                        <TableCell sx={{ whiteSpace: 'pre-line', color: 'rgba(255,255,255,0.60)', fontSize: '0.78rem' }}>{joinLines(tc.steps)}</TableCell>
-                        <TableCell sx={{ whiteSpace: 'pre-line', color: 'rgba(255,255,255,0.60)', fontSize: '0.78rem' }}>{joinLines(tc.expected)}</TableCell>
-                        <TableCell sx={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.76rem' }}>{Array.isArray(tc.coverageTags) ? tc.coverageTags.join(', ') : ''}</TableCell>
-                        <TableCell sx={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.76rem' }}>{Array.isArray(tc.requirementRefs) ? tc.requirementRefs.join(', ') : ''}</TableCell>
+                        <TableCell sx={{ whiteSpace: 'pre-line', color: 'text.secondary', fontSize: '0.78rem' }}>{joinLines(tc.preconditions)}</TableCell>
+                        <TableCell sx={{ whiteSpace: 'pre-line', color: 'text.secondary', fontSize: '0.78rem' }}>{joinLines(tc.steps)}</TableCell>
+                        <TableCell sx={{ whiteSpace: 'pre-line', color: 'text.secondary', fontSize: '0.78rem' }}>{joinLines(tc.expected)}</TableCell>
+                        <TableCell sx={{ color: 'text.secondary', fontSize: '0.76rem' }}>{Array.isArray(tc.coverageTags) ? tc.coverageTags.join(', ') : ''}</TableCell>
+                        <TableCell sx={{ color: 'text.secondary', fontSize: '0.76rem' }}>{Array.isArray(tc.requirementRefs) ? tc.requirementRefs.join(', ') : ''}</TableCell>
                       </TableRow>
                     )
                   })}
@@ -578,10 +594,10 @@ export default function StepResults({
                 size="small"
                 sx={{
                   '& .MuiPaginationItem-root': {
-                    color: 'rgba(255,255,255,0.50)',
-                    borderColor: 'rgba(255,255,255,0.08)',
-                    '&.Mui-selected': { backgroundColor: 'rgba(167, 139, 250, 0.18)', color: purpleMain, borderColor: 'rgba(167, 139, 250, 0.30)' },
-                    '&:hover': { backgroundColor: 'rgba(167, 139, 250, 0.08)' },
+                    color: 'text.secondary',
+                    borderColor: 'divider',
+                    '&.Mui-selected': { backgroundColor: isDark ? 'rgba(167, 139, 250, 0.18)' : 'rgba(124, 58, 237, 0.12)', color: purpleAccent, borderColor: isDark ? 'rgba(167, 139, 250, 0.30)' : 'rgba(124, 58, 237, 0.25)' },
+                    '&:hover': { backgroundColor: purpleBgSubtle },
                   },
                 }}
               />
@@ -604,28 +620,28 @@ export default function StepResults({
             userSelect: 'none',
             borderRadius: 2,
             border: '1px solid',
-            borderColor: insightsOpen ? 'rgba(167, 139, 250, 0.20)' : 'rgba(255,255,255,0.08)',
-            backgroundColor: insightsOpen ? 'rgba(167, 139, 250, 0.03)' : 'rgba(255,255,255,0.02)',
+            borderColor: insightsOpen ? purpleBorder : 'divider',
+            backgroundColor: insightsOpen ? purpleBgFaint : subtleBg,
             transition: 'all 200ms ease',
             '&:hover': {
-              backgroundColor: 'rgba(167, 139, 250, 0.06)',
-              borderColor: 'rgba(167, 139, 250, 0.25)',
+              backgroundColor: purpleBgSubtle,
+              borderColor: purpleBorderHover,
             },
           }}
         >
-          <ExpandMoreIcon sx={{ color: 'rgba(255,255,255,0.45)', fontSize: 20, transform: insightsOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 250ms cubic-bezier(0.4,0,0.2,1)' }} />
-          <InfoOutlinedIcon sx={{ color: 'rgba(255,255,255,0.35)', fontSize: 18 }} />
-          <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.88rem', color: 'rgba(255,255,255,0.75)' }}>
+          <ExpandMoreIcon sx={{ color: 'text.disabled', fontSize: 20, transform: insightsOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 250ms cubic-bezier(0.4,0,0.2,1)' }} />
+          <InfoOutlinedIcon sx={{ color: 'text.disabled', fontSize: 18 }} />
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.88rem', color: 'text.secondary' }}>
             Insights & Details
           </Typography>
           {!insightsOpen && insightsCount > 0 && (
-            <Chip size="small" label={`${insightsCount} sections`} sx={{ height: 20, fontSize: '0.64rem', backgroundColor: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.35)' }} />
+            <Chip size="small" label={`${insightsCount} sections`} sx={{ height: 20, fontSize: '0.64rem', backgroundColor: subtleBg, color: 'text.disabled' }} />
           )}
           <Box sx={{ flex: 1 }} />
         </Box>
 
         <Collapse in={insightsOpen} timeout={300}>
-          <Box sx={{ px: 2.5, pb: 2 }}>
+          <Box sx={{ px: 3, pb: 2 }}>
             <Stack spacing={0}>
               {[
                 {
@@ -647,11 +663,11 @@ export default function StepResults({
                           : [scoreLabel, matched.length ? `matched: ${matched.join(', ')}` : '', boosts.length ? `boosts: ${boosts.map((b) => (b && b.tag ? `${b.hint}->${b.tag}` : String(b))).join(', ')}` : ''].filter(Boolean).join(' | ')
                         return (
                           <Box>
-                            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.78)' }}>
-                              <Box component="span" sx={{ fontFamily: theme.typography.fontFamilyMonospace, color: 'rgba(255,255,255,0.55)' }}>{String(s.id)}</Box>
+                            <Typography variant="body2" sx={{ color: 'text.primary' }}>
+                              <Box component="span" sx={{ fontFamily: theme.typography.fontFamilyMonospace, color: 'text.secondary' }}>{String(s.id)}</Box>
                               {' — '}{String(s.title)}
                             </Typography>
-                            {why && <Typography variant="caption" sx={{ display: 'block', mt: 0.2, color: 'rgba(255,255,255,0.40)', fontFamily: theme.typography.fontFamilyMonospace, fontSize: '0.72rem' }}>{why}</Typography>}
+                            {why && <Typography variant="caption" sx={{ display: 'block', mt: 0.2, color: 'text.disabled', fontFamily: theme.typography.fontFamilyMonospace, fontSize: '0.72rem' }}>{why}</Typography>}
                           </Box>
                         )
                       }}
@@ -666,8 +682,9 @@ export default function StepResults({
                   key={card.key}
                   disableGutters
                   sx={{
-                    backgroundColor: 'rgba(0,0,0,0.12)',
-                    border: '1px solid rgba(255,255,255,0.05)',
+                    backgroundColor: isDark ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.02)',
+                    border: '1px solid',
+                    borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)',
                     '&:not(:last-child)': { borderBottom: 'none' },
                     '&:first-of-type': { borderTopLeftRadius: 8, borderTopRightRadius: 8 },
                     '&:last-of-type': { borderBottomLeftRadius: 8, borderBottomRightRadius: 8 },
@@ -675,10 +692,10 @@ export default function StepResults({
                   }}
                 >
                   <AccordionSummary
-                    expandIcon={<ExpandMoreIcon sx={{ color: 'rgba(255,255,255,0.40)' }} />}
+                    expandIcon={<ExpandMoreIcon sx={{ color: 'text.disabled' }} />}
                     sx={{ px: 2, '& .MuiAccordionSummary-content': { my: 0.75 } }}
                   >
-                    <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.85rem', color: 'rgba(255,255,255,0.70)' }}>{card.label}</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.85rem', color: 'text.secondary' }}>{card.label}</Typography>
                   </AccordionSummary>
                   <AccordionDetails sx={{ px: 2, pb: 1.5 }}>
                     {card.content}
@@ -689,13 +706,13 @@ export default function StepResults({
 
             {/* Diagrams */}
             {skillDiagrams.length > 0 && (
-              <Box sx={{ mt: 1.5, p: 1.5, borderRadius: 2, backgroundColor: 'rgba(0,0,0,0.12)', border: '1px solid rgba(167, 139, 250, 0.08)' }}>
+              <Box sx={{ mt: 1.5, p: 1.5, borderRadius: 2, backgroundColor: isDark ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.02)', border: '1px solid', borderColor: isDark ? 'rgba(167, 139, 250, 0.08)' : 'rgba(124, 58, 237, 0.08)' }}>
                 <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mb: 1 }}>
-                  <AccountTreeIcon sx={{ color: purpleMain, fontSize: 16 }} />
-                  <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.85rem', color: 'rgba(255,255,255,0.70)' }}>
+                  <AccountTreeIcon sx={{ color: purpleAccent, fontSize: 16 }} />
+                  <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.85rem', color: 'text.secondary' }}>
                     Technique Diagrams
                   </Typography>
-                  <Chip size="small" label={`${skillDiagrams.length}`} sx={{ height: 18, fontSize: '0.62rem', fontFamily: theme.typography.fontFamilyMonospace, backgroundColor: 'rgba(167, 139, 250, 0.10)', color: purpleMain }} />
+                  <Chip size="small" label={`${skillDiagrams.length}`} sx={{ height: 18, fontSize: '0.62rem', fontFamily: theme.typography.fontFamilyMonospace, backgroundColor: isDark ? 'rgba(167, 139, 250, 0.10)' : 'rgba(124, 58, 237, 0.08)', color: purpleAccent }} />
                 </Stack>
                 <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
                   {skillDiagrams.map((d) => (
@@ -703,16 +720,17 @@ export default function StepResults({
                       key={d.skillId}
                       size="small"
                       clickable
-                      icon={<AccountTreeIcon sx={{ fontSize: '14px !important', color: `${purpleMain} !important` }} />}
+                      icon={<AccountTreeIcon sx={{ fontSize: '14px !important', color: `${purpleAccent} !important` }} />}
                       label={d.skillTitle}
                       onClick={() => { setActiveDiagram(d); setDiagramZoom(1); setDiagramDialogOpen(true) }}
                       sx={{
                         height: 28,
                         fontSize: '0.76rem',
-                        backgroundColor: 'rgba(167, 139, 250, 0.06)',
-                        color: 'rgba(255,255,255,0.80)',
-                        border: '1px solid rgba(167, 139, 250, 0.18)',
-                        '&:hover': { backgroundColor: 'rgba(167, 139, 250, 0.14)', borderColor: 'rgba(167, 139, 250, 0.35)' },
+                        backgroundColor: purpleBgSubtle,
+                        color: 'text.primary',
+                        border: '1px solid',
+                        borderColor: purpleBorder,
+                        '&:hover': { backgroundColor: isDark ? 'rgba(167, 139, 250, 0.14)' : 'rgba(124, 58, 237, 0.10)', borderColor: isDark ? 'rgba(167, 139, 250, 0.35)' : 'rgba(124, 58, 237, 0.30)' },
                       }}
                     />
                   ))}
@@ -738,39 +756,39 @@ export default function StepResults({
             userSelect: 'none',
             borderRadius: 2,
             border: '1px solid',
-            borderColor: aioOpen ? 'rgba(167, 139, 250, 0.20)' : 'rgba(255,255,255,0.08)',
-            backgroundColor: aioOpen ? 'rgba(167, 139, 250, 0.03)' : 'rgba(255,255,255,0.02)',
+            borderColor: aioOpen ? purpleBorder : 'divider',
+            backgroundColor: aioOpen ? purpleBgFaint : subtleBg,
             transition: 'all 200ms ease',
             '&:hover': {
-              backgroundColor: 'rgba(167, 139, 250, 0.06)',
-              borderColor: 'rgba(167, 139, 250, 0.25)',
+              backgroundColor: purpleBgSubtle,
+              borderColor: purpleBorderHover,
             },
           }}
         >
-          <ExpandMoreIcon sx={{ color: 'rgba(255,255,255,0.45)', fontSize: 20, transform: aioOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 250ms cubic-bezier(0.4,0,0.2,1)' }} />
-          <CloudUploadIcon sx={{ color: 'rgba(255,255,255,0.35)', fontSize: 18 }} />
-          <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.88rem', color: 'rgba(255,255,255,0.75)' }}>
+          <ExpandMoreIcon sx={{ color: 'text.disabled', fontSize: 20, transform: aioOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 250ms cubic-bezier(0.4,0,0.2,1)' }} />
+          <CloudUploadIcon sx={{ color: 'text.disabled', fontSize: 18 }} />
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.88rem', color: 'text.secondary' }}>
             Push to AIO Tests
           </Typography>
           {aioServerConfigured && !aioOpen && (
-            <Chip size="small" icon={<CheckCircleIcon sx={{ color: '#4ade80 !important', fontSize: 12 }} />} label="configured" sx={{ height: 20, fontSize: '0.62rem', backgroundColor: 'rgba(74, 222, 128, 0.06)', color: 'rgba(74, 222, 128, 0.70)', '& .MuiChip-icon': { ml: 0.5 } }} variant="outlined" />
+            <Chip size="small" icon={<CheckCircleIcon sx={{ color: '#4ade80 !important', fontSize: 12 }} />} label="configured" sx={{ height: 20, fontSize: '0.62rem', backgroundColor: isDark ? 'rgba(74, 222, 128, 0.06)' : 'rgba(22, 163, 74, 0.06)', color: isDark ? 'rgba(74, 222, 128, 0.70)' : 'rgba(22, 163, 74, 0.70)', '& .MuiChip-icon': { ml: 0.5 } }} variant="outlined" />
           )}
           {aioStatus === 'success' && !aioOpen && (
-            <Chip size="small" icon={<CheckCircleIcon sx={{ color: '#4ade80 !important', fontSize: 12 }} />} label="pushed" sx={{ height: 20, fontSize: '0.62rem', backgroundColor: 'rgba(74, 222, 128, 0.06)', color: 'rgba(74, 222, 128, 0.70)', '& .MuiChip-icon': { ml: 0.5 } }} variant="outlined" />
+            <Chip size="small" icon={<CheckCircleIcon sx={{ color: '#4ade80 !important', fontSize: 12 }} />} label="pushed" sx={{ height: 20, fontSize: '0.62rem', backgroundColor: isDark ? 'rgba(74, 222, 128, 0.06)' : 'rgba(22, 163, 74, 0.06)', color: isDark ? 'rgba(74, 222, 128, 0.70)' : 'rgba(22, 163, 74, 0.70)', '& .MuiChip-icon': { ml: 0.5 } }} variant="outlined" />
           )}
           <Box sx={{ flex: 1 }} />
         </Box>
 
         <Collapse in={aioOpen} timeout={300}>
-          <Box sx={{ px: 2.5, pb: 2.5 }}>
+          <Box sx={{ px: 3, pb: 3 }}>
             <Stack spacing={1.5}>
               <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={1}>
-                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.50)', fontSize: '0.82rem' }}>
+                <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>
                   Create a folder (if needed) and push test cases to AIO.
                 </Typography>
                 <Box sx={{ flex: 1 }} />
                 <FormControlLabel
-                  control={<Switch checked={aioIncludeTags} onChange={(e) => setAioIncludeTags(e.target.checked)} size="small" sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: purpleMain }, '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: purpleMain } }} />}
+                  control={<Switch checked={aioIncludeTags} onChange={(e) => setAioIncludeTags(e.target.checked)} size="small" sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: purpleAccent }, '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: purpleAccent } }} />}
                   label={<Typography variant="caption" sx={{ fontSize: '0.78rem' }}>Include tags</Typography>}
                   sx={{ mr: 0 }}
                 />
@@ -781,7 +799,7 @@ export default function StepResults({
                   severity="success"
                   variant="outlined"
                   icon={<CheckCircleIcon sx={{ color: '#4ade80' }} />}
-                  sx={{ borderColor: 'rgba(74, 222, 128, 0.20)', backgroundColor: 'rgba(74, 222, 128, 0.03)', '& .MuiAlert-message': { color: 'rgba(255,255,255,0.65)', fontSize: '0.80rem' } }}
+                  sx={{ borderColor: alertSuccessBorder, backgroundColor: alertSuccessBg, '& .MuiAlert-message': { color: alertMsgColor, fontSize: '0.80rem' } }}
                 >
                   AIO is configured on the server. You can push test cases directly.
                 </Alert>
@@ -790,8 +808,8 @@ export default function StepResults({
                   <Alert
                     severity="info"
                     variant="outlined"
-                    icon={<InfoOutlinedIcon sx={{ color: 'rgba(167, 139, 250, 0.7)' }} />}
-                    sx={{ borderColor: 'rgba(167, 139, 250, 0.20)', backgroundColor: 'rgba(167, 139, 250, 0.03)', '& .MuiAlert-message': { color: 'rgba(255,255,255,0.65)', fontSize: '0.80rem' } }}
+                    icon={<InfoOutlinedIcon sx={{ color: isDark ? 'rgba(167, 139, 250, 0.7)' : 'rgba(124, 58, 237, 0.7)' }} />}
+                    sx={{ borderColor: alertInfoBorder, backgroundColor: alertInfoBg, '& .MuiAlert-message': { color: alertMsgColor, fontSize: '0.80rem' } }}
                   >
                     Enter your AIO base URL and API token to push test cases.
                   </Alert>
@@ -807,7 +825,7 @@ export default function StepResults({
                           sx: { fontSize: '0.85rem' },
                           endAdornment: (
                             <InputAdornment position="end">
-                              <IconButton size="small" onClick={() => setShowAioToken(!showAioToken)} edge="end" sx={{ color: 'rgba(255,255,255,0.40)' }}>
+                              <IconButton size="small" onClick={() => setShowAioToken(!showAioToken)} edge="end" sx={{ color: 'text.disabled' }}>
                                 {showAioToken ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
                               </IconButton>
                             </InputAdornment>
@@ -834,8 +852,9 @@ export default function StepResults({
                       onClick={pushToAio}
                       fullWidth
                       sx={{
-                        backgroundColor: purpleMain,
-                        '&:hover': { backgroundColor: purpleDeep },
+                        backgroundColor: purple[600],
+                        color: '#fff',
+                        '&:hover': { backgroundColor: purple[700] },
                         textTransform: 'none',
                         fontWeight: 600,
                         fontSize: '0.85rem',
@@ -844,7 +863,7 @@ export default function StepResults({
                       {aioBusy ? 'Pushing...' : 'Push to AIO'}
                     </Button>
                     {aioBusy && (
-                      <Button variant="text" size="small" onClick={() => { cancelInFlight(); setInfo('Cancelling...') }} sx={{ color: 'rgba(255,255,255,0.50)', textTransform: 'none', whiteSpace: 'nowrap' }}>
+                      <Button variant="text" size="small" onClick={() => { cancelInFlight(); setInfo('Cancelling...') }} sx={{ color: 'text.secondary', textTransform: 'none', whiteSpace: 'nowrap' }}>
                         Cancel
                       </Button>
                     )}
@@ -856,11 +875,11 @@ export default function StepResults({
                 <Alert
                   severity="success" variant="outlined" icon={<CheckCircleIcon sx={{ color: '#4ade80' }} />}
                   action={
-                    <IconButton size="small" onClick={async () => { try { await navigator.clipboard.writeText(aioResult); setInfo('Copied.') } catch { setError('Copy failed.') } }} sx={{ color: 'rgba(255,255,255,0.50)' }}>
+                    <IconButton size="small" onClick={async () => { try { await navigator.clipboard.writeText(aioResult); setInfo('Copied.') } catch { setError('Copy failed.') } }} sx={{ color: 'text.secondary' }}>
                       <ContentCopyIcon sx={{ fontSize: 16 }} />
                     </IconButton>
                   }
-                  sx={{ borderColor: 'rgba(74, 222, 128, 0.20)', backgroundColor: 'rgba(74, 222, 128, 0.03)', '& .MuiAlert-message': { color: 'rgba(255,255,255,0.70)', fontSize: '0.82rem' } }}
+                  sx={{ borderColor: alertSuccessBorder, backgroundColor: alertSuccessBg, '& .MuiAlert-message': { color: alertMsgColor, fontSize: '0.82rem' } }}
                 >
                   {aioResult}
                 </Alert>
@@ -869,7 +888,7 @@ export default function StepResults({
               {aioStatus === 'error' && aioResult && (
                 <Alert
                   severity="error" variant="outlined"
-                  sx={{ borderColor: 'rgba(239, 68, 68, 0.25)', backgroundColor: 'rgba(239, 68, 68, 0.03)', '& .MuiAlert-message': { color: 'rgba(255,255,255,0.70)', fontSize: '0.82rem' } }}
+                  sx={{ borderColor: alertErrorBorder, backgroundColor: alertErrorBg, '& .MuiAlert-message': { color: alertMsgColor, fontSize: '0.82rem' } }}
                 >
                   {aioResult}
                 </Alert>

@@ -5,7 +5,7 @@ import ZoomOutIcon from '@mui/icons-material/ZoomOut'
 import RestartAltIcon2 from '@mui/icons-material/FitScreen'
 import AccountTreeIcon from '@mui/icons-material/AccountTree'
 import MermaidDiagram from './MermaidDiagram'
-import { purpleMain } from './theme'
+import { purple } from './theme'
 
 export default function DiagramDialog({
   theme,
@@ -13,6 +13,9 @@ export default function DiagramDialog({
   activeDiagram,
   diagramZoom, setDiagramZoom,
 }) {
+  const isDark = theme.palette.mode === 'dark'
+  const purpleAccent = isDark ? purple[500] : purple[600]
+
   return (
     <Dialog
       open={open}
@@ -21,8 +24,9 @@ export default function DiagramDialog({
       fullWidth
       PaperProps={{
         sx: {
-          backgroundColor: '#0f0f0f',
-          border: '1px solid rgba(167, 139, 250, 0.25)',
+          backgroundColor: isDark ? '#0f0f0f' : '#ffffff',
+          border: '1px solid',
+          borderColor: isDark ? 'rgba(167, 139, 250, 0.25)' : 'rgba(124, 58, 237, 0.18)',
           borderRadius: 3,
           backgroundImage: 'none',
         }
@@ -31,18 +35,18 @@ export default function DiagramDialog({
       {activeDiagram && (
         <>
           <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pr: 6 }}>
-            <AccountTreeIcon sx={{ color: purpleMain, fontSize: 22 }} />
+            <AccountTreeIcon sx={{ color: purpleAccent, fontSize: 22 }} />
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
                 {activeDiagram.skillTitle}
               </Typography>
-              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.45)', fontFamily: theme.typography.fontFamilyMonospace }}>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: theme.typography.fontFamilyMonospace }}>
                 {activeDiagram.skillId}
               </Typography>
             </Box>
             <IconButton
               onClick={onClose}
-              sx={{ position: 'absolute', right: 12, top: 12, color: 'rgba(255,255,255,0.50)' }}
+              sx={{ position: 'absolute', right: 12, top: 12, color: 'text.secondary' }}
             >
               <CloseIcon />
             </IconButton>
@@ -53,7 +57,7 @@ export default function DiagramDialog({
                 size="small"
                 onClick={() => setDiagramZoom((z) => Math.max(0.25, z - 0.25))}
                 disabled={diagramZoom <= 0.25}
-                sx={{ color: 'rgba(255,255,255,0.60)' }}
+                sx={{ color: 'text.secondary' }}
               >
                 <ZoomOutIcon fontSize="small" />
               </IconButton>
@@ -65,22 +69,22 @@ export default function DiagramDialog({
                   fontSize: '0.72rem',
                   height: 24,
                   minWidth: 52,
-                  backgroundColor: 'rgba(255,255,255,0.06)',
-                  color: 'rgba(255,255,255,0.70)',
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                  color: 'text.secondary',
                 }}
               />
               <IconButton
                 size="small"
                 onClick={() => setDiagramZoom((z) => Math.min(3, z + 0.25))}
                 disabled={diagramZoom >= 3}
-                sx={{ color: 'rgba(255,255,255,0.60)' }}
+                sx={{ color: 'text.secondary' }}
               >
                 <ZoomInIcon fontSize="small" />
               </IconButton>
               <IconButton
                 size="small"
                 onClick={() => setDiagramZoom(1)}
-                sx={{ color: 'rgba(255,255,255,0.45)', ml: 0.5 }}
+                sx={{ color: 'text.disabled', ml: 0.5 }}
                 title="Reset zoom"
               >
                 <RestartAltIcon2 fontSize="small" />
@@ -89,8 +93,9 @@ export default function DiagramDialog({
             <Box
               sx={{
                 borderRadius: 3,
-                border: '1px solid rgba(167, 139, 250, 0.15)',
-                backgroundColor: 'rgba(0, 0, 0, 0.30)',
+                border: '1px solid',
+                borderColor: isDark ? 'rgba(167, 139, 250, 0.15)' : 'rgba(124, 58, 237, 0.10)',
+                backgroundColor: isDark ? 'rgba(0, 0, 0, 0.30)' : 'rgba(0, 0, 0, 0.02)',
                 overflow: 'auto',
                 minHeight: 200,
                 maxHeight: '70vh',

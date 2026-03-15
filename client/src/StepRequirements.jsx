@@ -14,7 +14,7 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import LinkIcon from '@mui/icons-material/Link'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import EditNoteIcon from '@mui/icons-material/EditNote'
-import { purpleMain, modelOptions, defaultModel } from './theme'
+import { purple, modelOptions, defaultModel } from './theme'
 
 const API = import.meta.env.VITE_API_URL || ''
 
@@ -74,6 +74,8 @@ export default function StepRequirements({
   // Collapsible AI section
   const [aiSectionOpen, setAiSectionOpen] = useState(true)
   const hasAutoCollapsed = useRef(false)
+
+  const isDark = theme.palette.mode === 'dark'
 
   const llmProviders = serverProviders && serverProviders.llm ? serverProviders.llm : {}
   const serverHasKey = serverProvidersLoaded && llmProviders[provider]
@@ -212,11 +214,26 @@ export default function StepRequirements({
   // AI section is "ready" when we have a validated key (server or user)
   const aiReady = apiKeyValidated || usingServerKey
 
+  // Theme-aware color helpers
+  const purpleAccent = isDark ? purple[500] : purple[600]
+  const purpleBgSubtle = isDark ? 'rgba(167, 139, 250, 0.08)' : 'rgba(124, 58, 237, 0.06)'
+  const purpleBgFaint = isDark ? 'rgba(167, 139, 250, 0.03)' : 'rgba(124, 58, 237, 0.03)'
+  const purpleBorder = isDark ? 'rgba(167, 139, 250, 0.20)' : 'rgba(124, 58, 237, 0.18)'
+  const purpleBorderHover = isDark ? 'rgba(167, 139, 250, 0.25)' : 'rgba(124, 58, 237, 0.22)'
+  const greenSuccess = '#4ade80'
+  const alertMsgColor = isDark ? 'rgba(255,255,255,0.72)' : 'rgba(0,0,0,0.65)'
+  const alertInfoBorder = isDark ? 'rgba(167, 139, 250, 0.25)' : 'rgba(124, 58, 237, 0.20)'
+  const alertInfoBg = isDark ? 'rgba(167, 139, 250, 0.04)' : 'rgba(124, 58, 237, 0.04)'
+  const alertSuccessBorder = isDark ? 'rgba(74, 222, 128, 0.25)' : 'rgba(22, 163, 74, 0.20)'
+  const alertSuccessBg = isDark ? 'rgba(74, 222, 128, 0.04)' : 'rgba(22, 163, 74, 0.04)'
+  const alertErrorBorder = isDark ? 'rgba(239, 68, 68, 0.30)' : 'rgba(220, 38, 38, 0.25)'
+  const alertErrorBg = isDark ? 'rgba(239, 68, 68, 0.04)' : 'rgba(220, 38, 38, 0.04)'
+
   return (
     <Card
       sx={{
         overflow: 'visible',
-        borderColor: 'rgba(167, 139, 250, 0.18)',
+        borderColor: purpleBorder,
       }}
     >
       <CardContent sx={{ p: '0 !important' }}>
@@ -228,27 +245,27 @@ export default function StepRequirements({
             display: 'flex',
             alignItems: 'center',
             gap: 1.5,
-            mx: 2,
-            mt: 2,
-            mb: aiSectionOpen ? 0 : 2,
-            px: 1.5,
-            py: 1.25,
+            mx: 2.5,
+            mt: 2.5,
+            mb: aiSectionOpen ? 0 : 2.5,
+            px: 2,
+            py: 1.5,
             cursor: 'pointer',
             userSelect: 'none',
-            borderRadius: 2,
+            borderRadius: 3,
             border: '1px solid',
-            borderColor: aiSectionOpen ? 'rgba(167, 139, 250, 0.20)' : 'rgba(255,255,255,0.08)',
-            backgroundColor: aiSectionOpen ? 'rgba(167, 139, 250, 0.03)' : 'rgba(255,255,255,0.02)',
+            borderColor: aiSectionOpen ? purpleBorder : 'divider',
+            backgroundColor: aiSectionOpen ? purpleBgFaint : 'transparent',
             transition: 'all 200ms ease',
             '&:hover': {
-              backgroundColor: 'rgba(167, 139, 250, 0.06)',
-              borderColor: 'rgba(167, 139, 250, 0.25)',
+              backgroundColor: purpleBgSubtle,
+              borderColor: purpleBorderHover,
             },
           }}
         >
           <ExpandMoreIcon
             sx={{
-              color: 'rgba(255,255,255,0.45)',
+              color: 'text.secondary',
               fontSize: 20,
               transform: aiSectionOpen ? 'rotate(180deg)' : 'rotate(0deg)',
               transition: 'transform 250ms cubic-bezier(0.4,0,0.2,1)',
@@ -262,15 +279,15 @@ export default function StepRequirements({
           {!aiSectionOpen && aiReady && (
             <Chip
               size="small"
-              icon={<CheckCircleIcon sx={{ color: '#4ade80 !important', fontSize: 14 }} />}
+              icon={<CheckCircleIcon sx={{ color: `${greenSuccess} !important`, fontSize: 14 }} />}
               label={`${providerLabel(provider)} · ${modelLabel}`}
               sx={{
                 height: 26,
                 fontSize: '0.76rem',
                 fontFamily: theme.typography.fontFamilyMonospace,
-                borderColor: 'rgba(74, 222, 128, 0.25)',
-                backgroundColor: 'rgba(74, 222, 128, 0.06)',
-                color: 'rgba(255,255,255,0.75)',
+                borderColor: alertSuccessBorder,
+                backgroundColor: alertSuccessBg,
+                color: 'text.secondary',
                 '& .MuiChip-icon': { ml: 0.5 },
               }}
               variant="outlined"
@@ -283,8 +300,8 @@ export default function StepRequirements({
               sx={{
                 height: 26,
                 fontSize: '0.76rem',
-                borderColor: 'rgba(239, 68, 68, 0.25)',
-                backgroundColor: 'rgba(239, 68, 68, 0.06)',
+                borderColor: alertErrorBorder,
+                backgroundColor: alertErrorBg,
                 color: 'rgba(239, 68, 68, 0.8)',
               }}
               variant="outlined"
@@ -295,9 +312,9 @@ export default function StepRequirements({
         </Box>
 
         <Collapse in={aiSectionOpen} timeout={300}>
-          <Box sx={{ px: 2.5, pt: 1.5, pb: 2.5 }}>
+          <Box sx={{ px: 3, pt: 2, pb: 3 }}>
             <Stack spacing={2}>
-              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.82rem', mt: -0.5 }}>
+              <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.82rem', mt: -0.5 }}>
                 {providerOptions.length > 0 && !hasUserKey
                   ? 'Server-configured providers are ready to use. You can also enter your own API key to override.'
                   : 'Enter your API key — the provider is auto-detected from the key prefix.'}
@@ -308,11 +325,11 @@ export default function StepRequirements({
                 <Alert
                   severity="success"
                   variant="outlined"
-                  icon={<CheckCircleIcon sx={{ color: '#4ade80' }} />}
+                  icon={<CheckCircleIcon sx={{ color: greenSuccess }} />}
                   sx={{
-                    borderColor: 'rgba(74, 222, 128, 0.25)',
-                    backgroundColor: 'rgba(74, 222, 128, 0.04)',
-                    '& .MuiAlert-message': { color: 'rgba(255,255,255,0.72)', fontSize: '0.82rem' }
+                    borderColor: alertSuccessBorder,
+                    backgroundColor: alertSuccessBg,
+                    '& .MuiAlert-message': { color: alertMsgColor, fontSize: '0.82rem' },
                   }}
                 >
                   Server has an API key configured for <strong>{providerLabel(provider)}</strong>. You can use it as-is or enter your own key below to override.
@@ -324,11 +341,11 @@ export default function StepRequirements({
                 <Alert
                   severity="info"
                   variant="outlined"
-                  icon={<InfoOutlinedIcon sx={{ color: 'rgba(167, 139, 250, 0.8)' }} />}
+                  icon={<InfoOutlinedIcon sx={{ color: purpleAccent, opacity: 0.8 }} />}
                   sx={{
-                    borderColor: 'rgba(167, 139, 250, 0.25)',
-                    backgroundColor: 'rgba(167, 139, 250, 0.04)',
-                    '& .MuiAlert-message': { color: 'rgba(255,255,255,0.72)', fontSize: '0.82rem' }
+                    borderColor: alertInfoBorder,
+                    backgroundColor: alertInfoBg,
+                    '& .MuiAlert-message': { color: alertMsgColor, fontSize: '0.82rem' },
                   }}
                 >
                   Your API key is sent directly to your chosen provider and is <strong>never stored</strong> on the server. It is kept only in your browser session and cleared when you close the tab.
@@ -346,12 +363,12 @@ export default function StepRequirements({
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton size="small" onClick={() => setShowKey(!showKey)} edge="end" sx={{ color: 'rgba(255,255,255,0.50)' }}>
+                      <IconButton size="small" onClick={() => setShowKey(!showKey)} edge="end" sx={{ color: 'text.secondary' }}>
                         {showKey ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
                       </IconButton>
                       {apiKeyValidated && (
                         <Tooltip title="Key validated">
-                          <CheckCircleIcon sx={{ color: '#4ade80', ml: 0.5, fontSize: 20 }} />
+                          <CheckCircleIcon sx={{ color: greenSuccess, ml: 0.5, fontSize: 20 }} />
                         </Tooltip>
                       )}
                     </InputAdornment>
@@ -377,7 +394,7 @@ export default function StepRequirements({
                           <Stack direction="row" alignItems="center" spacing={1} sx={{ width: '100%' }}>
                             <span>{p.label}</span>
                             {!hasUserKey && llmProviders[p.value] && (
-                              <CheckCircleIcon sx={{ color: '#4ade80', fontSize: 16, ml: 'auto' }} />
+                              <CheckCircleIcon sx={{ color: greenSuccess, fontSize: 16, ml: 'auto' }} />
                             )}
                           </Stack>
                         </MenuItem>
@@ -410,9 +427,12 @@ export default function StepRequirements({
                       paper: {
                         sx: {
                           mt: 0.5,
-                          border: '1px solid rgba(255,255,255,0.12)',
-                          backgroundColor: 'rgba(0,0,0,0.98)',
-                          boxShadow: '0 0 0 1px rgba(167, 139, 250, 0.10), 0 24px 70px rgba(0,0,0,0.55)',
+                          border: '1px solid',
+                          borderColor: 'divider',
+                          backgroundColor: isDark ? 'rgba(15,15,15,0.98)' : 'rgba(255,255,255,0.98)',
+                          boxShadow: isDark
+                            ? '0 0 0 1px rgba(167, 139, 250, 0.10), 0 24px 70px rgba(0,0,0,0.55)'
+                            : '0 0 0 1px rgba(124, 58, 237, 0.06), 0 12px 40px rgba(0,0,0,0.10)',
                         }
                       }
                     }}
@@ -427,11 +447,11 @@ export default function StepRequirements({
                     startIcon={validating ? <CircularProgress size={16} color="inherit" /> : null}
                     sx={{
                       height: 40,
-                      borderColor: apiKeyValidated ? 'rgba(74, 222, 128, 0.40)' : 'rgba(167, 139, 250, 0.35)',
-                      color: apiKeyValidated ? '#4ade80' : 'rgba(255,255,255,0.85)',
+                      borderColor: apiKeyValidated ? alertSuccessBorder : purpleBorder,
+                      color: apiKeyValidated ? greenSuccess : 'text.primary',
                       '&:hover': {
-                        borderColor: apiKeyValidated ? 'rgba(74, 222, 128, 0.60)' : purpleMain,
-                        backgroundColor: apiKeyValidated ? 'rgba(74, 222, 128, 0.06)' : 'rgba(167, 139, 250, 0.08)'
+                        borderColor: apiKeyValidated ? 'rgba(74, 222, 128, 0.60)' : purpleAccent,
+                        backgroundColor: apiKeyValidated ? alertSuccessBg : purpleBgSubtle,
                       },
                     }}
                   >
@@ -443,16 +463,16 @@ export default function StepRequirements({
           </Box>
         </Collapse>
 
-        <Divider sx={{ borderColor: 'rgba(255,255,255,0.06)' }} />
+        <Divider />
 
         {/* ─── Section 2: Requirements ─── */}
-        <Box sx={{ px: 2.5, pt: 2.5, pb: 2.5 }}>
+        <Box sx={{ px: 3, pt: 3, pb: 3 }}>
           <Stack spacing={2}>
             <Box>
               <Typography variant="subtitle1" sx={{ fontWeight: 700, fontSize: '0.95rem' }}>
                 Requirements
               </Typography>
-              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.82rem' }}>
+              <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>
                 Provide what you want to test — upload a file, write it out, or pull stories from Jira.
               </Typography>
             </Box>
@@ -463,8 +483,8 @@ export default function StepRequirements({
               sx={{
                 minHeight: 36,
                 '& .MuiTab-root': { minHeight: 36, textTransform: 'none', fontWeight: 600, fontSize: '0.85rem' },
-                '& .MuiTabs-indicator': { backgroundColor: purpleMain },
-                '& .Mui-selected': { color: purpleMain + ' !important' },
+                '& .MuiTabs-indicator': { backgroundColor: purpleAccent },
+                '& .Mui-selected': { color: purpleAccent + ' !important' },
               }}
             >
               <Tab value="manual" label="Write or Upload" icon={<EditNoteIcon sx={{ fontSize: 18 }} />} iconPosition="start" sx={{ '& .MuiTab-iconWrapper': { mr: 0.5 } }} />
@@ -473,16 +493,16 @@ export default function StepRequirements({
 
             {/* ─── Jira credentials (when not connected) ─── */}
             {reqInputTab === 'jira' && !jiraConfigured && (
-              <Box sx={{ pl: 2, borderLeft: '2px solid rgba(167, 139, 250, 0.25)' }}>
+              <Box sx={{ pl: 2, borderLeft: `2px solid ${purpleBorder}` }}>
                 <Stack spacing={2}>
                   <Alert
                     severity="info"
                     variant="outlined"
-                    icon={<InfoOutlinedIcon sx={{ color: 'rgba(167, 139, 250, 0.8)' }} />}
+                    icon={<InfoOutlinedIcon sx={{ color: purpleAccent, opacity: 0.8 }} />}
                     sx={{
-                      borderColor: 'rgba(167, 139, 250, 0.25)',
-                      backgroundColor: 'rgba(167, 139, 250, 0.04)',
-                      '& .MuiAlert-message': { color: 'rgba(255,255,255,0.72)', fontSize: '0.82rem' }
+                      borderColor: alertInfoBorder,
+                      backgroundColor: alertInfoBg,
+                      '& .MuiAlert-message': { color: alertMsgColor, fontSize: '0.82rem' },
                     }}
                   >
                     {jiraServerConfigured
@@ -524,7 +544,7 @@ export default function StepRequirements({
                           sx: { fontSize: '0.85rem' },
                           endAdornment: (
                             <InputAdornment position="end">
-                              <IconButton size="small" onClick={() => setShowJiraToken(!showJiraToken)} edge="end" sx={{ color: 'rgba(255,255,255,0.50)' }}>
+                              <IconButton size="small" onClick={() => setShowJiraToken(!showJiraToken)} edge="end" sx={{ color: 'text.secondary' }}>
                                 {showJiraToken ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
                               </IconButton>
                             </InputAdornment>
@@ -557,9 +577,9 @@ export default function StepRequirements({
                     }}
                     sx={{
                       alignSelf: 'flex-start',
-                      borderColor: 'rgba(167, 139, 250, 0.35)',
-                      color: 'rgba(255,255,255,0.85)',
-                      '&:hover': { borderColor: purpleMain, backgroundColor: 'rgba(167, 139, 250, 0.08)' },
+                      borderColor: purpleBorder,
+                      color: 'text.primary',
+                      '&:hover': { borderColor: purpleAccent, backgroundColor: purpleBgSubtle },
                     }}
                   >
                     {jiraConnecting ? 'Connecting...' : 'Connect to Jira'}
@@ -569,11 +589,11 @@ export default function StepRequirements({
                     <Alert
                       severity="success"
                       variant="outlined"
-                      icon={<CheckCircleIcon sx={{ color: '#4ade80' }} />}
+                      icon={<CheckCircleIcon sx={{ color: greenSuccess }} />}
                       sx={{
-                        borderColor: 'rgba(74, 222, 128, 0.25)',
-                        backgroundColor: 'rgba(74, 222, 128, 0.04)',
-                        '& .MuiAlert-message': { color: 'rgba(255,255,255,0.72)', fontSize: '0.82rem' }
+                        borderColor: alertSuccessBorder,
+                        backgroundColor: alertSuccessBg,
+                        '& .MuiAlert-message': { color: alertMsgColor, fontSize: '0.82rem' },
                       }}
                     >
                       {jiraConnectMessage}
@@ -585,9 +605,9 @@ export default function StepRequirements({
                       severity="error"
                       variant="outlined"
                       sx={{
-                        borderColor: 'rgba(239, 68, 68, 0.30)',
-                        backgroundColor: 'rgba(239, 68, 68, 0.04)',
-                        '& .MuiAlert-message': { color: 'rgba(255,255,255,0.72)', fontSize: '0.82rem' }
+                        borderColor: alertErrorBorder,
+                        backgroundColor: alertErrorBg,
+                        '& .MuiAlert-message': { color: alertMsgColor, fontSize: '0.82rem' },
                       }}
                     >
                       {jiraConnectMessage}
@@ -633,18 +653,18 @@ export default function StepRequirements({
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        backgroundColor: 'rgba(167, 139, 250, 0.08)',
+                        backgroundColor: purpleBgSubtle,
                         borderRadius: 2,
-                        border: '2px dashed rgba(167, 139, 250, 0.50)',
+                        border: `2px dashed ${purpleAccent}80`,
                         backdropFilter: 'blur(2px)',
                       }}
                     >
                       <Stack alignItems="center" spacing={0.5}>
-                        <CloudUploadIcon sx={{ color: purpleMain, fontSize: 36 }} />
-                        <Typography variant="body2" sx={{ color: purpleMain, fontWeight: 600 }}>
+                        <CloudUploadIcon sx={{ color: purpleAccent, fontSize: 36 }} />
+                        <Typography variant="body2" sx={{ color: purpleAccent, fontWeight: 600 }}>
                           Drop file here
                         </Typography>
-                        <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.45)' }}>
+                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                           .txt, .md, .pdf, .docx, .html
                         </Typography>
                       </Stack>
@@ -656,10 +676,7 @@ export default function StepRequirements({
                     direction="row"
                     spacing={1}
                     alignItems="center"
-                    sx={{
-                      mb: 1,
-                      px: 0.5,
-                    }}
+                    sx={{ mb: 1, px: 0.5 }}
                   >
                     <Button
                       size="small"
@@ -667,13 +684,13 @@ export default function StepRequirements({
                       onClick={() => fileInputRef.current && fileInputRef.current.click()}
                       sx={{
                         textTransform: 'none',
-                        color: requirementFile ? purpleMain : 'rgba(255,255,255,0.60)',
+                        color: requirementFile ? purpleAccent : 'text.secondary',
                         fontSize: '0.8rem',
                         fontWeight: requirementFile ? 600 : 400,
                         px: 1,
                         borderRadius: 1.5,
-                        backgroundColor: requirementFile ? 'rgba(167, 139, 250, 0.08)' : 'transparent',
-                        '&:hover': { backgroundColor: 'rgba(167, 139, 250, 0.10)' },
+                        backgroundColor: requirementFile ? purpleBgSubtle : 'transparent',
+                        '&:hover': { backgroundColor: purpleBgSubtle },
                       }}
                     >
                       {requirementFile ? requirementFile.name : 'Upload file'}
@@ -691,8 +708,8 @@ export default function StepRequirements({
                           height: 20,
                           fontSize: '0.65rem',
                           fontFamily: theme.typography.fontFamilyMonospace,
-                          backgroundColor: 'rgba(167, 139, 250, 0.12)',
-                          color: purpleMain,
+                          backgroundColor: purpleBgSubtle,
+                          color: purpleAccent,
                         }}
                       />
                     )}
@@ -703,7 +720,7 @@ export default function StepRequirements({
                     <Typography
                       variant="caption"
                       sx={{
-                        color: wordCount > 0 ? 'rgba(255,255,255,0.40)' : 'rgba(255,255,255,0.20)',
+                        color: wordCount > 0 ? 'text.secondary' : 'text.disabled',
                         fontFamily: theme.typography.fontFamilyMonospace,
                         fontSize: '0.72rem',
                         transition: 'color 200ms',
@@ -725,8 +742,8 @@ export default function StepRequirements({
                             setInfo('Cleared requirements.')
                           }}
                           sx={{
-                            color: 'rgba(255,255,255,0.40)',
-                            '&:hover': { color: 'rgba(239, 68, 68, 0.8)', backgroundColor: 'rgba(239, 68, 68, 0.08)' },
+                            color: 'text.secondary',
+                            '&:hover': { color: 'error.main', backgroundColor: alertErrorBg },
                           }}
                         >
                           <ClearAllIcon sx={{ fontSize: 18 }} />
@@ -750,8 +767,8 @@ export default function StepRequirements({
               <Stack spacing={2}>
                 {/* Connected indicator */}
                 <Stack direction="row" spacing={1} alignItems="center">
-                  <CheckCircleIcon sx={{ color: '#4ade80', fontSize: 16 }} />
-                  <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.78rem' }}>
+                  <CheckCircleIcon sx={{ color: greenSuccess, fontSize: 16 }} />
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.78rem' }}>
                     Connected to Jira
                   </Typography>
                   {jiraProject && (
@@ -763,8 +780,8 @@ export default function StepRequirements({
                         height: 20,
                         fontSize: '0.70rem',
                         fontFamily: theme.typography.fontFamilyMonospace,
-                        borderColor: 'rgba(74, 222, 128, 0.20)',
-                        color: 'rgba(255,255,255,0.60)',
+                        borderColor: alertSuccessBorder,
+                        color: 'text.secondary',
                       }}
                     />
                   )}
@@ -840,9 +857,9 @@ export default function StepRequirements({
                     startIcon={jiraLoading ? <CircularProgress size={16} color="inherit" /> : null}
                     sx={{
                       alignSelf: 'flex-start',
-                      borderColor: 'rgba(167, 139, 250, 0.35)',
-                      color: 'rgba(255,255,255,0.85)',
-                      '&:hover': { borderColor: purpleMain, backgroundColor: 'rgba(167, 139, 250, 0.08)' },
+                      borderColor: purpleBorder,
+                      color: 'text.primary',
+                      '&:hover': { borderColor: purpleAccent, backgroundColor: purpleBgSubtle },
                     }}
                   >
                     {jiraLoading ? 'Loading...' : 'Fetch Stories'}
@@ -850,7 +867,7 @@ export default function StepRequirements({
                 )}
 
                 {jiraStories.length > 0 && (
-                  <Card sx={{ backgroundColor: 'rgba(0,0,0,0.18)' }}>
+                  <Card sx={{ backgroundColor: isDark ? 'rgba(0,0,0,0.18)' : 'rgba(0,0,0,0.02)' }}>
                     <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
                       <Stack spacing={1}>
                         <Stack direction="row" spacing={1} alignItems="center">
@@ -862,7 +879,7 @@ export default function StepRequirements({
                             size="small"
                             variant="text"
                             onClick={() => setJiraSelectedKeys(new Set(jiraStories.map((s) => s.key)))}
-                            sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.50)', textTransform: 'none', minWidth: 0 }}
+                            sx={{ fontSize: '0.72rem', color: 'text.secondary', textTransform: 'none', minWidth: 0 }}
                           >
                             Select all
                           </Button>
@@ -870,13 +887,13 @@ export default function StepRequirements({
                             size="small"
                             variant="text"
                             onClick={() => setJiraSelectedKeys(new Set())}
-                            sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.50)', textTransform: 'none', minWidth: 0 }}
+                            sx={{ fontSize: '0.72rem', color: 'text.secondary', textTransform: 'none', minWidth: 0 }}
                           >
                             Deselect all
                           </Button>
                         </Stack>
 
-                        <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />
+                        <Divider />
 
                         <Box sx={{ maxHeight: 360, overflowY: 'auto' }}>
                           {jiraStories.map((story) => (
@@ -889,7 +906,7 @@ export default function StepRequirements({
                                 py: 0.75,
                                 px: 0.5,
                                 borderRadius: 1,
-                                '&:hover': { backgroundColor: 'rgba(255,255,255,0.03)' },
+                                '&:hover': { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' },
                               }}
                             >
                               <Checkbox
@@ -901,15 +918,15 @@ export default function StepRequirements({
                                   else next.delete(story.key)
                                   setJiraSelectedKeys(next)
                                 }}
-                                sx={{ p: 0.5, color: 'rgba(255,255,255,0.30)', '&.Mui-checked': { color: purpleMain } }}
+                                sx={{ p: 0.5, color: 'text.disabled', '&.Mui-checked': { color: purpleAccent } }}
                               />
                               <Chip
                                 size="small"
                                 variant="outlined"
                                 label={story.key}
-                                sx={{ fontFamily: theme.typography.fontFamilyMonospace, borderColor: 'rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.70)', minWidth: 72, justifyContent: 'flex-start' }}
+                                sx={{ fontFamily: theme.typography.fontFamilyMonospace, borderColor: 'divider', color: 'text.secondary', minWidth: 72, justifyContent: 'flex-start' }}
                               />
-                              <Typography variant="body2" sx={{ flex: 1, color: 'rgba(255,255,255,0.85)', minWidth: 0 }} noWrap>
+                              <Typography variant="body2" sx={{ flex: 1, color: 'text.primary', minWidth: 0 }} noWrap>
                                 {story.summary}
                               </Typography>
                               <Chip
@@ -918,8 +935,8 @@ export default function StepRequirements({
                                 sx={{
                                   fontSize: '0.68rem',
                                   height: 20,
-                                  backgroundColor: story.status === 'Done' ? 'rgba(22,163,74,0.15)' : story.status === 'In Progress' ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.06)',
-                                  color: story.status === 'Done' ? 'rgba(22,163,74,0.9)' : story.status === 'In Progress' ? 'rgba(59,130,246,0.9)' : 'rgba(255,255,255,0.55)',
+                                  backgroundColor: story.status === 'Done' ? 'rgba(22,163,74,0.15)' : story.status === 'In Progress' ? 'rgba(59,130,246,0.15)' : isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+                                  color: story.status === 'Done' ? 'rgba(22,163,74,0.9)' : story.status === 'In Progress' ? 'rgba(59,130,246,0.9)' : 'text.secondary',
                                 }}
                               />
                               {story.priority && (
@@ -927,7 +944,7 @@ export default function StepRequirements({
                                   size="small"
                                   variant="outlined"
                                   label={story.priority}
-                                  sx={{ fontSize: '0.68rem', height: 20, borderColor: 'rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.50)' }}
+                                  sx={{ fontSize: '0.68rem', height: 20, borderColor: 'divider', color: 'text.secondary' }}
                                 />
                               )}
                             </Stack>
@@ -940,7 +957,7 @@ export default function StepRequirements({
 
                 {jiraStories.length > 0 && (
                   <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }}>
-                    <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.60)' }}>
+                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                       {jiraSelectedKeys.size} {jiraSelectedKeys.size === 1 ? 'story' : 'stories'} selected
                     </Typography>
                     <Box sx={{ flex: 1 }} />
@@ -949,10 +966,11 @@ export default function StepRequirements({
                       disabled={jiraLoading || jiraSelectedKeys.size === 0}
                       onClick={useSelectedJiraStories}
                       sx={{
-                        backgroundColor: purpleMain,
-                        '&:hover': { backgroundColor: 'rgba(167, 139, 250, 0.85)' },
+                        backgroundColor: purple[600],
+                        '&:hover': { backgroundColor: purple[700] },
                         textTransform: 'none',
                         fontWeight: 600,
+                        color: '#fff',
                       }}
                     >
                       Use Selected

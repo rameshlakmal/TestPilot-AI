@@ -7,22 +7,22 @@ import {
   Container,
   CssBaseline,
   Fade,
+  IconButton,
   Slide,
   Stack,
-  Step,
-  StepLabel,
-  Stepper,
   Toolbar,
+  Tooltip,
   Typography,
   useMediaQuery
 } from '@mui/material'
-import StepConnector, { stepConnectorClasses } from '@mui/material/StepConnector'
-import { ThemeProvider, createTheme, styled } from '@mui/material/styles'
+import { ThemeProvider } from '@mui/material/styles'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import RestartAltIcon from '@mui/icons-material/RestartAlt'
+import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined'
+import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined'
 
-import { purpleMain, purpleDeep, bgBase, paperBase, primaryBlack, modelOptions, defaultModel } from './theme'
+import { purple, buildTheme, ColorModeContext, loadThemeMode, saveThemeMode, modelOptions, defaultModel } from './theme'
 
 const API = import.meta.env.VITE_API_URL || ''
 import StepRequirements from './StepRequirements'
@@ -65,93 +65,29 @@ function createApiFetch(getApiKey) {
   }
 }
 
-const AnimatedConnector = styled(StepConnector)(() => ({
-  [`&.${stepConnectorClasses.alternativeLabel}`]: {
-    top: 20,
-  },
-  [`& .${stepConnectorClasses.line}`]: {
-    height: 3,
-    border: 0,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.10)',
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  [`&.${stepConnectorClasses.active} .${stepConnectorClasses.line}`]: {
-    backgroundImage: 'none',
-    backgroundColor: 'rgba(255,255,255,0.10)',
-  },
-  [`&.${stepConnectorClasses.completed} .${stepConnectorClasses.line}`]: {
-    backgroundImage: 'none',
-    backgroundColor: '#7c3aed',
-  },
-  [`&.${stepConnectorClasses.active} .${stepConnectorClasses.line}::after`]: {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    height: '100%',
-    width: '100%',
-    background: `linear-gradient(90deg, ${purpleMain}, ${purpleDeep})`,
-    borderRadius: 2,
-    animation: 'connectorFill 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards',
-  },
-  [`&.${stepConnectorClasses.completed} .${stepConnectorClasses.line}::after`]: {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    height: '100%',
-    width: '100%',
-    background: '#7c3aed',
-    borderRadius: 2,
-  },
-  '@keyframes connectorFill': {
-    '0%': { width: '0%' },
-    '100%': { width: '100%' },
-  },
-}))
-
-function AnimatedStepIcon(props) {
-  const { active, completed, icon } = props
-  const bgColor = completed
-    ? '#7c3aed'
-    : active
-      ? purpleMain
-      : 'rgba(255,255,255,0.10)'
-  const textColor = completed || active ? '#fff' : 'rgba(255,255,255,0.50)'
-
-  return (
-    <Box
-      sx={{
-        width: 42,
-        height: 42,
-        borderRadius: '50%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: bgColor,
-        color: textColor,
-        fontWeight: 700,
-        fontSize: '0.88rem',
-        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-        transform: active ? 'scale(1.15)' : 'scale(1)',
-        boxShadow: active
-          ? `0 0 0 6px rgba(167, 139, 250, 0.18), 0 0 20px rgba(167, 139, 250, 0.25)`
-          : completed
-            ? '0 0 0 4px rgba(124, 58, 237, 0.20)'
-            : 'none',
-      }}
-    >
-      {completed ? '✓' : icon}
-    </Box>
-  )
-}
-
 const STEPS = ['Requirements', 'Analyze', 'Results']
 
 export default function App() {
   const appLogo = '/test-cases.png'
+
+  // ─── Theme mode ───
+  const [themeMode, setThemeMode] = useState(loadThemeMode)
+  const colorModeValue = useMemo(() => ({
+    mode: themeMode,
+    toggleColorMode: () => {
+      setThemeMode((prev) => {
+        const next = prev === 'dark' ? 'light' : 'dark'
+        saveThemeMode(next)
+        document.body.setAttribute('data-theme', next)
+        return next
+      })
+    },
+  }), [themeMode])
+
+  // Set data-theme on mount
+  useEffect(() => {
+    document.body.setAttribute('data-theme', themeMode)
+  }, [])
 
   // ─── API key state ───
   const savedKey = loadApiKey()
@@ -219,143 +155,8 @@ export default function App() {
     }).catch(() => { setServerProvidersLoaded(true) })
   }, [])
 
-  const theme = useMemo(
-    () =>
-      createTheme({
-        palette: {
-          mode: 'dark',
-          primary: { main: primaryBlack },
-          secondary: { main: purpleMain },
-          background: {
-            default: bgBase,
-            paper: paperBase
-          }
-        },
-        shape: { borderRadius: 10 },
-        typography: {
-          fontFamily: '"Space Grotesk", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial',
-          fontFamilyMonospace: '"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace',
-          fontSize: 13.5,
-          h5: { fontSize: '1.35rem' },
-          h6: { fontSize: '1.05rem' },
-          subtitle1: { fontSize: '0.95rem' },
-          body2: { fontSize: '0.88rem' },
-          caption: { fontSize: '0.72rem' }
-        },
-        components: {
-          MuiCssBaseline: {
-            styleOverrides: {
-              '*': { boxSizing: 'border-box' }
-            }
-          },
-          MuiPaper: {
-            styleOverrides: {
-              root: {
-                backgroundImage: 'none'
-              }
-            }
-          },
-          MuiFormLabel: {
-            styleOverrides: {
-              root: {
-                color: 'rgba(255,255,255,0.70)',
-                '&.Mui-focused': {
-                  color: purpleMain
-                },
-                '&.Mui-disabled': {
-                  color: 'rgba(255,255,255,0.35)'
-                }
-              }
-            }
-          },
-          MuiInputLabel: {
-            styleOverrides: {
-              root: {
-                color: 'rgba(255,255,255,0.70)',
-                '&.Mui-focused': {
-                  color: 'rgba(255,255,255,0.86)'
-                }
-              }
-            }
-          },
-          MuiCard: {
-            defaultProps: { elevation: 0 },
-            styleOverrides: {
-              root: {
-                border: '1px solid rgba(255,255,255,0.07)',
-                backgroundImage: 'none',
-                backgroundColor: '#161616',
-                boxShadow: '0 0 0 1px rgba(255,255,255,0.04), 0 24px 80px rgba(0,0,0,0.70)'
-              }
-            }
-          },
-          MuiOutlinedInput: {
-            styleOverrides: {
-              root: {
-                backgroundColor: 'rgba(0,0,0,0.35)',
-                borderRadius: 12,
-                transition: 'box-shadow 160ms ease, border-color 160ms ease',
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(255,255,255,0.14)'
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(167, 139, 250, 0.45)'
-                },
-                '&.Mui-focused': {
-                  boxShadow: '0 0 0 4px rgba(167, 139, 250, 0.16)'
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(167, 139, 250, 0.70)'
-                }
-              }
-            }
-          },
-          MuiSelect: {
-            defaultProps: {
-              MenuProps: {
-                disableScrollLock: true,
-                PaperProps: {
-                  sx: {
-                    mt: 1,
-                    border: '1px solid rgba(255,255,255,0.12)',
-                    backgroundColor: 'rgba(0,0,0,0.98)',
-                    boxShadow: '0 0 0 1px rgba(167, 139, 250, 0.10), 0 24px 70px rgba(0,0,0,0.55)'
-                  }
-                }
-              }
-            }
-          },
-          MuiPopover: {
-            defaultProps: {
-              disableScrollLock: true
-            }
-          },
-          MuiButton: {
-            styleOverrides: {
-              root: {
-                textTransform: 'none'
-              }
-            }
-          },
-          MuiStepLabel: {
-            styleOverrides: {
-              label: {
-                color: 'rgba(255,255,255,0.50)',
-                transition: 'all 0.3s ease',
-                '&.Mui-active': {
-                  color: 'rgba(255,255,255,0.92)',
-                  fontWeight: 700
-                },
-                '&.Mui-completed': {
-                  color: 'rgba(255,255,255,0.70)'
-                }
-              }
-            }
-          }
-        }
-      }),
-    []
-  )
+  const theme = useMemo(() => buildTheme(themeMode), [themeMode])
+  const isDark = themeMode === 'dark'
 
   const fileInputRef = useRef(null)
   const [dragOver, setDragOver] = useState(false)
@@ -898,37 +699,67 @@ export default function App() {
   ]
 
   return (
+    <ColorModeContext.Provider value={colorModeValue}>
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Box sx={{ minHeight: '100dvh', backgroundColor: bgBase }}>
+      <Box sx={{ minHeight: '100dvh', backgroundColor: 'background.default' }}>
+
+        {/* ─── Floating Glassmorphism Header ─── */}
         <AppBar
-          position="sticky"
-          color="transparent"
+          position="fixed"
+          elevation={0}
           sx={{
-            borderBottom: '1px solid rgba(255,255,255,0.08)',
+            top: 12,
+            left: 16,
+            right: 16,
+            width: 'auto',
+            borderRadius: 4,
+            border: '1px solid',
+            borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
             backgroundImage: 'none',
-            backgroundColor: 'rgba(0,0,0,0.78)',
-            backdropFilter: 'blur(12px)'
+            backgroundColor: isDark ? 'rgba(10,10,10,0.72)' : 'rgba(255,255,255,0.72)',
+            backdropFilter: 'blur(20px)',
+            boxShadow: isDark
+              ? '0 4px 30px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04)'
+              : '0 4px 30px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.02)',
           }}
         >
-          <Toolbar>
+          <Toolbar sx={{ minHeight: { xs: 56, sm: 64 } }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flex: 1, minWidth: 0 }}>
               <Box
                 component="img"
                 src={appLogo}
                 alt="TestPilot AI"
                 sx={{
-                  width: 36, height: 36, borderRadius: 2,
+                  width: 34, height: 34, borderRadius: 2,
                   objectFit: 'contain',
                 }}
               />
-              <Box sx={{ minWidth: 0 }}>
-                <Typography variant="caption" sx={{ fontFamily: theme.typography.fontFamilyMonospace, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.60)' }}>
-                  intelligent test design
-                </Typography>
-                <Typography variant="h6" sx={{ lineHeight: 1.1 }} noWrap>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
+                <Typography variant="h6" sx={{ lineHeight: 1.1, color: 'text.primary', fontWeight: 700 }} noWrap>
                   TestPilot AI
                 </Typography>
+                <Box sx={{
+                  px: 1.2,
+                  py: 0.25,
+                  borderRadius: 99,
+                  backgroundColor: isDark ? 'rgba(167, 139, 250, 0.12)' : 'rgba(124, 58, 237, 0.08)',
+                  border: '1px solid',
+                  borderColor: isDark ? 'rgba(167, 139, 250, 0.20)' : 'rgba(124, 58, 237, 0.15)',
+                  display: { xs: 'none', sm: 'block' },
+                }}>
+                  <Typography sx={{
+                    fontFamily: theme.typography.fontFamilyMonospace,
+                    fontSize: '0.65rem',
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    color: isDark ? purple[400] : purple[600],
+                    fontWeight: 600,
+                    lineHeight: 1.6,
+                  }}>
+                    intelligent test design
+                  </Typography>
+                </Box>
               </Box>
             </Box>
 
@@ -941,46 +772,110 @@ export default function App() {
                 variant="outlined"
                 size="small"
                 sx={{
-                  borderColor: 'rgba(255,255,255,0.14)',
-                  color: 'rgba(255,255,255,0.86)',
-                  boxShadow: '0 0 0 1px rgba(167, 139, 250, 0.18)',
-                  '&:hover': { borderColor: 'rgba(167, 139, 250, 0.45)', backgroundColor: 'rgba(167, 139, 250, 0.08)' }
+                  borderRadius: 99,
+                  borderColor: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)',
+                  color: 'text.primary',
+                  fontSize: '0.8rem',
+                  px: 2,
+                  '&:hover': { borderColor: purple[500], backgroundColor: isDark ? 'rgba(167, 139, 250, 0.08)' : 'rgba(124, 58, 237, 0.06)' },
                 }}
               >
                 Loaded skills
               </Button>
+
+              <Tooltip title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}>
+                <IconButton
+                  onClick={colorModeValue.toggleColorMode}
+                  size="small"
+                  sx={{
+                    color: 'text.secondary',
+                    border: '1px solid',
+                    borderColor: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)',
+                    borderRadius: 99,
+                    width: 36,
+                    height: 36,
+                    transition: 'all 0.25s ease',
+                    '&:hover': {
+                      color: purple[500],
+                      borderColor: purple[500],
+                      backgroundColor: isDark ? 'rgba(167, 139, 250, 0.08)' : 'rgba(124, 58, 237, 0.06)',
+                    },
+                  }}
+                >
+                  {isDark ? <LightModeOutlinedIcon sx={{ fontSize: 18 }} /> : <DarkModeOutlinedIcon sx={{ fontSize: 18 }} />}
+                </IconButton>
+              </Tooltip>
             </Stack>
           </Toolbar>
         </AppBar>
 
-        <Container maxWidth={false} sx={{ py: 3, px: { xs: 2, sm: 4, md: 6 } }}>
-          <Box sx={{ maxWidth: 1600, mx: 'auto', px: { md: 3, lg: 3 } }}>
+        {/* ─── Main Content ─── */}
+        <Container maxWidth={false} sx={{ pt: 10, pb: 3, px: { xs: 2, sm: 4, md: 8 } }}>
+          <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
 
-            <Stepper
-              activeStep={activeStep}
-              alternativeLabel={!isSmDown}
-              orientation={isSmDown ? 'vertical' : 'horizontal'}
-              connector={<AnimatedConnector />}
-              sx={{ mb: 4 }}
-            >
+            {/* ─── Segmented Progress Stepper ─── */}
+            <Box sx={{
+              display: 'flex',
+              gap: 0.5,
+              p: 0.5,
+              borderRadius: 3,
+              backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)',
+              mb: 4,
+            }}>
               {STEPS.map((label, index) => (
-                <Step
+                <Box
                   key={label}
-                  completed={stepCompleted[index] && index < activeStep}
-                  sx={{ cursor: 'pointer' }}
                   onClick={() => { if (!busy) goToStep(index) }}
+                  sx={{
+                    flex: 1,
+                    py: 1,
+                    px: 2,
+                    borderRadius: 2.5,
+                    cursor: busy ? 'default' : 'pointer',
+                    textAlign: 'center',
+                    backgroundColor: index <= activeStep
+                      ? (index === activeStep
+                        ? `linear-gradient(135deg, ${purple[500]}, ${purple[700]})`
+                        : purple[500])
+                      : 'transparent',
+                    background: index === activeStep
+                      ? `linear-gradient(135deg, ${purple[500]}, ${purple[700]})`
+                      : index < activeStep
+                        ? purple[600]
+                        : 'transparent',
+                    color: index <= activeStep ? '#fff' : 'text.secondary',
+                    fontWeight: index === activeStep ? 700 : 500,
+                    fontSize: '0.85rem',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    userSelect: 'none',
+                    '&:hover': !busy ? {
+                      backgroundColor: index <= activeStep
+                        ? undefined
+                        : isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+                    } : {},
+                  }}
                 >
-                  <StepLabel StepIconComponent={AnimatedStepIcon}>{label}</StepLabel>
-                </Step>
+                  {index + 1}. {label}
+                </Box>
               ))}
-            </Stepper>
+            </Box>
 
+            {/* ─── Status Alert ─── */}
             {status.trim().length > 0 ? (
-              <Alert severity={statusSeverity} variant="outlined" sx={{ mb: 2.5 }}>
+              <Alert
+                severity={statusSeverity}
+                variant="outlined"
+                sx={{
+                  mb: 2.5,
+                  borderRadius: 3,
+                  '& .MuiAlert-icon': { fontSize: 20 },
+                }}
+              >
                 {status}
               </Alert>
             ) : null}
 
+            {/* ─── Step Content with Slide Animation ─── */}
             <Box ref={stepContainerRef} sx={{ overflow: 'hidden', position: 'relative' }}>
               <Slide
                 direction={slideDirection}
@@ -999,24 +894,29 @@ export default function App() {
               </Slide>
             </Box>
 
+            {/* ─── Navigation Buttons ─── */}
             <Stack
               direction="row"
               spacing={1.5}
               justifyContent="space-between"
               alignItems="center"
-              sx={{ mt: 3, pt: 2, borderTop: '1px solid rgba(255,255,255,0.08)' }}
+              sx={{ mt: 3, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}
             >
               <Stack direction="row" spacing={1}>
                 {activeStep > 0 && (
                   <Button
-                    variant="outlined"
+                    variant="text"
                     startIcon={<ArrowBackIcon />}
                     disabled={busy}
                     onClick={() => goToStep(Math.max(0, activeStep - 1))}
                     sx={{
-                      borderColor: 'rgba(255,255,255,0.14)',
-                      color: 'rgba(255,255,255,0.85)',
-                      '&:hover': { borderColor: 'rgba(167, 139, 250, 0.45)', backgroundColor: 'rgba(167, 139, 250, 0.08)' }
+                      borderRadius: 99,
+                      color: 'text.secondary',
+                      px: 2.5,
+                      '&:hover': {
+                        backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                        color: 'text.primary',
+                      },
                     }}
                   >
                     Back
@@ -1027,13 +927,17 @@ export default function App() {
               <Stack direction="row" spacing={1}>
                 {activeStep === 2 && suite && (
                   <Button
-                    variant="outlined"
+                    variant="text"
                     startIcon={<RestartAltIcon />}
                     onClick={handleStartOver}
                     sx={{
-                      borderColor: 'rgba(255,255,255,0.14)',
-                      color: 'rgba(255,255,255,0.85)',
-                      '&:hover': { borderColor: 'rgba(167, 139, 250, 0.45)', backgroundColor: 'rgba(167, 139, 250, 0.08)' }
+                      borderRadius: 99,
+                      color: 'text.secondary',
+                      px: 2.5,
+                      '&:hover': {
+                        backgroundColor: isDark ? 'rgba(239,68,68,0.08)' : 'rgba(239,68,68,0.06)',
+                        color: '#ef4444',
+                      },
                     }}
                   >
                     Start Over
@@ -1046,11 +950,19 @@ export default function App() {
                     disabled={busy || !canGoNext()}
                     onClick={() => goToStep(Math.min(2, activeStep + 1))}
                     sx={{
-                      backgroundImage: 'none',
-                      backgroundColor: purpleMain,
-                      color: 'rgba(255,255,255,0.96)',
-                      boxShadow: '0 0 0 1px rgba(167, 139, 250, 0.30), 0 22px 70px rgba(0,0,0,0.45)',
-                      '&:hover': { backgroundColor: purpleDeep }
+                      borderRadius: 99,
+                      backgroundImage: `linear-gradient(135deg, ${purple[500]}, ${purple[700]})`,
+                      backgroundColor: purple[600],
+                      color: '#fff',
+                      px: 3,
+                      boxShadow: `0 0 0 1px ${purple[500]}33, 0 8px 24px ${isDark ? 'rgba(0,0,0,0.45)' : 'rgba(124,58,237,0.20)'}`,
+                      '&:hover': {
+                        backgroundImage: `linear-gradient(135deg, ${purple[600]}, ${purple[800]})`,
+                        boxShadow: `0 0 0 1px ${purple[500]}55, 0 12px 32px ${isDark ? 'rgba(0,0,0,0.55)' : 'rgba(124,58,237,0.30)'}`,
+                      },
+                      '&.Mui-disabled': {
+                        backgroundImage: 'none',
+                      },
                     }}
                   >
                     {activeStep === 1 ? 'Skip to Results' : 'Next'}
@@ -1072,5 +984,6 @@ export default function App() {
         setDiagramZoom={setDiagramZoom}
       />
     </ThemeProvider>
+    </ColorModeContext.Provider>
   )
 }

@@ -194,7 +194,7 @@ export default function MermaidDiagram({ chart }) {
         borderRadius: 8,
         border: '1px solid rgba(239, 68, 68, 0.3)',
         backgroundColor: 'rgba(239, 68, 68, 0.06)',
-        color: 'rgba(255,255,255,0.6)',
+        color: 'inherit',
         fontSize: 12,
         fontFamily: 'monospace',
         whiteSpace: 'pre-wrap',
@@ -204,7 +204,7 @@ export default function MermaidDiagram({ chart }) {
           Diagram render error
         </div>
         {error}
-        <details style={{ marginTop: 8, color: 'rgba(255,255,255,0.4)' }}>
+        <details style={{ marginTop: 8, opacity: 0.6 }}>
           <summary style={{ cursor: 'pointer' }}>Show raw diagram code</summary>
           <pre style={{ marginTop: 6, fontSize: 11, whiteSpace: 'pre-wrap' }}>{chart}</pre>
         </details>

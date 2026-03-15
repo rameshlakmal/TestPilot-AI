@@ -3,7 +3,7 @@ node_modules/
 *.log
 dist/
 client/dist/
-server/users.json
 .DS_Store
 plan.html
 workflow.html
+.claude/skills/

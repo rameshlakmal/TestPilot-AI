@@ -44,7 +44,7 @@ From there you can export the suite as PDF or CSV, or push it directly to AIO Te
 
 ## 3-Step Wizard Flow
 
-<p align="center"><img src="docs/Diagram-1.png" alt="3-Step Wizard Flow" width="850"/></p>
+<p align="center"><img src="docs/Dia1.drawio.png" alt="3-Step Wizard Flow" width="850"/></p>
 
 The user moves through three stages: provide requirements and configure the AI provider, let the AI analyze and recommend testing techniques, then review the generated test cases and export them.
 
@@ -52,7 +52,7 @@ The user moves through three stages: provide requirements and configure the AI p
 
 ## How It Works — The AI Pipeline
 
-<p align="center"><img src="docs/Diagram-2.png" alt="AI Pipeline" width="600"/></p>
+<p align="center"><img src="docs/Dia2.drawio.png" alt="AI Pipeline" width="600"/></p>
 
 **Stage 1 — Analyze** (`POST /api/analyze`)
 
@@ -72,14 +72,16 @@ The user moves through three stages: provide requirements and configure the AI p
 
 ---
 
-## Architecture
+## Parallel Execution
 
-<p align="center"><img src="docs/Diagram-3.png" alt="Architecture Overview" width="800"/></p>
+<p align="center"><img src="docs/Dia3.drawio.png" alt="Parallel Execution" width="800"/></p>
+
+## Architecture
 
 | Layer | Components |
 |-------|-----------|
-| **Client** | React 19 + MUI 6 + Vite &mdash; 3-step wizard, Mermaid.js diagram viewer, login page |
-| **Server** | Express 5 + Node.js &mdash; Prompt Engine, Skill Loader (12 .md playbooks), Schema Validator (Ajv), Merge + Dedup, Auth Middleware |
+| **Client** | React 19 + MUI 6 + Vite &mdash; 3-step wizard, Mermaid.js diagram viewer |
+| **Server** | Express 5 + Node.js &mdash; Prompt Engine, Skill Loader (12 .md playbooks), Schema Validator (Ajv), Merge + Dedup |
 | **AI Providers** | OpenAI, Anthropic Claude, Google Gemini &mdash; switchable per request |
 | **Integrations** | Jira Cloud (import stories), AIO Tests (export cases) &mdash; server-configured or user-provided credentials |
 
@@ -113,21 +115,19 @@ Each generated test case is structured and atomic:
 ```json
 {
   "id": "TC-001",
-  "title": "Verify that login fails with invalid password",
+  "title": "Verify that checkout fails when cart is empty",
   "type": "negative",
   "priority": "P0",
-  "preconditions": ["User has a registered account"],
+  "preconditions": ["User is logged in", "Cart is empty"],
   "steps": [
-    "Navigate to login page",
-    "Enter valid email",
-    "Enter invalid password",
-    "Click Sign In"
+    "Navigate to checkout page",
+    "Click Place Order"
   ],
   "expected": [
-    "Error message: 'Invalid credentials'",
-    "User remains on login page"
+    "Error message: 'Your cart is empty'",
+    "User remains on checkout page"
   ],
-  "coverageTags": ["authentication", "boundary-value-analysis"],
+  "coverageTags": ["checkout", "boundary-value-analysis"],
   "requirementRefs": ["REQ-001"]
 }
 ```
@@ -210,19 +210,6 @@ Push generated test cases to [AIO Tests](https://marketplace.atlassian.com/apps/
 
 </details>
 
-<details>
-<summary><strong>Authentication (Optional)</strong></summary>
-
-```env
-JWT_SECRET=your-secret-key
-ADMIN_EMAIL=admin@example.com
-ADMIN_PASSWORD=your-password
-```
-
-Seed an admin user on startup. JWT tokens protect all API routes except health check and auth endpoints.
-
-</details>
-
 ---
 
 ## API Reference
@@ -259,8 +246,6 @@ testpilot-ai/
 |   +-- util.js                     # JSON parsing, dedup, suite merging
 |   +-- selectSkills.js             # Keyword-based skill selection (fallback)
 |   +-- skills.js                   # Skill loader (parses markdown playbooks)
-|   +-- auth.js                     # JWT authentication routes
-|   +-- authMiddleware.js           # Route protection middleware
 |   +-- jira.js                     # Jira Cloud API integration
 |   +-- aio.js                      # AIO Tests export
 |   +-- llm/
@@ -277,7 +262,6 @@ testpilot-ai/
 |       +-- StepRequirements.jsx    # Step 1: input, provider config, Jira import
 |       +-- StepAnalyze.jsx         # Step 2: analysis, technique selection, diagrams
 |       +-- StepResults.jsx         # Step 3: results, filters, export, AIO push
-|       +-- LoginPage.jsx           # Authentication login page
 |       +-- DiagramDialog.jsx       # Fullscreen Mermaid diagram viewer
 |       +-- MermaidDiagram.jsx      # Mermaid.js renderer
 |       +-- helpers.jsx             # Shared utility components (PDF, CSV, lists)
@@ -295,7 +279,7 @@ testpilot-ai/
 
 | Layer | Technology |
 |-------|-----------|
-| **Backend** | Express.js 5, Node.js 18+, Ajv, JWT, Helmet |
+| **Backend** | Express.js 5, Node.js 18+, Ajv, Helmet |
 | **Frontend** | React 19, Material UI 6, Vite 7, Mermaid.js 11 |
 | **AI Providers** | OpenAI, Anthropic Claude, Google Gemini |
 | **Integrations** | Jira Cloud REST API, AIO Tests TCMS |

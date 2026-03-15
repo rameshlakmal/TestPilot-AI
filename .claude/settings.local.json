@@ -21,7 +21,11 @@
       "Bash(cd \"C:\\\\Users\\\\rames\\\\Desktop\\\\Workspace\\\\test-generaror\\\\client\" && npm run build 2>&1 | grep -E \"error|Error|✓ built\")",
       "Bash(cd \"C:\\\\Users\\\\rames\\\\Desktop\\\\Workspace\\\\test-generaror\" && timeout 5 node -e \"require\\('./server/index.js'\\)\" 2>&1 || true)",
       "Bash(cd /c/Users/rames/Desktop/Workspace/test-generaror/client && npm run build 2>&1 | tail -30)",
-      "Bash(cd /c/Users/rames/Desktop/Workspace/test-generaror/client && npm run build 2>&1 | tail -5)"
+      "Bash(cd /c/Users/rames/Desktop/Workspace/test-generaror/client && npm run build 2>&1 | tail -5)",
+      "Bash(uipro init:*)",
+      "Bash(python3:*)",
+      "Bash(cd:*)",
+      "mcp__magic__21st_magic_component_inspiration"
     ]
   }
 }

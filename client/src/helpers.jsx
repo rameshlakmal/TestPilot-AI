@@ -105,7 +105,8 @@ export function exportPdf(suite) {
     margin: { top: 38, bottom: 30, left: 28, right: 28 },
   })
 
-  doc.save(`${title.replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf`)
+  const slug = title.replace(/[^a-zA-Z0-9 _-]/g, '').trim().slice(0, 40).replace(/\s+/g, '_') || 'test-suite'
+  doc.save(`${slug}.pdf`)
 }
 
 export function toCsv(suite) {

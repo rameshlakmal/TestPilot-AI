@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Alert,
   Box,
@@ -49,6 +49,9 @@ export default function StepAnalyze({
   setAnalysis, setAnalysisMeta,
 }) {
   const [clarifyOpen, setClarifyOpen] = useState(false)
+  const [showAllElements, setShowAllElements] = useState(false)
+  const summaryRef = useRef(null)
+  const [summaryHeight, setSummaryHeight] = useState(null)
   const isDark = theme.palette.mode === 'dark'
 
   // Theme-aware helpers
@@ -118,6 +121,19 @@ export default function StepAnalyze({
   const selectedDiagramCount = useMemo(() => {
     return availableDiags.filter((id) => selectedDiagrams[id]).length
   }, [availableDiags, selectedDiagrams])
+
+  useEffect(() => {
+    setShowAllElements(false)
+    setSummaryHeight(null)
+    if (!summaryRef.current) return
+    const measure = () => {
+      if (summaryRef.current) setSummaryHeight(summaryRef.current.offsetHeight)
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(summaryRef.current)
+    return () => ro.disconnect()
+  }, [analysis])
 
   function handleReAnalyze() {
     setAnalysis(null)
@@ -211,7 +227,7 @@ export default function StepAnalyze({
 
           <Collapse in={clarifyOpen} timeout={300}>
             <Box sx={{ px: 3, pb: 3 }}>
-              <Stack spacing={2}>
+              <Stack spacing={3}>
                 <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>
                   Let the AI identify ambiguities in your requirements before analysis. You can skip this step and go straight to Analyze below.
                 </Typography>
@@ -418,7 +434,7 @@ export default function StepAnalyze({
         sx={{
           py: 1,
           px: 1.5,
-          borderRadius: 2,
+          borderRadius: '6px',
           cursor: 'pointer',
           backgroundColor: checked ? purpleBgFaint : 'transparent',
           border: '1px solid',
@@ -519,7 +535,7 @@ export default function StepAnalyze({
           <Grid container spacing={2}>
             {/* Summary */}
             <Grid item xs={12} md={Array.isArray(analysis.extractedElements) && analysis.extractedElements.length > 0 ? 6 : 12}>
-              <Box sx={{ height: '100%' }}>
+              <Box ref={summaryRef}>
                 <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.disabled', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', mb: 0.75 }}>
                   Summary
                 </Typography>
@@ -536,44 +552,93 @@ export default function StepAnalyze({
                   <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.disabled', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', mb: 0.75 }}>
                     Testable Elements ({analysis.extractedElements.length})
                   </Typography>
-                  <Stack spacing={1}>
-                    {analysis.extractedElements.map((el, idx) => (
-                      <Box
-                        key={idx}
+
+                  {/* Capped list */}
+                  <Box sx={{ position: 'relative' }}>
+                    <Box
+                      sx={{
+                        maxHeight: showAllElements || !summaryHeight ? 'none' : summaryHeight,
+                        overflow: 'hidden',
+                        position: 'relative',
+                      }}
+                    >
+                      <Stack spacing={1}>
+                        {analysis.extractedElements.map((el, idx) => (
+                          <Box
+                            key={idx}
+                            sx={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: 0.25,
+                              pl: 1.5,
+                              borderLeft: `2px solid ${purpleBorder}`,
+                              py: 0.5,
+                            }}
+                          >
+                            <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap" useFlexGap>
+                              <Chip
+                                size="small"
+                                label={el.type}
+                                sx={{
+                                  fontFamily: theme.typography.fontFamilyMonospace,
+                                  fontSize: '0.64rem',
+                                  height: 20,
+                                  backgroundColor: purpleBgSubtle,
+                                  color: purpleAccent,
+                                  flexShrink: 0,
+                                }}
+                              />
+                              <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary', opacity: 0.85, fontSize: '0.84rem' }}>
+                                {el.name}
+                              </Typography>
+                            </Stack>
+                            {el.description && (
+                              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.76rem', lineHeight: 1.4 }}>
+                                {el.description}
+                              </Typography>
+                            )}
+                          </Box>
+                        ))}
+                      </Stack>
+
+                      {/* Fade overlay when capped */}
+                      {!showAllElements && summaryHeight && (
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            height: 48,
+                            background: isDark
+                              ? 'linear-gradient(to bottom, transparent, rgba(10,10,10,0.85))'
+                              : 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.90))',
+                            pointerEvents: 'none',
+                          }}
+                        />
+                      )}
+                    </Box>
+
+                    {/* View more / less button */}
+                    {summaryHeight && (
+                      <Button
+                        size="small"
+                        variant="text"
+                        onClick={() => setShowAllElements((v) => !v)}
                         sx={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: 0.25,
-                          pl: 1.5,
-                          borderLeft: `2px solid ${purpleBorder}`,
-                          py: 0.5,
+                          mt: 0.5,
+                          fontSize: '0.76rem',
+                          color: purpleAccent,
+                          textTransform: 'none',
+                          px: 0,
+                          minWidth: 0,
+                          '&:hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
                         }}
                       >
-                        <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap" useFlexGap>
-                          <Chip
-                            size="small"
-                            label={el.type}
-                            sx={{
-                              fontFamily: theme.typography.fontFamilyMonospace,
-                              fontSize: '0.64rem',
-                              height: 20,
-                              backgroundColor: purpleBgSubtle,
-                              color: purpleAccent,
-                              flexShrink: 0,
-                            }}
-                          />
-                          <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary', opacity: 0.85, fontSize: '0.84rem' }}>
-                            {el.name}
-                          </Typography>
-                        </Stack>
-                        {el.description && (
-                          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.76rem', lineHeight: 1.4 }}>
-                            {el.description}
-                          </Typography>
-                        )}
-                      </Box>
-                    ))}
-                  </Stack>
+                        {showAllElements ? 'Show less' : `View all ${analysis.extractedElements.length} elements`}
+                      </Button>
+                    )}
+                  </Box>
                 </Box>
               </Grid>
             )}
@@ -601,9 +666,11 @@ export default function StepAnalyze({
                 }}
               />
               {estimatedTotal > 0 && (
-                <Typography variant="caption" sx={{ color: 'text.disabled', fontFamily: theme.typography.fontFamilyMonospace, fontSize: '0.72rem' }}>
-                  ~{estimatedTotal} scenarios
-                </Typography>
+                <Tooltip title="Estimated scenario count from analysis. Actual test cases generated may be higher — each scenario can expand into multiple cases." arrow>
+                  <Typography variant="caption" sx={{ color: 'text.disabled', fontFamily: theme.typography.fontFamilyMonospace, fontSize: '0.72rem', cursor: 'help', borderBottom: '1px dashed', borderColor: 'text.disabled' }}>
+                    ~{estimatedTotal} scenarios
+                  </Typography>
+                </Tooltip>
               )}
               <Box sx={{ flex: 1 }} />
               <Button
@@ -633,7 +700,7 @@ export default function StepAnalyze({
               <Box
                 sx={{
                   p: 1.5,
-                  borderRadius: 3,
+                  borderRadius: '8px',
                   backgroundColor: isDark ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.02)',
                   border: `1px solid ${isDark ? 'rgba(167, 139, 250, 0.08)' : 'rgba(124, 58, 237, 0.06)'}`,
                 }}
@@ -715,7 +782,12 @@ export default function StepAnalyze({
             <Stack direction="row" spacing={1} alignItems="center" sx={{ flex: 1 }}>
               {selectedCount > 0 && estimatedTotal > 0 && (
                 <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.78rem' }}>
-                  {selectedCount} technique{selectedCount !== 1 ? 's' : ''} &middot; ~{estimatedTotal} scenarios
+                  {selectedCount} technique{selectedCount !== 1 ? 's' : ''} &middot;{' '}
+                  <Tooltip title="Estimated scenario count. Actual test cases generated may be higher — each scenario can expand into multiple cases." arrow>
+                    <Box component="span" sx={{ cursor: 'help', borderBottom: '1px dashed', borderColor: 'text.secondary' }}>
+                      ~{estimatedTotal} scenarios (est.)
+                    </Box>
+                  </Tooltip>
                 </Typography>
               )}
               {selectedCount === 0 && (

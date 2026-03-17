@@ -75,15 +75,15 @@ function sharedComponents(mode) {
   const inputBg = isDark ? 'rgba(0,0,0,0.25)' : 'rgba(0,0,0,0.03)'
   const labelColor = isDark ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.60)'
   const labelFocus = isDark ? purple[500] : purple[600]
-  const cardBg = isDark ? '#161616' : '#ffffff'
-  const cardBorder = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.08)'
+  const cardBg = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.82)'
+  const cardBorder = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.90)'
   const cardShadow = isDark
-    ? '0 0 0 1px rgba(255,255,255,0.04), 0 24px 80px rgba(0,0,0,0.70)'
-    : '0 0 0 1px rgba(0,0,0,0.03), 0 4px 24px rgba(0,0,0,0.06)'
+    ? '0 4px 24px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.06)'
+    : '0 4px 24px rgba(124,58,237,0.07), inset 0 1px 0 rgba(255,255,255,1)'
   const stepLabelInactive = isDark ? 'rgba(255,255,255,0.50)' : 'rgba(0,0,0,0.45)'
   const stepLabelActive = isDark ? 'rgba(255,255,255,0.92)' : 'rgba(0,0,0,0.87)'
   const stepLabelCompleted = isDark ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.60)'
-  const selectMenuBg = isDark ? 'rgba(15,15,15,0.98)' : 'rgba(255,255,255,0.98)'
+  const selectMenuBg = isDark ? 'rgba(15,15,15,0.82)' : 'rgba(255,255,255,0.82)'
   const selectMenuBorder = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)'
   const selectMenuShadow = isDark
     ? '0 0 0 1px rgba(167, 139, 250, 0.10), 0 24px 70px rgba(0,0,0,0.55)'
@@ -149,9 +149,11 @@ function sharedComponents(mode) {
           PaperProps: {
             sx: {
               mt: 1,
-              borderRadius: 3,
+              borderRadius: '10px',
               border: `1px solid ${selectMenuBorder}`,
               backgroundColor: selectMenuBg,
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
               boxShadow: selectMenuShadow,
             },
           },

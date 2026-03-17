@@ -642,7 +642,7 @@ export default function StepResults({
 
         <Collapse in={insightsOpen} timeout={300}>
           <Box sx={{ px: 3, pb: 2 }}>
-            <Stack spacing={0}>
+            <Stack spacing={1.5}>
               {[
                 {
                   key: 'skills',
@@ -685,9 +685,7 @@ export default function StepResults({
                     backgroundColor: isDark ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.02)',
                     border: '1px solid',
                     borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)',
-                    '&:not(:last-child)': { borderBottom: 'none' },
-                    '&:first-of-type': { borderTopLeftRadius: 8, borderTopRightRadius: 8 },
-                    '&:last-of-type': { borderBottomLeftRadius: 8, borderBottomRightRadius: 8 },
+                    borderRadius: '8px !important',
                     '&:before': { display: 'none' },
                   }}
                 >
@@ -706,7 +704,7 @@ export default function StepResults({
 
             {/* Diagrams */}
             {skillDiagrams.length > 0 && (
-              <Box sx={{ mt: 1.5, p: 1.5, borderRadius: 2, backgroundColor: isDark ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.02)', border: '1px solid', borderColor: isDark ? 'rgba(167, 139, 250, 0.08)' : 'rgba(124, 58, 237, 0.08)' }}>
+              <Box sx={{ mt: 1.5, p: 1.5, borderRadius: '8px', backgroundColor: isDark ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.02)', border: '1px solid', borderColor: isDark ? 'rgba(167, 139, 250, 0.08)' : 'rgba(124, 58, 237, 0.08)' }}>
                 <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mb: 1 }}>
                   <AccountTreeIcon sx={{ color: purpleAccent, fontSize: 16 }} />
                   <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.85rem', color: 'text.secondary' }}>

@@ -702,7 +702,19 @@ export default function App() {
     <ColorModeContext.Provider value={colorModeValue}>
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Box sx={{ minHeight: '100dvh', backgroundColor: 'background.default' }}>
+      <Box sx={{
+        minHeight: '100dvh',
+        backgroundColor: 'background.default',
+        background: isDark
+          ? `radial-gradient(ellipse at 15% 15%, rgba(124,58,237,0.14) 0%, transparent 45%),
+             radial-gradient(ellipse at 85% 75%, rgba(167,139,250,0.09) 0%, transparent 45%),
+             radial-gradient(ellipse at 50% 100%, rgba(109,40,217,0.07) 0%, transparent 40%),
+             #0a0a0a`
+          : `radial-gradient(ellipse at 15% 15%, rgba(124,58,237,0.08) 0%, transparent 45%),
+             radial-gradient(ellipse at 85% 75%, rgba(167,139,250,0.06) 0%, transparent 45%),
+             radial-gradient(ellipse at 50% 100%, rgba(109,40,217,0.04) 0%, transparent 40%),
+             #faf8ff`,
+      }}>
 
         {/* ─── Floating Glassmorphism Header ─── */}
         <AppBar
@@ -719,6 +731,7 @@ export default function App() {
             backgroundImage: 'none',
             backgroundColor: isDark ? 'rgba(10,10,10,0.72)' : 'rgba(255,255,255,0.72)',
             backdropFilter: 'blur(20px)',
+            willChange: 'transform',
             boxShadow: isDark
               ? '0 4px 30px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04)'
               : '0 4px 30px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.02)',
@@ -819,7 +832,15 @@ export default function App() {
               gap: 0.5,
               p: 0.5,
               borderRadius: 3,
-              backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)',
+              backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.62)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              willChange: 'transform',
+              border: '1px solid',
+              borderColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)',
+              boxShadow: isDark
+                ? '0 2px 12px rgba(0,0,0,0.30)'
+                : '0 2px 12px rgba(124,58,237,0.06)',
               mb: 4,
             }}>
               {STEPS.map((label, index) => (
